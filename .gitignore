@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+dist/
+build/
+*.egg-info/
+
+# Research data and derived local outputs
+data/raw/
+data/interim/
+data/processed/
+data/external/
+*.parquet
+*.jsonl
+
+# Local environment
+.env
+.env.*
+!.env.example

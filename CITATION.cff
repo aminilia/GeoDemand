@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use GeoDemand-FF, please cite this software."
+title: "GeoDemand-FF"
+version: 0.1.0
+authors:
+  - name: "GeoDemand-FF contributors"
+license: MIT
+abstract: "Reproducible GeoAI research pipeline scaffolding for studying regional search-demand surges following urban flash floods."
