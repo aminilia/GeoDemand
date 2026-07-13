@@ -24,6 +24,8 @@ classifiers = [
 dependencies = [
   "polars>=1.0",
   "pydantic>=2.7",
+  "pyarrow>=15.0",
+  "shapely>=2.0",
   "typer>=0.12",
 ]
 
@@ -58,6 +60,10 @@ python_version = "3.11"
 strict = true
 warn_unused_configs = true
 packages = ["geodemand"]
+
+[[tool.mypy.overrides]]
+module = ["pyarrow", "pyarrow.*", "shapely", "shapely.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = "-q"

@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.test-runtime/
+.cache/
 .ruff_cache/
 .mypy_cache/
 .coverage

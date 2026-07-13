@@ -13,5 +13,10 @@ data/
   external/     # ignored externally managed references
 ```
 
-The Groundsource ingestion commands accept explicit paths, so data can also live
-outside the repository.
+The Groundsource ingestion and audit commands accept explicit paths, so data can
+also live outside the repository. Generated full-size audit outputs should be
+kept outside version control or under ignored local output directories.
+
+Groundsource itself is GeoParquet with WKB geometries. Country or state boundary
+datasets for future spatial enrichment should be stored as external local inputs
+and must not be committed unless their license explicitly permits redistribution.

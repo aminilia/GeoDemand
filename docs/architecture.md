@@ -2,10 +2,10 @@
 
 ## Milestone Boundary
 
-Milestone 0 builds the reproducible foundation only: package structure, data
-contracts, local ingestion, CLI commands, documentation, and verification. It
-does not include machine-learning models, feature engineering, Google Trends
-collection, or forecast evaluation.
+Milestone 0.5 builds the reproducible foundation plus real Groundsource schema
+discovery and data auditing. It does not include NOAA ingestion, Google Trends
+collection, machine-learning models, event clustering, maps, feature
+engineering, or forecast evaluation.
 
 ## Source Layout
 
@@ -17,9 +17,9 @@ research scripts.
 ## Dependency Management
 
 Dependencies live in `pyproject.toml` and are compatible with `uv`. Runtime
-dependencies are limited to Typer, Pydantic, and Polars. Development tools are
-kept in the `dev` optional dependency group so CI and local development use the
-same commands.
+dependencies include Typer, Pydantic, Polars, PyArrow, and Shapely. PyArrow is
+used for Parquet metadata and record-batch scanning; Shapely is used for WKB
+geometry decoding and representative-point extraction.
 
 ## CLI
 
@@ -32,29 +32,35 @@ testable without shelling out.
 
 Pydantic models define stable research-facing records for flood events,
 geographic regions, search-interest observations, and event-region
-intersections. These contracts are separate from the Groundsource ingestion
-schema because external source columns may change while internal research
-records should remain stable.
+intersections. Raw Groundsource records are represented separately from
+canonical GeoDemand flood-event records because source columns may drift while
+internal research contracts should remain stable.
 
 ## Groundsource Ingestion
 
-Groundsource ingestion accepts only caller-provided local Parquet paths. It does
-not hard-code URLs, paths, credentials, countries, or dates. Polars lazy scans
-are used so schema validation, filtering, and output generation can scale to
-larger files while keeping small-fixture tests fast.
+Groundsource ingestion accepts only caller-provided local Parquet paths. The
+confirmed source schema is GeoParquet 0.4.0 with `uuid`, `area_km2`, `geometry`,
+`start_date`, `end_date`, and ignored `__index_level_0__`. It does not provide
+source country, latitude, or longitude fields.
+
+Inspection reads raw Arrow schema and Parquet key-value metadata before
+validation. Auditing and canonical output scan record batches with PyArrow so
+the 2.6 million source geometries do not need to fit into memory as a
+GeoDataFrame. WKB is decoded in bounded batches with Shapely.
 
 ## Output Format
 
-Filtered Groundsource output is written as partitioned Parquet by `country` and
-`event_date`. These partitions support repeatable data audits and future
-regional or temporal joins without implying a modeling design.
+Canonical Groundsource output preserves original WKB geometry and GeoParquet
+metadata. Representative coordinates are produced from
+`representative_point().x` and `.y`; centroid is intentionally not used.
+Country filtering requires a boundary dataset and later spatial enrichment.
 
 ## Profiling
 
-The data profile report is JSON so it can be reviewed in pull requests, archived
-with experiment metadata, or consumed by future automation. It includes schema,
-row count, date range, country counts, missing counts, and numeric summaries for
-the required severity and coordinate fields.
+The audit creates deterministic JSON and CSV outputs for schema, profile, field
+quality, temporal coverage, geometry quality, and rejected-record summaries. The
+manifest intentionally includes a UTC timestamp, checksum, file size, package
+version, configuration, and row counts for reproducibility.
 
 ## Logging And Errors
 
