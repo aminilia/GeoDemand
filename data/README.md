@@ -20,3 +20,19 @@ kept outside version control or under ignored local output directories.
 Groundsource itself is GeoParquet with WKB geometries. Country or state boundary
 datasets for future spatial enrichment should be stored as external local inputs
 and must not be committed unless their license explicitly permits redistribution.
+
+Milestone 0.5E expects versioned boundary archives outside the repository:
+
+```text
+C:\Work\Data\GeoDemand\boundaries\
+  natural_earth\5.1.1\ne_10m_admin_0_countries.zip
+  census\2025\tl_2025_us_state.zip
+```
+
+Prepared boundary artifacts and spatial-enrichment outputs should also remain
+outside version control. Typical local output folders are:
+
+```text
+C:\Work\Data\GeoDemand\artifacts\boundaries_prepared\
+C:\Work\Data\GeoDemand\artifacts\groundsource_spatial\
+```

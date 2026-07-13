@@ -158,7 +158,11 @@ def test_profile_groundsource_is_deterministic(
     profile_groundsource(clean_groundsource_path, first)
     profile_groundsource(clean_groundsource_path, second)
 
-    assert first.read_text(encoding="utf-8") == second.read_text(encoding="utf-8")
+    first_profile = json.loads(first.read_text(encoding="utf-8"))
+    second_profile = json.loads(second.read_text(encoding="utf-8"))
+    first_profile.pop("timing")
+    second_profile.pop("timing")
+    assert first_profile == second_profile
 
 
 def test_audit_non_manifest_outputs_are_deterministic(
@@ -170,13 +174,17 @@ def test_audit_non_manifest_outputs_are_deterministic(
 
     for artifact_name in [
         "schema",
-        "profile",
         "field_quality",
         "temporal_coverage",
         "geometry_quality",
         "rejected_records_summary",
     ]:
         assert first[artifact_name].read_bytes() == second[artifact_name].read_bytes()
+    first_profile = json.loads(first["profile"].read_text(encoding="utf-8"))
+    second_profile = json.loads(second["profile"].read_text(encoding="utf-8"))
+    first_profile.pop("timing")
+    second_profile.pop("timing")
+    assert first_profile == second_profile
 
 
 @pytest.mark.parametrize(
@@ -241,6 +249,80 @@ def test_bounded_audit_options_limit_smoke_test_scope(
     assert manifest["configuration"]["batch_size"] == 1
     assert manifest["configuration"]["max_rows"] == 1
     assert manifest["configuration"]["max_row_groups"] == 1
+
+
+def test_max_rows_processes_exactly_requested_source_rows(
+    multi_row_group_groundsource_path: Path,
+    tmp_path: Path,
+) -> None:
+    artifacts = audit_groundsource(
+        multi_row_group_groundsource_path,
+        tmp_path / "audit",
+        batch_size=2,
+        max_rows=5,
+    )
+    profile = json.loads(artifacts["profile"].read_text(encoding="utf-8"))
+
+    assert profile["total_record_count"] == 5
+    assert profile["row_accounting"]["source_rows"] == 5
+    assert profile["row_accounting"]["balanced"] is True
+
+
+def test_max_row_groups_never_reads_later_row_groups(
+    multi_row_group_groundsource_path: Path,
+    tmp_path: Path,
+) -> None:
+    artifacts = audit_groundsource(
+        multi_row_group_groundsource_path,
+        tmp_path / "audit",
+        batch_size=2,
+        max_row_groups=1,
+    )
+    profile = json.loads(artifacts["profile"].read_text(encoding="utf-8"))
+    rejected = json.loads(artifacts["rejected_records_summary"].read_text(encoding="utf-8"))
+
+    assert profile["total_record_count"] == 3
+    assert profile["rejected_record_count"] == 0
+    assert rejected["duplicate_uuid"]["groups"] == 0
+    assert rejected["rejection_reasons"]["undecodable_geometry"] == 0
+    assert rejected["rejection_reasons"]["malformed_start_date"] == 0
+
+
+def test_duplicate_analysis_uses_only_bounded_audit_scope(
+    multi_row_group_groundsource_path: Path,
+    tmp_path: Path,
+) -> None:
+    artifacts = audit_groundsource(
+        multi_row_group_groundsource_path,
+        tmp_path / "audit",
+        batch_size=2,
+        max_rows=5,
+    )
+    rejected = json.loads(artifacts["rejected_records_summary"].read_text(encoding="utf-8"))
+
+    assert rejected["duplicate_uuid"]["groups"] == 0
+    assert rejected["duplicate_uuid"]["participating_rows"] == 0
+
+
+def test_multiple_audit_metrics_use_same_bounded_population(
+    multi_row_group_groundsource_path: Path,
+    tmp_path: Path,
+) -> None:
+    artifacts = audit_groundsource(
+        multi_row_group_groundsource_path,
+        tmp_path / "audit",
+        batch_size=2,
+        max_rows=5,
+    )
+    profile = json.loads(artifacts["profile"].read_text(encoding="utf-8"))
+    temporal_rows = (artifacts["temporal_coverage"]).read_text(encoding="utf-8").splitlines()
+    field_quality = (artifacts["field_quality"]).read_text(encoding="utf-8")
+
+    temporal_count = sum(int(line.split(",")[1]) for line in temporal_rows[1:])
+    assert temporal_count == 5
+    assert "area_km2,optional,0,0.0" in field_quality
+    assert profile["geometry_type_distribution"] == {"Polygon": 5}
+    assert profile["row_accounting"]["balanced"] is True
 
 
 def test_country_filtering_requires_boundary_dataset(

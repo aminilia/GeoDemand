@@ -4,7 +4,8 @@ GeoDemand-FF is a reproducible research scaffold for studying regional Google
 search-demand surges following urban flash floods.
 
 Milestone 0.5 provides package structure, data contracts, local GeoParquet
-Groundsource inspection, WKB geometry auditing, tests, and project documentation.
+Groundsource inspection, WKB geometry auditing, spatial enrichment, tests, and
+project documentation.
 It does not implement NOAA ingestion, Google Trends ingestion, machine-learning
 models, event clustering, or maps.
 
@@ -36,6 +37,23 @@ uv run geodemand data profile --input PATH --output REPORT_JSON
 uv run geodemand data filter-groundsource --input PATH --output OUTPUT_DIR --country US --country-boundaries BOUNDARIES
 ```
 
+## Boundary Preparation And Spatial Enrichment
+
+Milestone 0.5E prepares local Natural Earth and Census boundary files, then
+streams Groundsource events through country and U.S. state spatial assignment.
+Use local archives; do not commit boundary archives or prepared outputs.
+
+```powershell
+uv run geodemand boundaries inspect --boundary-root C:\Work\Data\GeoDemand\boundaries
+uv run geodemand boundaries prepare --boundary-root C:\Work\Data\GeoDemand\boundaries --output-dir C:\Work\Data\GeoDemand\artifacts\boundaries_prepared
+uv run geodemand data enrich-spatial --input C:\Work\Data\GeoDemand\groundsource\groundsource_2026.parquet --countries C:\Work\Data\GeoDemand\artifacts\boundaries_prepared\countries.parquet --states C:\Work\Data\GeoDemand\artifacts\boundaries_prepared\us_states.parquet --output-dir C:\Work\Data\GeoDemand\artifacts\groundsource_spatial
+```
+
+The enrichment command writes `events_enriched/`,
+`event_country_membership/`, `event_state_overlaps/`, `us_events/`,
+`spatial_enrichment_summary.json`, assignment-quality CSVs, boundary metadata,
+and a run manifest.
+
 ## Groundsource Required Fields
 
 The confirmed Groundsource source is GeoParquet 0.4.0 with this schema:
@@ -51,6 +69,25 @@ The source does not provide country, state, latitude, or longitude columns.
 Representative coordinates are derived from WKB geometry with
 `representative_point()`, not centroid. Country filtering requires an explicit
 boundary dataset because country assignment is a later spatial-enrichment step.
+
+Spatial enrichment assigns countries with representative-point coverage,
+maximum-overlap fallback, single-intersection fallback, and explicit
+manual-review flags. U.S. state assignment runs only for events whose complete
+geometry intersects the United States boundary and ranks states by EPSG:6933
+overlap area.
+
+## Milestone 0.5D Results
+
+The full Groundsource audit for `groundsource_2026.parquet` verified SHA-256
+`77c266ba5a5176d983edca989a81ff73f21c556fd98c82e2131c2f8d172546ce` and
+processed 2,646,302 rows. Row accounting was balanced: 2,646,302 accepted
+canonical rows, 0 quarantined rows, and 0 rejected rows.
+
+All required and optional source fields had zero nulls. The dataset contained
+2,478,877 `Polygon` records and 167,425 `MultiPolygon` records; all geometries
+were valid, decodable, non-empty, and supported. The audit flagged 300 records
+for antimeridian review. Temporal coverage spans 2000-01-01 through
+2026-02-03, and no duplicate UUID groups were found.
 
 ## Repository Policy
 

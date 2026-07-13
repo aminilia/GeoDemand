@@ -3,9 +3,9 @@
 ## Milestone Boundary
 
 Milestone 0.5 builds the reproducible foundation plus real Groundsource schema
-discovery and data auditing. It does not include NOAA ingestion, Google Trends
-collection, machine-learning models, event clustering, maps, feature
-engineering, or forecast evaluation.
+discovery, data auditing, and global/U.S. spatial enrichment. It does not
+include NOAA ingestion, Google Trends collection, machine-learning models,
+event clustering, maps, feature engineering, or forecast evaluation.
 
 ## Source Layout
 
@@ -17,9 +17,11 @@ research scripts.
 ## Dependency Management
 
 Dependencies live in `pyproject.toml` and are compatible with `uv`. Runtime
-dependencies include Typer, Pydantic, Polars, PyArrow, and Shapely. PyArrow is
-used for Parquet metadata and record-batch scanning; Shapely is used for WKB
-geometry decoding and representative-point extraction.
+dependencies include Typer, Pydantic, Polars, PyArrow, Shapely, PyProj, and
+Pyogrio. PyArrow is used for Parquet metadata and record-batch scanning; Shapely
+is used for WKB geometry decoding, representative-point extraction, STRtree
+queries, and topology operations. PyProj provides EPSG:6933 area calculations,
+and Pyogrio reads the small Natural Earth and Census boundary archives.
 
 ## CLI
 
@@ -54,6 +56,35 @@ Canonical Groundsource output preserves original WKB geometry and GeoParquet
 metadata. Representative coordinates are produced from
 `representative_point().x` and `.y`; centroid is intentionally not used.
 Country filtering requires a boundary dataset and later spatial enrichment.
+
+## Boundary Preparation
+
+Boundary preparation is separate from Groundsource ingestion because boundary
+files are small, versioned reference datasets while Groundsource is the large
+streamed event source. Natural Earth Admin 0 Countries 5.1.1 and Census
+TIGER/Line 2025 states are validated, normalized to EPSG:4326, and written as
+deterministic GeoParquet. The boundary manifest records source hashes, output
+hashes, feature counts, CRS, geometry types, code fields, source versions,
+Natural Earth `de_facto` worldview, and Census legal-boundary vintage.
+
+## Spatial Enrichment
+
+Spatial enrichment loads only the prepared boundary datasets into memory. The
+2.6 million Groundsource rows are processed in bounded PyArrow record batches.
+Each event retains original WKB geometry and receives country, U.S.
+intersection, and state-overlap attributes.
+
+Country assignment first uses `representative_point()` coverage. Ambiguous or
+cross-border events use EPSG:6933 maximum-overlap ranking; offshore events with
+a single country intersection use `single_intersection`; events with no country
+intersection remain enriched with null country fields. State assignment runs
+only for events whose complete geometry intersects the United States boundary.
+All intersecting state overlaps are preserved, and the primary state is the
+largest EPSG:6933 overlap with deterministic tie breaking.
+
+Antimeridian, offshore, cross-border, multistate, and manual-review records are
+not rejected by spatial enrichment. They remain terminal enriched rows with
+review flags.
 
 ## Profiling
 

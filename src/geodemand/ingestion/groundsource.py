@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 import logging
+import time
 import uuid
 from collections import Counter
 from collections.abc import Iterator
@@ -168,6 +169,14 @@ class BatchValidationResult:
     durations: Counter[int] = field(default_factory=Counter)
 
 
+@dataclass(frozen=True)
+class AuditBatch:
+    row_group_index: int
+    batch_number: int
+    row_offset: int
+    batch: pa.RecordBatch
+
+
 @dataclass
 class AuditAccumulator:
     total_rows: int = 0
@@ -210,6 +219,8 @@ class AuditAccumulator:
     miny: float | None = None
     maxx: float | None = None
     maxy: float | None = None
+    processing_seconds: float = 0.0
+    rows_per_second: float = 0.0
 
     def to_rejected_summary(self, inspection: GroundsourceInspection) -> dict[str, Any]:
         return {
@@ -523,14 +534,18 @@ def write_canonical_groundsource(
     quarantined_rows = 0
     rejected_rows = 0
     try:
-        for row_offset, batch in _iter_limited_batches(
+        for audit_batch in _iter_limited_batches(
             path,
             batch_size=batch_size,
             max_rows=max_rows,
             max_row_groups=max_row_groups,
         ):
-            result = _process_batch(batch, inspection.geoparquet, row_offset=row_offset)
-            input_rows += batch.num_rows
+            result = _process_batch(
+                audit_batch.batch,
+                inspection.geoparquet,
+                row_offset=audit_batch.row_offset,
+            )
+            input_rows += audit_batch.batch.num_rows
             rejected_rows += result.rejected_rows
             accepted, quarantined = _terminal_rows(
                 result.rows,
@@ -717,6 +732,7 @@ def _audit_accumulator(
     max_row_groups: int | None = None,
     quarantine_path: Path | None = None,
 ) -> AuditAccumulator:
+    started_at = time.perf_counter()
     accumulator = AuditAccumulator()
     duplicate_index = _duplicate_index(
         path,
@@ -729,20 +745,25 @@ def _audit_accumulator(
     quarantine_writer: pq.ParquetWriter | None = None
     quarantine_schema = _quarantine_arrow_schema(geoparquet)
     try:
-        for row_offset, batch in _iter_limited_batches(
+        for audit_batch in _iter_limited_batches(
             path,
             batch_size=batch_size,
             max_rows=max_rows,
             max_row_groups=max_row_groups,
         ):
-            result = _process_batch(batch, geoparquet, row_offset=row_offset)
+            result = _process_batch(
+                audit_batch.batch,
+                geoparquet,
+                row_offset=audit_batch.row_offset,
+            )
             accepted, quarantined = _terminal_rows(
                 result.rows,
                 duplicate_index,
                 duplicate_policy=duplicate_policy,
                 preserve_invalid_geometries=preserve_invalid_geometries,
             )
-            _merge_batch_result(accumulator, result, batch, accepted, quarantined)
+            _merge_batch_result(accumulator, result, audit_batch.batch, accepted, quarantined)
+            _log_audit_progress(audit_batch, accumulator, started_at)
             if quarantine_path is not None and quarantined:
                 table = pa.Table.from_pylist(quarantined, schema=quarantine_schema)
                 if quarantine_writer is None:
@@ -752,6 +773,12 @@ def _audit_accumulator(
     finally:
         if quarantine_writer is not None:
             quarantine_writer.close()
+    accumulator.processing_seconds = time.perf_counter() - started_at
+    accumulator.rows_per_second = (
+        accumulator.total_rows / accumulator.processing_seconds
+        if accumulator.processing_seconds > 0
+        else 0.0
+    )
     return accumulator
 
 
@@ -884,15 +911,18 @@ def _iter_limited_batches(
     batch_size: int,
     max_rows: int | None,
     max_row_groups: int | None,
-) -> Iterator[tuple[int, pa.RecordBatch]]:
+) -> Iterator[AuditBatch]:
     parquet_file = pq.ParquetFile(path)
     emitted_rows = 0
     row_group_indexes = range(parquet_file.num_row_groups)
     if max_row_groups is not None:
         row_group_indexes = range(min(max_row_groups, parquet_file.num_row_groups))
+    batch_number = 0
     for row_group_index in row_group_indexes:
-        row_group = parquet_file.read_row_group(row_group_index)
-        for batch in row_group.to_batches(max_chunksize=batch_size):
+        for batch in parquet_file.iter_batches(
+            batch_size=batch_size,
+            row_groups=[row_group_index],
+        ):
             if max_rows is not None and emitted_rows >= max_rows:
                 return
             limited_batch = batch
@@ -900,7 +930,13 @@ def _iter_limited_batches(
                 remaining = max_rows - emitted_rows
                 if batch.num_rows > remaining:
                     limited_batch = batch.slice(0, remaining)
-            yield emitted_rows, limited_batch
+            batch_number += 1
+            yield AuditBatch(
+                row_group_index=row_group_index,
+                batch_number=batch_number,
+                row_offset=emitted_rows,
+                batch=limited_batch,
+            )
             emitted_rows += limited_batch.num_rows
 
 
@@ -911,23 +947,41 @@ def _duplicate_index(
     max_rows: int | None,
     max_row_groups: int | None,
 ) -> dict[str, DuplicateStats]:
+    _ = geoparquet
     index: dict[str, DuplicateStats] = {}
-    for row_offset, batch in _iter_limited_batches(
+    for audit_batch in _iter_limited_batches(
         path,
         batch_size=batch_size,
         max_rows=max_rows,
         max_row_groups=max_row_groups,
     ):
-        result = _process_batch(batch, geoparquet, row_offset=row_offset)
-        for row in result.rows:
-            source_id = str(row["source_record_id"])
+        data = audit_batch.batch.to_pydict()
+        for index_in_batch in range(audit_batch.batch.num_rows):
+            source_id = _parse_uuid(data["uuid"][index_in_batch])
+            if source_id is None:
+                continue
+            source_row_index = _source_row_index(
+                data,
+                index_in_batch,
+                audit_batch.row_offset,
+            )
+            geometry_signature = _raw_geometry_signature(data["geometry"][index_in_batch])
+            date_signature = _raw_date_signature(
+                data["start_date"][index_in_batch],
+                data.get("end_date", [None] * audit_batch.batch.num_rows)[index_in_batch],
+            )
+            area_signature = str(
+                data.get("area_km2", [None] * audit_batch.batch.num_rows)[index_in_batch]
+            )
             stats = index.setdefault(source_id, DuplicateStats())
             stats.count += 1
-            stats.source_row_indexes.append(int(row["source_row_index"]))
-            stats.signatures[_row_signature(row)] += 1
-            stats.geometry_signatures.add(_geometry_signature(row))
-            stats.date_signatures.add(_date_signature(row))
-            stats.area_signatures.add(_area_signature(row))
+            stats.source_row_indexes.append(source_row_index)
+            stats.signatures[
+                _raw_row_signature(geometry_signature, date_signature, area_signature)
+            ] += 1
+            stats.geometry_signatures.add(geometry_signature)
+            stats.date_signatures.add(date_signature)
+            stats.area_signatures.add(area_signature)
     return index
 
 
@@ -1045,6 +1099,55 @@ def _date_signature(row: dict[str, Any]) -> str:
 
 def _area_signature(row: dict[str, Any]) -> str:
     return str(row["reported_area_km2"])
+
+
+def _raw_geometry_signature(value: object) -> str:
+    if isinstance(value, bytes):
+        return hashlib.sha256(value).hexdigest()
+    return str(value)
+
+
+def _raw_date_signature(start_date: object, end_date: object) -> str:
+    return json.dumps({"start": str(start_date), "end": str(end_date)}, sort_keys=True)
+
+
+def _raw_row_signature(
+    geometry_signature: str,
+    date_signature: str,
+    area_signature: str,
+) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            {
+                "geometry": geometry_signature,
+                "date": date_signature,
+                "area": area_signature,
+            },
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _log_audit_progress(
+    audit_batch: AuditBatch,
+    accumulator: AuditAccumulator,
+    started_at: float,
+) -> None:
+    elapsed = time.perf_counter() - started_at
+    rows_per_second = accumulator.total_rows / elapsed if elapsed > 0 else 0.0
+    LOGGER.info(
+        "groundsource_audit_batch_processed",
+        extra={
+            "row_group": audit_batch.row_group_index,
+            "batch_number": audit_batch.batch_number,
+            "rows_processed": accumulator.total_rows,
+            "accepted": accumulator.valid_rows,
+            "quarantined": accumulator.quarantined_rows,
+            "rejected": accumulator.rejected_rows,
+            "elapsed_seconds": round(elapsed, 6),
+            "rows_per_second": round(rows_per_second, 3),
+        },
+    )
 
 
 def _merge_duplicate_stats(
@@ -1166,6 +1269,10 @@ def _profile_payload_from_accumulator(
             "rejected_rows": accumulator.rejected_rows,
             "balanced": accumulator.total_rows
             == accumulator.valid_rows + accumulator.quarantined_rows + accumulator.rejected_rows,
+        },
+        "timing": {
+            "processing_seconds": round(accumulator.processing_seconds, 6),
+            "rows_per_second": round(accumulator.rows_per_second, 3),
         },
         "geoparquet": inspection.geoparquet.to_dict(),
         "geometry_type_distribution": dict(sorted(accumulator.geometry_type_counts.items())),
@@ -1292,6 +1399,8 @@ def _manifest(
         "output_row_count": accumulator.valid_rows,
         "rejected_row_count": accumulator.rejected_rows,
         "quarantined_row_count": accumulator.quarantined_rows,
+        "processing_seconds": round(accumulator.processing_seconds, 6),
+        "rows_per_second": round(accumulator.rows_per_second, 3),
     }
 
 

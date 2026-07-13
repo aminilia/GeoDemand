@@ -81,3 +81,13 @@ def test_cli_validate_groundsource_reports_rejections(groundsource_path: Path) -
 
     assert result.exit_code != 0
     assert "rejected records" in result.output
+
+
+def test_cli_boundaries_inspect(tmp_path: Path) -> None:
+    root = tmp_path / "boundaries"
+    root.mkdir()
+
+    result = CliRunner().invoke(app, ["boundaries", "inspect", "--boundary-root", str(root)])
+
+    assert result.exit_code == 0
+    assert "natural_earth" in result.output

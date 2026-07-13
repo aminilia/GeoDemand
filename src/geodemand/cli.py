@@ -6,6 +6,7 @@ from typing import Annotated
 
 import typer
 
+from geodemand.boundaries import BoundaryError, inspect_boundaries, prepare_boundaries
 from geodemand.ingestion.groundsource import (
     DuplicatePolicy,
     GroundsourceError,
@@ -17,10 +18,13 @@ from geodemand.ingestion.groundsource import (
     validate_groundsource,
 )
 from geodemand.logging import configure_logging
+from geodemand.spatial import SpatialEnrichmentError, enrich_spatial
 
 app = typer.Typer(help="GeoDemand-FF research pipeline CLI.")
 data_app = typer.Typer(help="Data inspection, filtering, and profiling commands.")
+boundaries_app = typer.Typer(help="Boundary inspection and preparation commands.")
 app.add_typer(data_app, name="data")
+app.add_typer(boundaries_app, name="boundaries")
 
 
 @app.callback()
@@ -164,6 +168,71 @@ def validate_groundsource_command(
     except GroundsourceError as exc:
         raise typer.BadParameter(str(exc)) from exc
     typer.echo(summary)
+
+
+@data_app.command("enrich-spatial")
+def enrich_spatial_command(
+    input_path: Annotated[
+        Path,
+        typer.Option("--input", exists=True, file_okay=True, dir_okay=False),
+    ],
+    countries_path: Annotated[
+        Path,
+        typer.Option("--countries", exists=True, file_okay=True, dir_okay=False),
+    ],
+    states_path: Annotated[
+        Path,
+        typer.Option("--states", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
+    batch_size: Annotated[int, typer.Option("--batch-size", min=1)] = 10_000,
+    max_rows: Annotated[int | None, typer.Option("--max-rows", min=1)] = None,
+    max_row_groups: Annotated[int | None, typer.Option("--max-row-groups", min=1)] = None,
+) -> None:
+    try:
+        artifacts = enrich_spatial(
+            input_path=input_path,
+            countries_path=countries_path,
+            states_path=states_path,
+            output_dir=output_dir,
+            batch_size=batch_size,
+            max_rows=max_rows,
+            max_row_groups=max_row_groups,
+        )
+    except (GroundsourceError, SpatialEnrichmentError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@boundaries_app.command("inspect")
+def inspect_boundaries_command(
+    boundary_root: Annotated[
+        Path,
+        typer.Option("--boundary-root", exists=True, file_okay=False, dir_okay=True),
+    ],
+) -> None:
+    typer.echo(inspect_boundaries(boundary_root))
+
+
+@boundaries_app.command("prepare")
+def prepare_boundaries_command(
+    boundary_root: Annotated[
+        Path,
+        typer.Option("--boundary-root", exists=True, file_okay=False, dir_okay=True),
+    ],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
+) -> None:
+    try:
+        paths = prepare_boundaries(boundary_root, output_dir)
+    except BoundaryError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(
+        {
+            "countries": str(paths.countries),
+            "states": str(paths.states),
+            "manifest": str(paths.manifest),
+        }
+    )
 
 
 def _load_mapping(mapping_path: Path | None) -> GroundsourceFieldMapping:

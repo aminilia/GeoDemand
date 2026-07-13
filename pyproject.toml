@@ -25,6 +25,8 @@ dependencies = [
   "polars>=1.0",
   "pydantic>=2.7",
   "pyarrow>=15.0",
+  "pyogrio>=0.9",
+  "pyproj>=3.6",
   "shapely>=2.0",
   "typer>=0.12",
 ]
@@ -62,7 +64,7 @@ warn_unused_configs = true
 packages = ["geodemand"]
 
 [[tool.mypy.overrides]]
-module = ["pyarrow", "pyarrow.*", "shapely", "shapely.*"]
+module = ["pyarrow", "pyarrow.*", "pyogrio", "pyproj", "pyproj.*", "shapely", "shapely.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

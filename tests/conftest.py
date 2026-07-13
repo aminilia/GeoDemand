@@ -101,10 +101,66 @@ def clean_groundsource_path(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.fixture()
+def multi_row_group_groundsource_path(tmp_path: Path) -> Path:
+    path = tmp_path / "multi-row-group-groundsource.parquet"
+    polygon = Polygon([(-75.0, 40.0), (-74.0, 40.0), (-74.0, 41.0), (-75.0, 41.0)])
+    duplicate_uuid = str(uuid.uuid4())
+    table = pa.table(
+        {
+            "uuid": [
+                str(uuid.uuid4()),
+                str(uuid.uuid4()),
+                str(uuid.uuid4()),
+                str(uuid.uuid4()),
+                duplicate_uuid,
+                duplicate_uuid,
+                str(uuid.uuid4()),
+                str(uuid.uuid4()),
+            ],
+            "area_km2": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+            "geometry": [
+                polygon.wkb,
+                polygon.wkb,
+                polygon.wkb,
+                polygon.wkb,
+                polygon.wkb,
+                polygon.wkb,
+                b"not-wkb",
+                polygon.wkb,
+            ],
+            "start_date": [
+                "2026-01-01",
+                "2026-01-02",
+                "2026-01-03",
+                "2026-01-04",
+                "2026-01-05",
+                "2026-01-06",
+                "2026-01-07",
+                "not-a-date",
+            ],
+            "end_date": [
+                "2026-01-02",
+                "2026-01-03",
+                "2026-01-04",
+                "2026-01-05",
+                "2026-01-06",
+                "2026-01-07",
+                "2026-01-08",
+                "2026-01-09",
+            ],
+            "__index_level_0__": list(range(8)),
+        }
+    )
+    _write_geoparquet(path, table, row_group_size=3)
+    return path
+
+
 def _write_geoparquet(
     path: Path,
     table: pa.Table,
     geometry_type_key: str = "geometry_types",
+    row_group_size: int | None = None,
 ) -> None:
     geo_metadata = {
         "version": "0.4.0",
@@ -124,4 +180,4 @@ def _write_geoparquet(
         },
     }
     table = table.replace_schema_metadata({b"geo": json.dumps(geo_metadata).encode("utf-8")})
-    pq.write_table(table, path)
+    pq.write_table(table, path, row_group_size=row_group_size)
