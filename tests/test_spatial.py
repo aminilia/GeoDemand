@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -17,7 +18,7 @@ from geodemand.boundaries import (
     _canonical_state_rows,
     _reproject_source_rows,
 )
-from geodemand.spatial import enrich_spatial
+from geodemand.spatial import AREA_TOLERANCE, _fraction_valid, enrich_spatial
 
 
 def test_spatial_enrichment_assigns_countries_states_and_preserves_cases(
@@ -45,12 +46,88 @@ def test_spatial_enrichment_assigns_countries_states_and_preserves_cases(
     assert by_id["00000000-0000-0000-0000-000000000005"]["multi_state_event"] is True
     assert by_id["00000000-0000-0000-0000-000000000006"]["primary_country_code"] == "MX"
     assert by_id["00000000-0000-0000-0000-000000000006"]["intersects_united_states"] is True
+    assert by_id["00000000-0000-0000-0000-000000000006"]["intersects_us_country_boundary"] is True
+    assert by_id["00000000-0000-0000-0000-000000000006"]["intersects_us_state_union"] is True
     assert by_id["00000000-0000-0000-0000-000000000007"]["geometry_type"] == "MultiPolygon"
     assert by_id["00000000-0000-0000-0000-000000000009"]["spatial_review_required"] is True
 
     state_rows = _rows(artifacts["event_state_overlaps"] / "part-00000.parquet")
     assert {row["state_code"] for row in state_rows} >= {"CA", "NV"}
     assert all(0.0 <= row["event_area_fraction"] <= 1.0 for row in state_rows)
+    for source_record_id in {
+        row["source_record_id"] for row in state_rows if row["source_record_id"] is not None
+    }:
+        rows = [row for row in state_rows if row["source_record_id"] == source_record_id]
+        assert sum(float(row["event_area_fraction"] or 0.0) for row in rows) <= 1.0 + 1e-8
+        assert sum(float(row["us_overlap_fraction"] or 0.0) for row in rows) <= 1.0 + 1e-8
+
+
+def test_state_union_denominator_handles_detailed_state_exceeding_country_boundary(
+    tmp_path: Path,
+) -> None:
+    countries = _canonical_country_rows(
+        [
+            _country("US", "USA", "United States", Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])),
+            _country("MX", "MEX", "Mexico", Polygon([(-1, 0), (0, 0), (0, 1), (-1, 1)])),
+        ]
+    )
+    states = _canonical_state_rows(
+        [_state("06", "CA", "California", Polygon([(0, 0), (2, 0), (2, 1), (0, 1)]))]
+    )
+    country_path = tmp_path / "countries.parquet"
+    state_path = tmp_path / "us_states.parquet"
+    _write_table(country_path, countries, _country_schema(), ["Polygon"])
+    _write_table(state_path, states, _state_schema(), ["Polygon"])
+
+    event = Polygon([(0.5, 0.2), (1.5, 0.2), (1.5, 0.8), (0.5, 0.8)])
+    source = tmp_path / "coastal.parquet"
+    _write_groundsource(source, _groundsource_table([event]))
+    artifacts = enrich_spatial(source, country_path, state_path, tmp_path / "out")
+
+    event_row = _rows(artifacts["events_enriched"] / "part-00000.parquet")[0]
+    state_row = _rows(artifacts["event_state_overlaps"] / "part-00000.parquet")[0]
+
+    assert event_row["intersects_us_country_boundary"] is True
+    assert event_row["intersects_us_state_union"] is True
+    assert event_row["us_country_boundary_overlap_area_km2"] < event_row["us_overlap_area_km2"]
+    assert state_row["us_overlap_fraction"] == pytest.approx(1.0)
+    assert "state_fraction_out_of_range" not in str(event_row["spatial_review_reason"])
+
+
+def test_zero_area_state_union_intersection_does_not_flag_fraction(
+    tmp_path: Path,
+) -> None:
+    countries = _canonical_country_rows(
+        [_country("US", "USA", "United States", Polygon([(0, 0), (1, 0), (1, 1), (0, 1)]))]
+    )
+    states = _canonical_state_rows(
+        [_state("06", "CA", "California", Polygon([(0, 0), (1, 0), (1, 1), (0, 1)]))]
+    )
+    country_path = tmp_path / "countries.parquet"
+    state_path = tmp_path / "us_states.parquet"
+    _write_table(country_path, countries, _country_schema(), ["Polygon"])
+    _write_table(state_path, states, _state_schema(), ["Polygon"])
+
+    source = tmp_path / "touch.parquet"
+    _write_groundsource(
+        source,
+        _groundsource_table([Polygon([(-1, 0.2), (0, 0.2), (0, 0.8), (-1, 0.8)])]),
+    )
+    artifacts = enrich_spatial(source, country_path, state_path, tmp_path / "out")
+
+    event_row = _rows(artifacts["events_enriched"] / "part-00000.parquet")[0]
+    state_row = _rows(artifacts["event_state_overlaps"] / "part-00000.parquet")[0]
+
+    assert event_row["intersects_us_state_union"] is True
+    assert event_row["us_overlap_area_km2"] == 0.0
+    assert state_row["overlap_area_km2"] == 0.0
+    assert state_row["us_overlap_fraction"] is None
+    assert "state_fraction_out_of_range" not in str(event_row["spatial_review_reason"])
+
+
+def test_fraction_tolerance_allows_tiny_excess_but_not_material_excess() -> None:
+    assert _fraction_valid(1.0 + (AREA_TOLERANCE / 2.0))
+    assert not _fraction_valid(1.0 + (AREA_TOLERANCE * 2.0))
 
 
 def test_spatial_enrichment_outputs_are_deterministic(
@@ -67,6 +144,9 @@ def test_spatial_enrichment_outputs_are_deterministic(
     )
     assert _rows(first["event_country_membership"] / "part-00000.parquet") == _rows(
         second["event_country_membership"] / "part-00000.parquet"
+    )
+    assert _sha256(first["spatial_enrichment_summary"]) == _sha256(
+        second["spatial_enrichment_summary"]
     )
 
 
@@ -260,6 +340,25 @@ def _state(fips: str, code: str, name: str, geometry: Polygon) -> dict[str, obje
 
 def _rows(path: Path) -> list[dict[str, object]]:
     return pq.read_table(path).to_pylist()
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _groundsource_table(geometries: list[Polygon | MultiPolygon]) -> pa.Table:
+    return pa.table(
+        {
+            "uuid": [
+                f"10000000-0000-0000-0000-{index:012d}" for index in range(1, len(geometries) + 1)
+            ],
+            "area_km2": [float(index) for index in range(1, len(geometries) + 1)],
+            "geometry": [geometry.wkb for geometry in geometries],
+            "start_date": ["2026-01-01"] * len(geometries),
+            "end_date": ["2026-01-02"] * len(geometries),
+            "__index_level_0__": list(range(len(geometries))),
+        }
+    )
 
 
 def _write_groundsource(path: Path, table: pa.Table, row_group_size: int | None = None) -> None:

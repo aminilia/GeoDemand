@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 import time
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -162,6 +163,8 @@ def enrich_spatial(
             "package_version": __version__,
             "source_file_name": input_path.name,
             "source_sha256": _sha256(input_path),
+            "output_dir": str(output_dir),
+            "run_id": str(uuid.uuid4()),
             "configuration": {
                 "batch_size": batch_size,
                 "max_rows": max_rows,
@@ -202,11 +205,17 @@ def _enrich_row(
         countries,
     )
     primary_country, country_method, country_ambiguous = _primary_country(country_matches)
-    intersects_us, us_overlap_area = _us_overlap(geometry, projected_geometry, countries)
+    intersects_us_country_boundary, country_boundary_us_overlap_area = _us_overlap(
+        geometry,
+        projected_geometry,
+        countries,
+    )
+    intersects_us_state_union, us_overlap_area = _us_overlap(geometry, projected_geometry, states)
+    intersects_us = intersects_us_state_union
     us_fraction = _fraction(us_overlap_area, event_area)
     state_overlaps: list[dict[str, Any]] = []
     primary_state: dict[str, Any] | None = None
-    if intersects_us:
+    if intersects_us_state_union:
         state_overlaps = _state_matches(
             row,
             geometry,
@@ -250,7 +259,10 @@ def _enrich_row(
         "country_candidate_count": len(country_matches),
         "country_assignment_ambiguous": country_ambiguous,
         "intersects_united_states": intersects_us,
+        "intersects_us_country_boundary": intersects_us_country_boundary,
+        "intersects_us_state_union": intersects_us_state_union,
         "us_overlap_area_km2": us_overlap_area,
+        "us_country_boundary_overlap_area_km2": country_boundary_us_overlap_area,
         "us_event_area_fraction": us_fraction,
         "primary_state_code": primary_state["state_code"] if primary_state is not None else None,
         "primary_state_name": primary_state["state_name"] if primary_state is not None else None,
@@ -418,16 +430,18 @@ def _fraction_valid(value: float | None) -> bool:
 
 def _load_countries(path: Path) -> BoundaryIndex:
     rows = pq.read_table(path).to_pylist()
-    features = [
-        BoundaryFeature(
-            code=str(row["country_code_alpha3"]),
-            name=str(row["country_name"]),
-            geometry=_geometry(row["geometry"]),
-            projected_geometry=_project_geometry(_geometry(row["geometry"])),
-            properties=row,
+    features: list[BoundaryFeature] = []
+    for row in rows:
+        geometry = _geometry(row["geometry"])
+        features.append(
+            BoundaryFeature(
+                code=str(row["country_code_alpha3"]),
+                name=str(row["country_name"]),
+                geometry=geometry,
+                projected_geometry=_project_geometry(geometry),
+                properties=row,
+            )
         )
-        for row in rows
-    ]
     _validate_unique(features, "country_code_alpha3", "country")
     version = str(rows[0].get("source_version", "")) if rows else ""
     us_features = [
@@ -451,19 +465,29 @@ def _load_countries(path: Path) -> BoundaryIndex:
 
 def _load_states(path: Path) -> BoundaryIndex:
     rows = pq.read_table(path).to_pylist()
-    features = [
-        BoundaryFeature(
-            code=str(row["state_code"]),
-            name=str(row["state_name"]),
-            geometry=_geometry(row["geometry"]),
-            projected_geometry=_project_geometry(_geometry(row["geometry"])),
-            properties=row,
+    features: list[BoundaryFeature] = []
+    for row in rows:
+        geometry = _geometry(row["geometry"])
+        features.append(
+            BoundaryFeature(
+                code=str(row["state_code"]),
+                name=str(row["state_name"]),
+                geometry=geometry,
+                projected_geometry=_project_geometry(geometry),
+                properties=row,
+            )
         )
-        for row in rows
-    ]
     _validate_unique(features, "state_code", "state")
     version = str(rows[0].get("source_version", "")) if rows else ""
-    return BoundaryIndex(features, STRtree([feature.geometry for feature in features]), version)
+    return BoundaryIndex(
+        features,
+        STRtree([feature.geometry for feature in features]),
+        version,
+        union=shapely.union_all([feature.geometry for feature in features]) if features else None,
+        projected_union=shapely.union_all([feature.projected_geometry for feature in features])
+        if features
+        else None,
+    )
 
 
 def _geometry(value: object) -> BaseGeometry:
@@ -523,10 +547,6 @@ def _summary_payload(accumulator: SpatialAccumulator) -> dict[str, Any]:
             "multistate": accumulator.multistate,
         },
         "spatial_review_required": accumulator.spatial_review,
-        "timing": {
-            "processing_seconds": round(accumulator.processing_seconds, 6),
-            "rows_per_second": round(accumulator.rows_per_second, 3),
-        },
     }
 
 
@@ -647,7 +667,10 @@ def _events_schema(source_geo: dict[str, Any] | None) -> pa.Schema:
             pa.field("country_candidate_count", pa.int64()),
             pa.field("country_assignment_ambiguous", pa.bool_()),
             pa.field("intersects_united_states", pa.bool_()),
+            pa.field("intersects_us_country_boundary", pa.bool_()),
+            pa.field("intersects_us_state_union", pa.bool_()),
             pa.field("us_overlap_area_km2", pa.float64()),
+            pa.field("us_country_boundary_overlap_area_km2", pa.float64()),
             pa.field("us_event_area_fraction", pa.float64()),
             pa.field("primary_state_code", pa.string()),
             pa.field("primary_state_name", pa.string()),

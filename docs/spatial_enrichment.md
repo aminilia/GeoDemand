@@ -48,14 +48,22 @@ events remain enriched rows. They are not rejected.
 
 ## U.S. And State Logic
 
-`intersects_united_states` is true when the complete event geometry intersects
-the United States country boundary. It does not depend on the representative
-point or primary country.
+The enrichment records both U.S. boundary concepts:
 
-State assignment runs only for U.S.-intersecting events. Intersecting states
-are ranked by EPSG:6933 overlap area and then deterministic state code order.
-The largest-overlap state is primary, and all state overlaps are preserved in
-`event_state_overlaps/`.
+- `intersects_us_country_boundary`: complete event geometry intersects the
+  Natural Earth United States country boundary.
+- `intersects_us_state_union`: complete event geometry intersects the
+  deterministic Census state/equivalent union.
+
+`intersects_united_states` follows `intersects_us_state_union` for the state
+workflow and reproducible U.S. subset. Natural Earth remains the country
+assignment source, but Census state/equivalent geometry is the denominator for
+U.S. state-overlap fractions.
+
+State assignment runs only for state-union-intersecting events. Intersecting
+states are ranked by EPSG:6933 overlap area and then deterministic state code
+order. The largest-overlap state is primary, and all state overlaps are
+preserved in `event_state_overlaps/`.
 
 ## Area Calculations
 
@@ -65,7 +73,8 @@ areas are projected to EPSG:6933 and stored in square kilometers.
 Fractions are written without silent clamping:
 
 - `event_area_fraction`
-- `us_overlap_fraction`
+- `us_overlap_fraction`, using the Census state/equivalent union overlap as
+  the denominator
 - `us_event_area_fraction`
 
 Values outside the documented floating-point tolerance are flagged for spatial
