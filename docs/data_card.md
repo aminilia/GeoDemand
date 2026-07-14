@@ -39,6 +39,22 @@ EPSG:6933 overlap areas for cross-border and state ranking. Offshore,
 cross-border, multistate, antimeridian, and manual-review records remain in the
 enriched dataset instead of being rejected.
 
+## Candidate Cohort Outputs
+
+Milestone 0.6A builds candidate flood-event records for downstream physical
+verification and search-demand analysis. These are not confirmed flash-flood
+events. The default primary window is 2022-01-01 through 2025-12-31, and the
+default primary domain is the contiguous 48 states plus Washington, DC.
+
+Alaska, Hawaii, Puerto Rico, and other U.S. territories are retained as
+secondary-domain records. Multistate, country-unassigned, spatial-review, and
+antimeridian records are preserved when otherwise eligible.
+
+The cohort outputs include eligible primary records, secondary-domain records,
+excluded records, event-state records, temporal quality profiles, deterministic
+state/year/split counts, and bounded overlap diagnostics. Runtime metadata is
+kept in the cohort manifest rather than the deterministic scientific summary.
+
 ## Measured Milestone 0.5D Results
 
 The full audit of `groundsource_2026.parquet` measured 2,646,302 source rows.
@@ -77,9 +93,9 @@ that local Groundsource files are licensed for research use.
 
 ## Known Limitations
 
-Milestone 0.5 validates raw schema, GeoParquet metadata, WKB geometry decoding,
-basic quality, reproducible audit metadata, and boundary-based spatial
-enrichment. It does not evaluate event completeness, score flood attribution
-quality, analyze search behavior, or forecast demand. The 300
-antimeridian-review flags from the full audit require special attention during
-spatial review before downstream region matching.
+Milestone 0.6A validates raw schema, GeoParquet metadata, WKB geometry decoding,
+basic quality, reproducible audit metadata, boundary-based spatial enrichment,
+and candidate cohort construction. It does not evaluate event completeness,
+score flood attribution quality, ingest MRMS, analyze search behavior, cluster
+final episodes, or forecast demand. Candidate records require later physical
+verification before they should be described as confirmed flash-flood events.

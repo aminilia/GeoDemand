@@ -3,9 +3,10 @@
 GeoDemand-FF is a reproducible research scaffold for studying regional Google
 search-demand surges following urban flash floods.
 
-Milestone 0.5 provides package structure, data contracts, local GeoParquet
-Groundsource inspection, WKB geometry auditing, spatial enrichment, tests, and
-project documentation.
+Milestone 0.6A provides package structure, data contracts, local GeoParquet
+Groundsource inspection, WKB geometry auditing, spatial enrichment, candidate
+U.S. event cohort construction, overlap diagnostics, tests, and project
+documentation.
 It does not implement NOAA ingestion, Google Trends ingestion, machine-learning
 models, event clustering, or maps.
 
@@ -53,6 +54,21 @@ The enrichment command writes `events_enriched/`,
 `event_country_membership/`, `event_state_overlaps/`, `us_events/`,
 `spatial_enrichment_summary.json`, assignment-quality CSVs, boundary metadata,
 and a run manifest.
+
+## Candidate Event Cohort
+
+Milestone 0.6A builds candidate flood-event cohorts from corrected spatial
+enrichment outputs. Records are candidate events, not confirmed flash-flood
+events.
+
+```powershell
+uv run geodemand cohort inspect --events C:\Work\Data\GeoDemand\artifacts\spatial_enrichment_full\events_enriched --state-overlaps C:\Work\Data\GeoDemand\artifacts\spatial_enrichment_full\event_state_overlaps
+uv run geodemand cohort build --events C:\Work\Data\GeoDemand\artifacts\spatial_enrichment_full\events_enriched --state-overlaps C:\Work\Data\GeoDemand\artifacts\spatial_enrichment_full\event_state_overlaps --output-dir C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort --start-date 2022-01-01 --end-date 2025-12-31 --primary-domain conus
+```
+
+The default primary domain is the contiguous 48 states plus Washington, DC.
+Alaska, Hawaii, Puerto Rico, and other U.S. territories are preserved as
+secondary-domain records.
 
 ## Groundsource Required Fields
 

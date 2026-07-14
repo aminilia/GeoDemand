@@ -2,10 +2,11 @@
 
 ## Milestone Boundary
 
-Milestone 0.5 builds the reproducible foundation plus real Groundsource schema
-discovery, data auditing, and global/U.S. spatial enrichment. It does not
-include NOAA ingestion, Google Trends collection, machine-learning models,
-event clustering, maps, feature engineering, or forecast evaluation.
+Milestone 0.6A builds the reproducible foundation plus real Groundsource schema
+discovery, data auditing, global/U.S. spatial enrichment, and candidate U.S.
+event cohort construction. It does not include NOAA or MRMS ingestion, Google
+Trends collection, machine-learning models, final event clustering, maps,
+demographic features, urban classification, or forecast evaluation.
 
 ## Source Layout
 
@@ -85,6 +86,20 @@ largest EPSG:6933 overlap with deterministic tie breaking.
 Antimeridian, offshore, cross-border, multistate, and manual-review records are
 not rejected by spatial enrichment. They remain terminal enriched rows with
 review flags.
+
+## Candidate Cohort
+
+The cohort builder consumes spatial-enrichment outputs rather than raw
+Groundsource. It filters to U.S. state-union-intersecting records, classifies
+study domains with explicit state-code sets, and writes candidate flood-event
+records for the configured temporal window. The default primary domain is
+CONUS plus Washington, DC; Alaska, Hawaii, Puerto Rico, and other U.S.
+territories are preserved separately.
+
+The builder uses source UUIDs as `event_record_id` and intentionally does not
+create final independent episode IDs. Potential duplicate or related records
+are measured with shared-state/year buckets and STRtree spatial candidates, but
+records are not merged or clustered in this milestone.
 
 ## Profiling
 
