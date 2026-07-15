@@ -16,6 +16,9 @@ data/raw/
 data/interim/
 data/processed/
 data/external/
+imerg/
+usgs/
+multisource_verification/
 *.parquet
 *.jsonl
 

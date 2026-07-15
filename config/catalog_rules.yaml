@@ -1,0 +1,32 @@
+rule_version: 0.7C-v1
+split_periods:
+  development: [2022-01-01, 2023-12-31]
+  validation: [2024-01-01, 2024-12-31]
+  test: [2025-01-01, 2025-12-31]
+clustering_review:
+  large_member_count: 100
+  long_duration_days: 7
+  high_state_count: 5
+  maximum_member_distance_km: 250.0
+  high_articulation_point_count: 5
+mrms:
+  minimum_coverage_fraction: 0.70
+  minimum_quality_valid_fraction: 0.70
+  meaningful_max_1h_mm: 5.0
+  split_minimum_conditions: 2
+  multiple_peak_minimum: 2
+  long_dry_gap_hours: 12
+  weak_median_correlation: 0.30
+  large_peak_time_range_hours: 12.0
+  merge_maximum_peak_difference_hours: 6.0
+  merge_maximum_dry_gap_hours: 6
+  merge_minimum_correlation: 0.50
+review_priority:
+  split_boundary: 100
+  possible_overmerge: 90
+  possible_undermerge: 80
+  geometry_review: 70
+  weak_physical_signal: 60
+  insufficient_evidence: 50
+  missing_mrms: 40
+  missing_usgs: 30

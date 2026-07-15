@@ -17,6 +17,16 @@ uv venv
 uv pip install -e ".[dev]"
 ```
 
+Source-specific clients are optional so ordinary offline development does not
+install network and native decoding stacks unnecessarily:
+
+```powershell
+uv pip install -e ".[mrms]"
+uv pip install -e ".[imerg]"
+uv pip install -e ".[usgs]"
+uv pip install -e ".[verification]"
+```
+
 ## Tests And Checks
 
 ```powershell
@@ -104,6 +114,26 @@ uv run geodemand mrms assess --metrics-root C:\Work\Data\GeoDemand\mrms\metrics
 
 MRMS downloads are cached locally and must not be committed.
 
+## Multi-Source Verification
+
+Milestone 0.7B adds offline-testable NASA IMERG, USGS, and integrated
+multi-source commands. These commands produce feasibility evidence and review
+categories only; they do not relabel events.
+
+The deterministic pilot selector uses quota strata followed by a seeded
+coverage fill for years, seasons, states, and regions. Network clients and
+native decoders are installed through the optional `imerg`, `usgs`, and
+`verification` dependency groups. A real-data pilot remains gated on a populated
+episode-policy output and MRMS verification sample.
+
+```powershell
+uv run geodemand imerg selfcheck --working-root C:\Work\Data\GeoDemand\imerg
+uv run geodemand usgs selfcheck --working-root C:\Work\Data\GeoDemand\usgs
+uv run geodemand observations pilot-sample --sample C:\Work\Data\GeoDemand\mrms\manifests\verification_sample.parquet --output-dir C:\Work\Data\GeoDemand\multisource_verification
+uv run geodemand observations compare-precipitation --mrms-metrics MRMS_METRICS --mrms-timeseries MRMS_TIMESERIES --imerg-metrics IMERG_METRICS --imerg-timeseries IMERG_TIMESERIES --sample PILOT_SAMPLE --output-dir C:\Work\Data\GeoDemand\multisource_verification
+uv run geodemand observations assess --sample PILOT_SAMPLE --mrms-metrics MRMS_METRICS --imerg-metrics IMERG_METRICS --precipitation-comparison PRECIP_COMPARISON --usgs-summary USGS_SUMMARY --output-dir C:\Work\Data\GeoDemand\multisource_verification
+```
+
 ## Groundsource Required Fields
 
 The confirmed Groundsource source is GeoParquet 0.4.0 with this schema:
@@ -145,3 +175,24 @@ This repository intentionally excludes research data and local outputs. Store
 raw data under ignored folders such as `data/raw/` or outside the repository.
 Keep credentials in local environment files only; this milestone does not need
 credentials.
+
+## Provisional Episode Catalog
+
+Milestone 0.7C builds a deterministic provisional physically informed episode
+catalog from conservative episode membership. Balanced relationships identify
+possible undermerges; clustering diagnostics identify possible overmerges.
+Neither changes membership without adequate physical evidence and review.
+Missing MRMS is pending, no suitable USGS gauge is unknown, and IMERG is
+deferred. See [the catalog guide](docs/provisional_episode_catalog.md).
+
+```powershell
+uv run geodemand catalog inspect --cohort-root C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full --episode-root C:\Work\Data\GeoDemand\artifacts\episode_policy_full --comparison-root C:\Work\Data\GeoDemand\artifacts\episode_comparison_full --mrms-root C:\Work\Data\GeoDemand\mrms --usgs-root C:\Work\Data\GeoDemand\usgs
+uv run geodemand catalog build-provisional --cohort-root C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full --episode-root C:\Work\Data\GeoDemand\artifacts\episode_policy_full --comparison-root C:\Work\Data\GeoDemand\artifacts\episode_comparison_full --mrms-root C:\Work\Data\GeoDemand\mrms --usgs-root C:\Work\Data\GeoDemand\usgs --rules config\catalog_rules.yaml --output-dir C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog
+uv run geodemand catalog validate --catalog-dir C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog
+```
+
+The full 0.7C run produced 37,053 provisional episodes and 88,515 unique
+membership rows with zero split leakage. It retained 19,030 episodes
+provisionally and queued 18,023 for review. MRMS episode evidence remains
+pending, so no physical merge, split, or support status was assigned. Two full
+builds matched across every generated file.

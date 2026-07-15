@@ -131,6 +131,10 @@ Use `--max-rows` for bounded smoke runs. Scientific summaries are deterministic;
 runtime metadata such as timestamps, processing seconds, throughput, and output
 paths live in `manifest.json`.
 
+The provisional catalog consumes all eligible event IDs and preserves their
+cohort dates, state codes, and candidate-split lineage. Catalog validation
+requires every source record to occur in exactly one membership row.
+
 ## Limitations
 
 The cohort is analysis-ready for downstream verification, but the records are

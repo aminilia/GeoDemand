@@ -53,3 +53,11 @@ uv run geodemand mrms assess --metrics-root C:\Work\Data\GeoDemand\mrms\metrics
 The provided `episode_comparison_full` directory currently contains comparison
 CSVs only. `mrms sample` requires policy episode and membership datasets before
 a real sample can be generated.
+
+## Catalog Integration
+
+Catalog physical decisions require configured MRMS coverage and quality.
+Multiple peaks, dry gaps, weak member correlation, and dispersed peak timing
+can support split candidacy only in combination. Temporally coherent evidence
+can support a balanced-policy merge candidate. Missing MRMS remains `pending`
+and never counts against an episode.

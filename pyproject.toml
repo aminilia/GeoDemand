@@ -22,20 +22,46 @@ classifiers = [
   "Topic :: Scientific/Engineering :: GIS",
 ]
 dependencies = [
-  "cfgrib>=0.9.14",
-  "eccodes>=2.39",
+  "geopandas>=1.0",
+  "numpy>=2.0",
+  "pandas>=2.2",
   "polars>=1.0",
   "pydantic>=2.7",
   "pyarrow>=15.0",
   "pyogrio>=0.9",
   "pyproj>=3.6",
-  "s3fs>=2025.5",
+  "PyYAML>=6.0",
   "shapely>=2.0",
   "typer>=0.12",
-  "xarray>=2025.1",
 ]
 
 [project.optional-dependencies]
+mrms = [
+  "cfgrib>=0.9.14",
+  "eccodes>=2.39",
+  "s3fs>=2025.5",
+  "xarray>=2025.1",
+]
+imerg = [
+  "earthaccess>=0.14",
+  "h5py>=3.11",
+  "requests-cache>=1.2",
+  "xarray>=2025.1",
+]
+usgs = [
+  "dataretrieval>=1.0",
+  "requests-cache>=1.2",
+]
+verification = [
+  "cfgrib>=0.9.14",
+  "dataretrieval>=1.0",
+  "earthaccess>=0.14",
+  "eccodes>=2.39",
+  "h5py>=3.11",
+  "requests-cache>=1.2",
+  "s3fs>=2025.5",
+  "xarray>=2025.1",
+]
 dev = [
   "mypy>=1.10",
   "pre-commit>=3.7",
@@ -70,7 +96,13 @@ packages = ["geodemand"]
 [[tool.mypy.overrides]]
 module = [
   "cfgrib",
+  "dataretrieval",
+  "earthaccess",
   "eccodes",
+  "geopandas",
+  "h5py",
+  "numpy",
+  "pandas",
   "pyarrow",
   "pyarrow.*",
   "pyogrio",
@@ -81,6 +113,7 @@ module = [
   "shapely.*",
   "xarray",
   "xarray.*",
+  "yaml",
 ]
 ignore_missing_imports = true
 

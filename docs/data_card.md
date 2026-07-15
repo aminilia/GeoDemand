@@ -126,3 +126,27 @@ committed.
 MRMS metrics are provisional. Missing-data handling, quality-index behavior,
 coverage thresholds, and physical-coherence categories require real-file smoke
 validation before use in final event labeling.
+
+## Multi-Source Outputs
+
+Milestone 0.7B adds IMERG inventory, fetch, and precipitation metric outputs;
+USGS gauge discovery, observation, and response metric outputs; MRMS/IMERG
+comparison outputs; and integrated multi-source assessment outputs. These
+derived products remain local research artifacts.
+
+IMERG and MRMS estimate precipitation on different grids and cadences. USGS
+gauges measure local hydrologic response. The integrated categories are
+transparent review categories, not confirmed truth labels.
+
+## Provisional Catalog Product
+
+Milestone 0.7C derives a local provisional physically informed episode catalog
+from the 88,515-record candidate cohort. Conservative membership is retained by
+default. Balanced-policy relationships and clustering diagnostics are review
+evidence, while MRMS and USGS are optional physical evidence. MRMS gaps are
+recorded as pending, no suitable gauge is unknown, and IMERG is deferred.
+
+The product supports reproducible episode-level research design and manual
+review. It is not confirmed flood truth. Remaining limitations include
+incomplete MRMS coverage, sparse gauge relevance, uncertain Groundsource
+completeness, and unresolved clustering candidates.

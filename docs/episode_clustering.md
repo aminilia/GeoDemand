@@ -90,3 +90,10 @@ Connected components can chain events across accepted pair edges. Bridge,
 duration, size, distance, state-count, and split-boundary diagnostics are
 therefore review signals, not automatic rejection rules. Final episode
 confirmation requires later MRMS or related physical validation.
+
+## Catalog Use
+
+Milestone 0.7C uses conservative episodes as base units and balanced components
+only to identify possible undermerges. Broad components remain sensitivity
+diagnostics. Clustering-only indicators create manual-review records and cannot
+automatically split or merge membership.

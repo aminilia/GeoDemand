@@ -139,6 +139,19 @@ keys before downloading, globally deduplicates objects, validates cache files,
 and keeps volatile execution details in manifests. Physical coherence categories
 are provisional review labels and do not mutate episode membership.
 
+## Multi-Source Verification
+
+NASA IMERG and USGS are added as separate offline-testable adapters. IMERG
+provides satellite precipitation rates that are converted to half-hour
+accumulations before comparison with MRMS hourly precipitation. USGS provides
+gauge observations used as hydrologic-response evidence, not as direct
+precipitation measurements.
+
+The integrated assessment combines component evidence through explicit
+versioned rules written to `assessment_rules.json`. No gauge is represented as
+unknown evidence rather than negative evidence, and no automated event relabeling
+is performed.
+
 ## Profiling
 
 The audit creates deterministic JSON and CSV outputs for schema, profile, field
@@ -157,3 +170,16 @@ to non-zero exits without tracebacks for expected validation failures.
 Ruff, MyPy, Pytest, pre-commit, and GitHub Actions are configured at project
 start. This keeps formatting, linting, type checking, and unit tests part of the
 research workflow before model code exists.
+
+## Provisional Catalog Layer
+
+The catalog layer reads, but never overwrites, cohort and episode-policy
+artifacts. Conservative episodes provide base membership; balanced membership
+is joined as relationship evidence. Optional MRMS and USGS adapters are indexed
+by source conservative episode ID. Deterministic rules emit catalog, evidence,
+review, decision, split, summary, and manifest artifacts.
+
+This separation prevents absent physical observations from becoming negative
+labels and prevents sensitivity policies from silently rewriting analysis
+units. Stable content-derived IDs and post-build validation enforce record
+accounting and split isolation.

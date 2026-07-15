@@ -23,3 +23,22 @@ Dissemination Program public AWS bucket noaa-mrms-pds.
 Groundsource, Natural Earth, and Census TIGER/Line inputs remain local external
 inputs. Their licenses and redistribution constraints should be reviewed before
 sharing derived datasets.
+
+## NASA IMERG
+
+NASA GPM IMERG Final data require Earthdata Login for download. Credentials must
+remain local and must not be committed. Publications should cite NASA GPM IMERG
+according to current NASA guidance for `GPM_3IMERGHH` Version 07.
+
+## USGS Water Data
+
+USGS water observations are accessed from official USGS Water Data services.
+Users should preserve qualifier, approval, provisional, unit, parameter, and
+monitoring-location metadata when sharing derived metrics.
+
+## Provisional Catalog
+
+The provisional catalog combines derived identifiers and metrics from the
+sources above. Its creation does not grant redistribution rights for source
+geometry, precipitation, or gauge data. Review all upstream terms before
+publishing or redistributing catalog artifacts.

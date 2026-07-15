@@ -38,6 +38,9 @@ C:\Work\Data\GeoDemand\artifacts\groundsource_spatial\
 C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\
 C:\Work\Data\GeoDemand\artifacts\candidate_episodes\
 C:\Work\Data\GeoDemand\mrms\
+C:\Work\Data\GeoDemand\imerg\
+C:\Work\Data\GeoDemand\usgs\
+C:\Work\Data\GeoDemand\multisource_verification\
 ```
 
 Candidate episode outputs, sensitivity tables, and smoke-run artifacts are
@@ -46,3 +49,14 @@ derived research outputs and should not be committed.
 MRMS compressed files, decoded temporary GRIB files, metric outputs, manifests,
 and quicklooks are also local derived artifacts and must remain outside version
 control.
+
+IMERG downloads, USGS cached responses, multisource comparison outputs, and
+quicklooks follow the same local-only rule.
+
+The provisional catalog is also a generated local artifact:
+
+```text
+C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog\
+```
+
+Do not commit its Parquet tables, review exports, summaries, or manifests.

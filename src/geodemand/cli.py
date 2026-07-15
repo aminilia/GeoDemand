@@ -1,12 +1,23 @@
 from __future__ import annotations
 
+import json
 from datetime import date
 from pathlib import Path
 from typing import Annotated
 
+import pyarrow.parquet as pq
 import typer
 
 from geodemand.boundaries import BoundaryError, inspect_boundaries, prepare_boundaries
+from geodemand.catalog import (
+    CatalogError,
+    apply_catalog_decisions,
+    build_provisional_catalog,
+    discover_catalog_inputs,
+    inspect_catalog_inputs,
+    summarize_catalog,
+    validate_catalog,
+)
 from geodemand.cohort import CohortError, build_cohort, inspect_cohort_inputs
 from geodemand.episodes import (
     EpisodeError,
@@ -14,6 +25,15 @@ from geodemand.episodes import (
     build_episodes,
     compare_episode_policies,
     inspect_episode_inputs,
+)
+from geodemand.imerg import (
+    EarthaccessImergClient,
+    ImergError,
+    estimate_imerg_fetch,
+    extract_imerg,
+    fetch_imerg,
+    inventory_imerg,
+    selfcheck_imerg,
 )
 from geodemand.ingestion.groundsource import (
     DuplicatePolicy,
@@ -36,7 +56,23 @@ from geodemand.mrms import (
     sample_mrms,
     selfcheck_mrms,
 )
+from geodemand.observations import (
+    ObservationsError,
+    assess_observations,
+    compare_precipitation,
+    pilot_sample,
+    write_quicklooks,
+)
 from geodemand.spatial import SpatialEnrichmentError, enrich_spatial
+from geodemand.usgs import (
+    DataretrievalUsgsClient,
+    UsgsError,
+    discover_usgs,
+    estimate_usgs_fetch,
+    extract_usgs,
+    fetch_usgs,
+    selfcheck_usgs,
+)
 
 app = typer.Typer(help="GeoDemand-FF research pipeline CLI.")
 data_app = typer.Typer(help="Data inspection, filtering, and profiling commands.")
@@ -44,11 +80,19 @@ boundaries_app = typer.Typer(help="Boundary inspection and preparation commands.
 cohort_app = typer.Typer(help="Candidate event cohort commands.")
 episodes_app = typer.Typer(help="Candidate episode clustering commands.")
 mrms_app = typer.Typer(help="MRMS feasibility and physical-verification commands.")
+imerg_app = typer.Typer(help="NASA IMERG feasibility and extraction commands.")
+usgs_app = typer.Typer(help="USGS gauge-response verification commands.")
+observations_app = typer.Typer(help="Multi-source physical verification commands.")
+catalog_app = typer.Typer(help="Provisional physically informed episode catalog commands.")
 app.add_typer(data_app, name="data")
 app.add_typer(boundaries_app, name="boundaries")
 app.add_typer(cohort_app, name="cohort")
 app.add_typer(episodes_app, name="episodes")
 app.add_typer(mrms_app, name="mrms")
+app.add_typer(imerg_app, name="imerg")
+app.add_typer(usgs_app, name="usgs")
+app.add_typer(observations_app, name="observations")
+app.add_typer(catalog_app, name="catalog")
 
 
 @app.callback()
@@ -503,6 +547,362 @@ def mrms_assess_command(
 ) -> None:
     artifacts = assess_mrms(metrics_root)
     typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@imerg_app.command("selfcheck")
+def imerg_selfcheck_command(
+    working_root: Annotated[
+        Path,
+        typer.Option("--working-root", file_okay=False, dir_okay=True),
+    ],
+    interactive: Annotated[bool, typer.Option("--interactive")] = False,
+) -> None:
+    """Check local NASA client, decoder, authentication, and write readiness."""
+    _echo_json(selfcheck_imerg(working_root, interactive=interactive))
+
+
+@imerg_app.command("inventory")
+def imerg_inventory_command(
+    sample_path: Annotated[
+        Path,
+        typer.Option("--sample", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ],
+    max_episodes: Annotated[int | None, typer.Option("--max-episodes", min=1)] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    """Build a deduplicated IMERG granule inventory without downloading files."""
+    del dry_run
+    try:
+        artifacts = inventory_imerg(
+            sample_path,
+            output_root,
+            client=EarthaccessImergClient(),
+            max_episodes=max_episodes,
+        )
+    except ImergError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@imerg_app.command("fetch")
+def imerg_fetch_command(
+    download_plan: Annotated[
+        Path,
+        typer.Option("--download-plan", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ],
+    max_episodes: Annotated[int | None, typer.Option("--max-episodes", min=1)] = None,
+    max_bytes: Annotated[int | None, typer.Option("--max-bytes", min=1)] = None,
+    workers: Annotated[int, typer.Option("--workers", min=1)] = 2,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+    interactive: Annotated[bool, typer.Option("--interactive")] = False,
+) -> None:
+    """Fetch a bounded IMERG plan into the validated local cache."""
+    del workers
+    if dry_run:
+        _echo_json(estimate_imerg_fetch(download_plan, max_episodes, max_bytes))
+        return
+    artifacts = fetch_imerg(
+        download_plan,
+        output_root,
+        client=EarthaccessImergClient(interactive=interactive),
+        max_episodes=max_episodes,
+        max_bytes=max_bytes,
+    )
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@imerg_app.command("extract")
+def imerg_extract_command(
+    sample_path: Annotated[
+        Path,
+        typer.Option("--sample", exists=True, file_okay=True, dir_okay=False),
+    ],
+    file_manifest: Annotated[
+        Path,
+        typer.Option("--file-manifest", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ],
+) -> None:
+    """Extract episode and member precipitation metrics from cached IMERG files."""
+    artifacts = extract_imerg(sample_path, file_manifest, output_root)
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@usgs_app.command("selfcheck")
+def usgs_selfcheck_command(
+    working_root: Annotated[
+        Path,
+        typer.Option("--working-root", file_okay=False, dir_okay=True),
+    ],
+) -> None:
+    """Check local USGS client, optional API key, and write readiness."""
+    _echo_json(selfcheck_usgs(working_root))
+
+
+@usgs_app.command("discover")
+def usgs_discover_command(
+    sample_path: Annotated[
+        Path,
+        typer.Option("--sample", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ],
+    max_episodes: Annotated[int | None, typer.Option("--max-episodes", min=1)] = None,
+    max_gauges: Annotated[int, typer.Option("--max-gauges", min=1)] = 3,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    """Discover and rank nearby gauges, then write a bounded request plan."""
+    del dry_run
+    try:
+        artifacts = discover_usgs(
+            sample_path,
+            output_root,
+            client=DataretrievalUsgsClient(),
+            max_episodes=max_episodes,
+            max_gauges=max_gauges,
+        )
+    except UsgsError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@usgs_app.command("fetch")
+def usgs_fetch_command(
+    request_plan: Annotated[
+        Path,
+        typer.Option("--request-plan", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ],
+    max_episodes: Annotated[int | None, typer.Option("--max-episodes", min=1)] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    """Fetch and cache a bounded USGS request plan."""
+    if dry_run:
+        _echo_json(estimate_usgs_fetch(request_plan, max_episodes))
+        return
+    artifacts = fetch_usgs(
+        request_plan,
+        output_root,
+        client=DataretrievalUsgsClient(),
+        max_episodes=max_episodes,
+    )
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@usgs_app.command("extract")
+def usgs_extract_command(
+    observations_path: Annotated[
+        Path,
+        typer.Option("--observations", exists=True, file_okay=True, dir_okay=False),
+    ],
+    associations_path: Annotated[
+        Path,
+        typer.Option("--associations", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ],
+) -> None:
+    """Calculate within-gauge response metrics and episode summaries."""
+    artifacts = extract_usgs(observations_path, associations_path, output_root)
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@observations_app.command("pilot-sample")
+def observations_pilot_sample_command(
+    verification_sample: Annotated[
+        Path,
+        typer.Option("--sample", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
+    seed: Annotated[int, typer.Option("--seed")] = 20260715,
+    target_count: Annotated[int, typer.Option("--target-count", min=1)] = 30,
+) -> None:
+    """Select a deterministic stratified pilot from a verification sample."""
+    artifacts = pilot_sample(verification_sample, output_dir, seed=seed, target_count=target_count)
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@observations_app.command("compare-precipitation")
+def observations_compare_precipitation_command(
+    mrms_metrics: Annotated[Path, typer.Option("--mrms-metrics", exists=True)],
+    mrms_timeseries: Annotated[Path, typer.Option("--mrms-timeseries", exists=True)],
+    imerg_metrics: Annotated[Path, typer.Option("--imerg-metrics", exists=True)],
+    imerg_timeseries: Annotated[Path, typer.Option("--imerg-timeseries", exists=True)],
+    verification_sample: Annotated[Path, typer.Option("--sample", exists=True)],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
+) -> None:
+    """Compare MRMS and IMERG over common valid UTC hours."""
+    try:
+        artifacts = compare_precipitation(
+            mrms_metrics,
+            mrms_timeseries,
+            imerg_metrics,
+            imerg_timeseries,
+            verification_sample,
+            output_dir,
+        )
+    except ObservationsError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@observations_app.command("assess")
+def observations_assess_command(
+    sample_path: Annotated[Path, typer.Option("--sample", exists=True)],
+    mrms_metrics: Annotated[Path, typer.Option("--mrms-metrics", exists=True)],
+    imerg_metrics: Annotated[Path, typer.Option("--imerg-metrics", exists=True)],
+    precipitation_comparison: Annotated[
+        Path,
+        typer.Option("--precipitation-comparison", exists=True),
+    ],
+    usgs_summary: Annotated[Path, typer.Option("--usgs-summary", exists=True)],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
+) -> None:
+    """Combine precipitation and gauge evidence using versioned review rules."""
+    artifacts = assess_observations(
+        sample_path,
+        mrms_metrics,
+        imerg_metrics,
+        precipitation_comparison,
+        usgs_summary,
+        output_dir,
+    )
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@observations_app.command("quicklooks")
+def observations_quicklooks_command(
+    assessment_path: Annotated[Path, typer.Option("--assessment", exists=True)],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
+    max_quicklooks: Annotated[int, typer.Option("--max-quicklooks", min=1)] = 7,
+) -> None:
+    """Write deterministic quicklook selections for manual review."""
+    artifacts = write_quicklooks(assessment_path, output_dir, max_quicklooks=max_quicklooks)
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@catalog_app.command("inspect")
+def catalog_inspect_command(
+    cohort_root: Annotated[Path, typer.Option("--cohort-root", exists=True)],
+    episode_root: Annotated[Path, typer.Option("--episode-root", exists=True)],
+    comparison_root: Annotated[Path, typer.Option("--comparison-root", exists=True)],
+    mrms_root: Annotated[Path | None, typer.Option("--mrms-root", exists=True)] = None,
+    usgs_root: Annotated[Path | None, typer.Option("--usgs-root", exists=True)] = None,
+) -> None:
+    """Discover required policy inputs and report optional evidence availability."""
+    try:
+        inputs = discover_catalog_inputs(
+            cohort_root, episode_root, comparison_root, mrms_root, usgs_root
+        )
+        _echo_json(inspect_catalog_inputs(inputs))
+    except CatalogError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@catalog_app.command("build-provisional")
+def catalog_build_command(
+    cohort_root: Annotated[Path, typer.Option("--cohort-root", exists=True)],
+    episode_root: Annotated[Path, typer.Option("--episode-root", exists=True)],
+    comparison_root: Annotated[Path, typer.Option("--comparison-root", exists=True)],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False)],
+    rules_path: Annotated[
+        Path, typer.Option("--rules", exists=True, file_okay=True, dir_okay=False)
+    ],
+    mrms_root: Annotated[Path | None, typer.Option("--mrms-root", exists=True)] = None,
+    usgs_root: Annotated[Path | None, typer.Option("--usgs-root", exists=True)] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    """Build the deterministic conservative-base provisional catalog."""
+    try:
+        inputs = discover_catalog_inputs(
+            cohort_root, episode_root, comparison_root, mrms_root, usgs_root
+        )
+        if dry_run:
+            _echo_json(inspect_catalog_inputs(inputs))
+            return
+        artifacts = build_provisional_catalog(inputs, output_dir, rules_path)
+        _echo_json({name: str(path) for name, path in artifacts.items()})
+    except CatalogError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@catalog_app.command("review-queue")
+def catalog_review_queue_command(
+    catalog_dir: Annotated[Path, typer.Option("--catalog-dir", exists=True, file_okay=False)],
+) -> None:
+    """Report the generated deterministic review queue and editable CSV template."""
+    queue = catalog_dir / "manual_review_queue.parquet"
+    template = catalog_dir / "manual_review_template.csv"
+    if not queue.exists() or not template.exists():
+        raise typer.BadParameter("Catalog review queue is missing; run build-provisional first.")
+    _echo_json(
+        {
+            "review_count": pq.ParquetFile(queue).metadata.num_rows,
+            "manual_review_queue": str(queue),
+            "manual_review_template": str(template),
+        }
+    )
+
+
+@catalog_app.command("apply-decisions")
+def catalog_apply_decisions_command(
+    catalog_dir: Annotated[Path, typer.Option("--catalog-dir", exists=True, file_okay=False)],
+    decisions_csv: Annotated[
+        Path, typer.Option("--decisions", exists=True, file_okay=True, dir_okay=False)
+    ],
+    rule_version: Annotated[str, typer.Option("--rule-version")],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False)],
+) -> None:
+    """Validate manual review decisions and write immutable decision records."""
+    try:
+        output = apply_catalog_decisions(catalog_dir, decisions_csv, rule_version, output_dir)
+        _echo_json({"clustering_decisions": str(output)})
+    except CatalogError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@catalog_app.command("validate")
+def catalog_validate_command(
+    catalog_dir: Annotated[Path, typer.Option("--catalog-dir", exists=True, file_okay=False)],
+) -> None:
+    """Validate accounting, stable IDs, lineage, and split integrity."""
+    try:
+        _echo_json(validate_catalog(catalog_dir))
+    except CatalogError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@catalog_app.command("summarize")
+def catalog_summarize_command(
+    catalog_dir: Annotated[Path, typer.Option("--catalog-dir", exists=True, file_okay=False)],
+) -> None:
+    """Regenerate deterministic scientific catalog summaries."""
+    try:
+        _echo_json(summarize_catalog(catalog_dir))
+    except CatalogError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+def _echo_json(payload: object) -> None:
+    typer.echo(json.dumps(payload, sort_keys=True, default=str))
 
 
 def _load_mapping(mapping_path: Path | None) -> GroundsourceFieldMapping:
