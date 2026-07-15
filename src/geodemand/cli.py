@@ -8,6 +8,13 @@ import typer
 
 from geodemand.boundaries import BoundaryError, inspect_boundaries, prepare_boundaries
 from geodemand.cohort import CohortError, build_cohort, inspect_cohort_inputs
+from geodemand.episodes import (
+    EpisodeError,
+    PolicyName,
+    build_episodes,
+    compare_episode_policies,
+    inspect_episode_inputs,
+)
 from geodemand.ingestion.groundsource import (
     DuplicatePolicy,
     GroundsourceError,
@@ -25,9 +32,11 @@ app = typer.Typer(help="GeoDemand-FF research pipeline CLI.")
 data_app = typer.Typer(help="Data inspection, filtering, and profiling commands.")
 boundaries_app = typer.Typer(help="Boundary inspection and preparation commands.")
 cohort_app = typer.Typer(help="Candidate event cohort commands.")
+episodes_app = typer.Typer(help="Candidate episode clustering commands.")
 app.add_typer(data_app, name="data")
 app.add_typer(boundaries_app, name="boundaries")
 app.add_typer(cohort_app, name="cohort")
+app.add_typer(episodes_app, name="episodes")
 
 
 @app.callback()
@@ -284,6 +293,79 @@ def build_cohort_command(
             max_rows=max_rows,
         )
     except CohortError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@episodes_app.command("inspect")
+def inspect_episodes_command(
+    events_path: Annotated[
+        Path,
+        typer.Option("--events", exists=True, file_okay=True, dir_okay=True),
+    ],
+    event_states_path: Annotated[
+        Path,
+        typer.Option("--event-states", exists=True, file_okay=True, dir_okay=True),
+    ],
+) -> None:
+    try:
+        typer.echo(inspect_episode_inputs(events_path, event_states_path))
+    except EpisodeError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@episodes_app.command("build")
+def build_episodes_command(
+    events_path: Annotated[
+        Path,
+        typer.Option("--events", exists=True, file_okay=True, dir_okay=True),
+    ],
+    event_states_path: Annotated[
+        Path,
+        typer.Option("--event-states", exists=True, file_okay=True, dir_okay=True),
+    ],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
+    policy: Annotated[PolicyName, typer.Option("--policy")] = "balanced",
+    batch_size: Annotated[int, typer.Option("--batch-size", min=1)] = 10_000,
+    max_rows: Annotated[int | None, typer.Option("--max-rows", min=1)] = None,
+) -> None:
+    try:
+        artifacts = build_episodes(
+            events_path=events_path,
+            event_states_path=event_states_path,
+            output_dir=output_dir,
+            policy_name=policy,
+            batch_size=batch_size,
+            max_rows=max_rows,
+        )
+    except EpisodeError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@episodes_app.command("compare")
+def compare_episodes_command(
+    events_path: Annotated[
+        Path,
+        typer.Option("--events", exists=True, file_okay=True, dir_okay=True),
+    ],
+    event_states_path: Annotated[
+        Path,
+        typer.Option("--event-states", exists=True, file_okay=True, dir_okay=True),
+    ],
+    output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
+    batch_size: Annotated[int, typer.Option("--batch-size", min=1)] = 10_000,
+    max_rows: Annotated[int | None, typer.Option("--max-rows", min=1)] = None,
+) -> None:
+    try:
+        artifacts = compare_episode_policies(
+            events_path=events_path,
+            event_states_path=event_states_path,
+            output_dir=output_dir,
+            batch_size=batch_size,
+            max_rows=max_rows,
+        )
+    except EpisodeError as exc:
         raise typer.BadParameter(str(exc)) from exc
     typer.echo({name: str(path) for name, path in artifacts.items()})
 

@@ -145,11 +145,14 @@ class CohortAccumulator:
     eligible_rows: int = 0
     secondary_domain_rows: int = 0
     excluded_rows: int = 0
-    temporal_quality: Counter[str] = field(default_factory=Counter)
-    records_by_year_month: Counter[tuple[int, int]] = field(default_factory=Counter)
-    durations: list[int] = field(default_factory=list)
+    temporal_quality_source: Counter[str] = field(default_factory=Counter)
+    temporal_quality_eligible: Counter[str] = field(default_factory=Counter)
+    records_by_year_month_source: Counter[tuple[int, int]] = field(default_factory=Counter)
+    records_by_year_month_eligible: Counter[tuple[int, int]] = field(default_factory=Counter)
+    durations_source: list[int] = field(default_factory=list)
+    durations_eligible: list[int] = field(default_factory=list)
     split_counts: Counter[str] = field(default_factory=Counter)
-    state_year_counts: Counter[tuple[str, int, str]] = field(default_factory=Counter)
+    state_year_counts: Counter[tuple[str, int, str, str, str, str]] = field(default_factory=Counter)
     exclusion_primary_counts: Counter[str] = field(default_factory=Counter)
     exclusion_secondary_counts: Counter[str] = field(default_factory=Counter)
     domain_counts: Counter[str] = field(default_factory=Counter)
@@ -317,7 +320,6 @@ def _classify_events(
             )
             event["primary_exclusion_reason"] = primary_reason
             event["secondary_exclusion_reasons"] = ";".join(secondary_reasons)
-            _merge_temporal_quality(accumulator, event)
             if primary_reason is None:
                 event["cohort_status"] = "eligible"
                 accumulator.eligible_rows += 1
@@ -332,12 +334,24 @@ def _classify_events(
                 accumulator.exclusion_primary_counts[primary_reason] += 1
             for reason in secondary_reasons:
                 accumulator.exclusion_secondary_counts[reason] += 1
+            _merge_temporal_quality(accumulator, event, scope="source")
+            if event["cohort_status"] == "eligible":
+                _merge_temporal_quality(accumulator, event, scope="eligible")
             if event["start_date"] is not None and event["primary_state_code"] is not None:
+                terminal_category = str(event["cohort_status"])
+                split = (
+                    str(event["candidate_split"])
+                    if terminal_category == "eligible"
+                    else "not_applicable"
+                )
                 accumulator.state_year_counts[
                     (
                         str(event["primary_state_code"]),
                         event["start_date"].year,
-                        str(event["candidate_split"] or "unassigned"),
+                        split,
+                        terminal_category,
+                        str(event["study_domain"]),
+                        str(event["primary_exclusion_reason"] or "not_applicable"),
                     )
                 ] += 1
             events.append(event)
@@ -430,28 +444,45 @@ def _exclusion_reasons(
     return None, []
 
 
-def _merge_temporal_quality(accumulator: CohortAccumulator, event: dict[str, Any]) -> None:
+def _merge_temporal_quality(
+    accumulator: CohortAccumulator,
+    event: dict[str, Any],
+    scope: str,
+) -> None:
+    quality = (
+        accumulator.temporal_quality_eligible
+        if scope == "eligible"
+        else accumulator.temporal_quality_source
+    )
+    records_by_year_month = (
+        accumulator.records_by_year_month_eligible
+        if scope == "eligible"
+        else accumulator.records_by_year_month_source
+    )
+    durations = (
+        accumulator.durations_eligible if scope == "eligible" else accumulator.durations_source
+    )
     start = event["start_date"]
     end = event["end_date"]
     duration = event["duration_days"]
     if start is not None:
-        accumulator.records_by_year_month[(start.year, start.month)] += 1
+        records_by_year_month[(start.year, start.month)] += 1
     if end is None:
-        accumulator.temporal_quality["missing_end_dates"] += 1
+        quality["missing_end_dates"] += 1
     if duration is not None:
-        accumulator.durations.append(int(duration))
+        durations.append(int(duration))
         if duration < 0:
-            accumulator.temporal_quality["end_date_before_start_date"] += 1
+            quality["end_date_before_start_date"] += 1
         if duration == 0:
-            accumulator.temporal_quality["same_day_records"] += 1
+            quality["same_day_records"] += 1
         if duration > DURATION_GT_1_DAY:
-            accumulator.temporal_quality["duration_gt_1_day"] += 1
+            quality["duration_gt_1_day"] += 1
         if duration > DURATION_GT_3_DAYS:
-            accumulator.temporal_quality["duration_gt_3_days"] += 1
+            quality["duration_gt_3_days"] += 1
         if duration > DURATION_GT_7_DAYS:
-            accumulator.temporal_quality["duration_gt_7_days"] += 1
+            quality["duration_gt_7_days"] += 1
         if duration > DURATION_GT_30_DAYS:
-            accumulator.temporal_quality["duration_gt_30_days"] += 1
+            quality["duration_gt_30_days"] += 1
 
 
 def _state_records_for_events(
@@ -723,7 +754,10 @@ def _summary_payload(accumulator: CohortAccumulator) -> dict[str, Any]:
         "domain_counts": dict(sorted(accumulator.domain_counts.items())),
         "candidate_split_counts": dict(sorted(accumulator.split_counts.items())),
         "exclusion_primary_counts": dict(sorted(accumulator.exclusion_primary_counts.items())),
-        "temporal_quality": _temporal_quality_payload(accumulator),
+        "temporal_quality": {
+            "eligible_primary": _temporal_quality_payload(accumulator, scope="eligible"),
+            "source_us_intersecting": _temporal_quality_payload(accumulator, scope="source"),
+        },
     }
 
 
@@ -737,9 +771,16 @@ def _row_accounting_payload(accumulator: CohortAccumulator) -> dict[str, Any]:
     }
 
 
-def _temporal_quality_payload(accumulator: CohortAccumulator) -> dict[str, Any]:
-    durations = sorted(accumulator.durations)
-    payload: dict[str, Any] = dict(sorted(accumulator.temporal_quality.items()))
+def _temporal_quality_payload(accumulator: CohortAccumulator, scope: str) -> dict[str, Any]:
+    durations = sorted(
+        accumulator.durations_eligible if scope == "eligible" else accumulator.durations_source
+    )
+    quality = (
+        accumulator.temporal_quality_eligible
+        if scope == "eligible"
+        else accumulator.temporal_quality_source
+    )
+    payload: dict[str, Any] = dict(sorted(quality.items()))
     payload["duration_quantiles"] = {
         "p50": _quantile(durations, 0.5),
         "p90": _quantile(durations, 0.9),
@@ -776,23 +817,58 @@ def _write_state_year_counts(path: Path, accumulator: CohortAccumulator) -> None
             "state_code": state,
             "year": year,
             "candidate_split": split,
+            "terminal_category": terminal_category,
+            "study_domain": study_domain,
+            "primary_exclusion_reason": primary_exclusion_reason,
             "count": count,
         }
-        for (state, year, split), count in sorted(accumulator.state_year_counts.items())
+        for (
+            state,
+            year,
+            split,
+            terminal_category,
+            study_domain,
+            primary_exclusion_reason,
+        ), count in sorted(accumulator.state_year_counts.items())
     ]
-    _write_csv(path, rows, ["state_code", "year", "candidate_split", "count"])
+    _write_csv(
+        path,
+        rows,
+        [
+            "state_code",
+            "year",
+            "candidate_split",
+            "terminal_category",
+            "study_domain",
+            "primary_exclusion_reason",
+            "count",
+        ],
+    )
 
 
 def _write_temporal_quality(path: Path, accumulator: CohortAccumulator) -> None:
-    rows = [
-        {"metric": f"records_{year}_{month:02d}", "value": count}
-        for (year, month), count in sorted(accumulator.records_by_year_month.items())
-    ]
-    for key, value in sorted(accumulator.temporal_quality.items()):
-        rows.append({"metric": key, "value": value})
-    for key, value in _temporal_quality_payload(accumulator)["duration_quantiles"].items():
-        rows.append({"metric": f"duration_{key}", "value": value})
-    _write_csv(path, rows, ["metric", "value"])
+    rows: list[dict[str, Any]] = []
+    for scope, records, quality in [
+        (
+            "source_us_intersecting",
+            accumulator.records_by_year_month_source,
+            accumulator.temporal_quality_source,
+        ),
+        (
+            "eligible_primary",
+            accumulator.records_by_year_month_eligible,
+            accumulator.temporal_quality_eligible,
+        ),
+    ]:
+        for (year, month), count in sorted(records.items()):
+            rows.append({"scope": scope, "metric": f"records_{year}_{month:02d}", "value": count})
+        for key, value in sorted(quality.items()):
+            rows.append({"scope": scope, "metric": key, "value": value})
+        for key, value in _temporal_quality_payload(accumulator, scope=scope.split("_")[0])[
+            "duration_quantiles"
+        ].items():
+            rows.append({"scope": scope, "metric": f"duration_{key}", "value": value})
+    _write_csv(path, rows, ["scope", "metric", "value"])
 
 
 def _schema_payload(path: Path) -> dict[str, Any]:

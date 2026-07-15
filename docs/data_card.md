@@ -51,9 +51,23 @@ secondary-domain records. Multistate, country-unassigned, spatial-review, and
 antimeridian records are preserved when otherwise eligible.
 
 The cohort outputs include eligible primary records, secondary-domain records,
-excluded records, event-state records, temporal quality profiles, deterministic
-state/year/split counts, and bounded overlap diagnostics. Runtime metadata is
-kept in the cohort manifest rather than the deterministic scientific summary.
+excluded records, event-state records, scoped temporal quality profiles,
+deterministic state/year/split counts with terminal category and exclusion
+reason, and bounded overlap diagnostics. Runtime metadata is kept in the cohort
+manifest rather than the deterministic scientific summary.
+
+## Candidate Episode Outputs
+
+Milestone 0.6B groups eligible candidate records into provisional candidate
+episodes using conservative, balanced, and broad policies. Episodes are
+connected components of accepted event-pair edges; singleton records remain
+valid one-member episodes.
+
+Outputs include episode GeoParquet, episode membership, accepted edges,
+episode-size distributions, state/year episode counts, bridge diagnostics,
+split-boundary diagnostics, deterministic episode summaries, manifests, and a
+policy sensitivity table. These products are candidate-analysis artifacts, not
+confirmed flood-event labels.
 
 ## Measured Milestone 0.5D Results
 
@@ -93,9 +107,10 @@ that local Groundsource files are licensed for research use.
 
 ## Known Limitations
 
-Milestone 0.6A validates raw schema, GeoParquet metadata, WKB geometry decoding,
+Milestone 0.6B validates raw schema, GeoParquet metadata, WKB geometry decoding,
 basic quality, reproducible audit metadata, boundary-based spatial enrichment,
-and candidate cohort construction. It does not evaluate event completeness,
-score flood attribution quality, ingest MRMS, analyze search behavior, cluster
-final episodes, or forecast demand. Candidate records require later physical
-verification before they should be described as confirmed flash-flood events.
+candidate cohort construction, and provisional candidate episode clustering. It
+does not evaluate event completeness, score flood attribution quality, ingest
+MRMS, analyze search behavior, confirm final episodes, or forecast demand.
+Candidate records and episodes require later physical verification before they
+should be described as confirmed flash-flood events.

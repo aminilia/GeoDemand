@@ -35,4 +35,9 @@ outside version control. Typical local output folders are:
 ```text
 C:\Work\Data\GeoDemand\artifacts\boundaries_prepared\
 C:\Work\Data\GeoDemand\artifacts\groundsource_spatial\
+C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\
+C:\Work\Data\GeoDemand\artifacts\candidate_episodes\
 ```
+
+Candidate episode outputs, sensitivity tables, and smoke-run artifacts are
+derived research outputs and should not be committed.

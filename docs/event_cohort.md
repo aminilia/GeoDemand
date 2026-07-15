@@ -3,7 +3,7 @@
 Milestone 0.6A builds a reproducible candidate U.S. flood-event cohort from
 spatially enriched Groundsource records. These records are candidates, not
 confirmed flash-flood events. Physical verification, MRMS ingestion, search
-demand analysis, clustering, and modeling happen later.
+demand analysis, final confirmation, and modeling happen later.
 
 ## Inputs
 
@@ -78,8 +78,8 @@ The builder writes:
 - `overlap_diagnostics.csv`
 - `manifest.json`
 
-`event_record_id` is the source UUID. This milestone does not create a final
-independent episode identifier.
+`event_record_id` is the source UUID. Candidate episode IDs are created later by
+Milestone 0.6B and are not final confirmed flood-event identifiers.
 
 ## Row Accounting
 
@@ -96,7 +96,16 @@ Secondary-domain records are not double-counted as other excluded rows.
 
 The cohort profile reports records by year/month, missing end dates, end dates
 before start dates, same-day records, duration thresholds, and duration
-quantiles. Event intervals are not expanded into daily rows.
+quantiles. It reports these metrics separately for all U.S.-intersecting source
+records and the eligible primary cohort. Event intervals are not expanded into
+daily rows.
+
+## State-Year Counts
+
+`state_year_counts.csv` reports candidate coverage by state and start year with
+explicit scope columns: `terminal_category`, `study_domain`, and
+`primary_exclusion_reason`. `candidate_split` is populated only for eligible
+primary records; noneligible terminal categories use `not_applicable`.
 
 ## Overlap Diagnostics
 
@@ -125,6 +134,6 @@ paths live in `manifest.json`.
 ## Limitations
 
 The cohort is analysis-ready for downstream verification, but the records are
-not yet confirmed events. No final clustering, urban classification, physical
+not yet confirmed events. No urban classification, physical
 precipitation verification, demographic feature generation, Google Trends
 collection, or machine-learning modeling is performed in this milestone.

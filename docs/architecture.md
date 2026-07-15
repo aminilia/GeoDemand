@@ -2,10 +2,11 @@
 
 ## Milestone Boundary
 
-Milestone 0.6A builds the reproducible foundation plus real Groundsource schema
+Milestone 0.6B builds the reproducible foundation plus real Groundsource schema
 discovery, data auditing, global/U.S. spatial enrichment, and candidate U.S.
-event cohort construction. It does not include NOAA or MRMS ingestion, Google
-Trends collection, machine-learning models, final event clustering, maps,
+event cohort construction, and candidate episode clustering. It does not
+include NOAA or MRMS ingestion, Google Trends collection, machine-learning
+models, final event confirmation, maps,
 demographic features, urban classification, or forecast evaluation.
 
 ## Source Layout
@@ -97,9 +98,33 @@ CONUS plus Washington, DC; Alaska, Hawaii, Puerto Rico, and other U.S.
 territories are preserved separately.
 
 The builder uses source UUIDs as `event_record_id` and intentionally does not
-create final independent episode IDs. Potential duplicate or related records
-are measured with shared-state/year buckets and STRtree spatial candidates, but
-records are not merged or clustered in this milestone.
+create final independent episode IDs. It writes scoped state/year counts with
+terminal category, study domain, primary exclusion reason, and an explicit
+`not_applicable` candidate split for noneligible records. Temporal quality is
+reported separately for all U.S.-intersecting source rows and for the eligible
+primary cohort.
+
+## Candidate Episode Clustering
+
+Episode clustering consumes `eligible_event_records/` and `event_state_records/`
+from the cohort builder. Three deterministic policies are supported:
+
+- `conservative`: intervals overlap and geometries intersect.
+- `balanced`: date gap is at most 1 day and records intersect, have IoU at
+  least 0.10, or representative-point distance is at most 10 km.
+- `broad`: date gap is at most 2 days and records intersect, have IoU at least
+  0.05, or representative-point distance is at most 25 km.
+
+Candidate generation uses temporal/state buckets and Shapely STRtree queries in
+EPSG:6933 rather than all-pairs comparison. Accepted edges are deduplicated
+globally by sorted event IDs, including pairs discovered through multiple
+states. Episodes are connected components; singleton episodes are valid.
+
+`episode_id` is deterministic: SHA-256 over the policy version, policy name, and
+sorted member event IDs. Episodes inherit a deterministic temporal split from
+episode start date, and split-boundary diagnostics flag components containing
+members from multiple cohort splits. Runtime metadata is written to manifests;
+scientific summaries use deterministic JSON ordering.
 
 ## Profiling
 

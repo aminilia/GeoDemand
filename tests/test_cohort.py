@@ -92,6 +92,40 @@ def test_cohort_overlap_diagnostics_and_temporal_quality(
     )
     assert any(row["spatial_rule"] == "iou_ge_0.05" for row in diagnostics)
     assert any(row["metric"] == "end_date_before_start_date" for row in temporal)
+    assert {row["scope"] for row in temporal} == {"eligible_primary", "source_us_intersecting"}
+
+
+def test_cohort_state_year_counts_include_terminal_scope(
+    cohort_inputs: tuple[Path, Path],
+    tmp_path: Path,
+) -> None:
+    events_path, states_path = cohort_inputs
+    artifacts = build_cohort(events_path, states_path, tmp_path / "cohort")
+    state_year_rows = _rows_csv(artifacts["state_year_counts"])
+    summary = json.loads(artifacts["cohort_summary"].read_text(encoding="utf-8"))
+
+    assert {
+        "state_code",
+        "year",
+        "candidate_split",
+        "terminal_category",
+        "study_domain",
+        "primary_exclusion_reason",
+        "count",
+    } <= set(state_year_rows[0])
+    assert any(
+        row["terminal_category"] == "excluded"
+        and row["candidate_split"] == "not_applicable"
+        and row["primary_exclusion_reason"] == "outside_temporal_window"
+        for row in state_year_rows
+    )
+    assert any(
+        row["terminal_category"] == "eligible"
+        and row["candidate_split"] == "development"
+        and row["primary_exclusion_reason"] == "not_applicable"
+        for row in state_year_rows
+    )
+    assert set(summary["temporal_quality"]) == {"eligible_primary", "source_us_intersecting"}
 
 
 def test_cohort_max_rows_bounds_everything(

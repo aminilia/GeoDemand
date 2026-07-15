@@ -3,12 +3,12 @@
 GeoDemand-FF is a reproducible research scaffold for studying regional Google
 search-demand surges following urban flash floods.
 
-Milestone 0.6A provides package structure, data contracts, local GeoParquet
+Milestone 0.6B provides package structure, data contracts, local GeoParquet
 Groundsource inspection, WKB geometry auditing, spatial enrichment, candidate
-U.S. event cohort construction, overlap diagnostics, tests, and project
-documentation.
+U.S. event cohort construction, candidate episode clustering, sensitivity
+analysis, tests, and project documentation.
 It does not implement NOAA ingestion, Google Trends ingestion, machine-learning
-models, event clustering, or maps.
+models, MRMS verification, urban exposure, final event confirmation, or maps.
 
 ## Installation
 
@@ -69,6 +69,22 @@ uv run geodemand cohort build --events C:\Work\Data\GeoDemand\artifacts\spatial_
 The default primary domain is the contiguous 48 states plus Washington, DC.
 Alaska, Hawaii, Puerto Rico, and other U.S. territories are preserved as
 secondary-domain records.
+
+## Candidate Episodes
+
+Milestone 0.6B clusters eligible candidate records into provisional candidate
+episodes. These clusters are for sensitivity analysis and downstream
+verification; they are not confirmed flood episodes.
+
+```powershell
+uv run geodemand episodes inspect --events C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\eligible_event_records --event-states C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\event_state_records
+uv run geodemand episodes build --events C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\eligible_event_records --event-states C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\event_state_records --output-dir C:\Work\Data\GeoDemand\artifacts\candidate_episodes --policy balanced
+uv run geodemand episodes compare --events C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\eligible_event_records --event-states C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\event_state_records --output-dir C:\Work\Data\GeoDemand\artifacts\candidate_episode_sensitivity
+```
+
+Supported policies are `conservative`, `balanced`, and `broad`. Use
+`--max-rows` for bounded smoke runs; full default runs process the complete
+eligible cohort.
 
 ## Groundsource Required Fields
 
