@@ -1,25 +1,25 @@
-# Data Licenses And Notices
+# Data Licenses And Attribution
 
-This repository does not redistribute Groundsource data, boundary archives,
-prepared boundary artifacts, enriched Groundsource outputs, quarantine outputs,
-or generated full-run artifacts.
+This repository does not commit raw research data, downloaded MRMS files,
+boundary archives, Groundsource files, generated full audit artifacts, episode
+outputs, or derived precipitation metrics.
 
-## Natural Earth
+## NOAA MRMS
 
-Milestone 0.5E expects Natural Earth Admin 0 Countries version 5.1.1 as a local
-archive. Natural Earth data is generally public domain, but users should verify
-the terms bundled with their downloaded copy. GeoDemand-FF records the
-`de_facto` worldview in the boundary manifest.
+Milestone 0.7A uses NOAA Multi-Radar/Multi-Sensor System files made available
+through the public AWS bucket `s3://noaa-mrms-pds`. Users are responsible for
+checking current NOAA terms, attribution expectations, and AWS public-dataset
+availability before redistribution or publication.
 
-## U.S. Census TIGER/Line
+Suggested attribution:
 
-Milestone 0.5E expects U.S. Census TIGER/Line 2025 States and Equivalent
-Entities as a local archive. TIGER/Line files are U.S. government data, but
-users should preserve provenance and vintage information. GeoDemand-FF records
-the 2025 vintage and legal-boundary date of 2025-01-01.
+```text
+NOAA Multi-Radar/Multi-Sensor System (MRMS) data accessed via the NOAA Open Data
+Dissemination Program public AWS bucket noaa-mrms-pds.
+```
 
-## Groundsource
+## Groundsource And Boundaries
 
-Groundsource licensing and redistribution terms must be managed by the local
-research user. Do not commit raw Groundsource files or derived full-size
-outputs unless the data license explicitly permits redistribution.
+Groundsource, Natural Earth, and Census TIGER/Line inputs remain local external
+inputs. Their licenses and redistribution constraints should be reviewed before
+sharing derived datasets.

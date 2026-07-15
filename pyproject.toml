@@ -22,13 +22,17 @@ classifiers = [
   "Topic :: Scientific/Engineering :: GIS",
 ]
 dependencies = [
+  "cfgrib>=0.9.14",
+  "eccodes>=2.39",
   "polars>=1.0",
   "pydantic>=2.7",
   "pyarrow>=15.0",
   "pyogrio>=0.9",
   "pyproj>=3.6",
+  "s3fs>=2025.5",
   "shapely>=2.0",
   "typer>=0.12",
+  "xarray>=2025.1",
 ]
 
 [project.optional-dependencies]
@@ -64,7 +68,20 @@ warn_unused_configs = true
 packages = ["geodemand"]
 
 [[tool.mypy.overrides]]
-module = ["pyarrow", "pyarrow.*", "pyogrio", "pyproj", "pyproj.*", "shapely", "shapely.*"]
+module = [
+  "cfgrib",
+  "eccodes",
+  "pyarrow",
+  "pyarrow.*",
+  "pyogrio",
+  "pyproj",
+  "pyproj.*",
+  "s3fs",
+  "shapely",
+  "shapely.*",
+  "xarray",
+  "xarray.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

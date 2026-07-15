@@ -114,3 +114,15 @@ does not evaluate event completeness, score flood attribution quality, ingest
 MRMS, analyze search behavior, confirm final episodes, or forecast demand.
 Candidate records and episodes require later physical verification before they
 should be described as confirmed flash-flood events.
+
+## MRMS Feasibility Outputs
+
+Milestone 0.7A writes local MRMS manifests, inventory tables, download plans,
+compressed-file manifests, precipitation metrics, compact episode time series,
+physical-coherence assessments, and quicklook-ready outputs under the configured
+MRMS working root. These are derived research outputs and should not be
+committed.
+
+MRMS metrics are provisional. Missing-data handling, quality-index behavior,
+coverage thresholds, and physical-coherence categories require real-file smoke
+validation before use in final event labeling.

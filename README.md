@@ -7,8 +7,8 @@ Milestone 0.6B provides package structure, data contracts, local GeoParquet
 Groundsource inspection, WKB geometry auditing, spatial enrichment, candidate
 U.S. event cohort construction, candidate episode clustering, sensitivity
 analysis, tests, and project documentation.
-It does not implement NOAA ingestion, Google Trends ingestion, machine-learning
-models, MRMS verification, urban exposure, final event confirmation, or maps.
+It does not implement Google Trends ingestion, machine-learning models, national
+MRMS extraction, urban exposure, final event confirmation, or maps.
 
 ## Installation
 
@@ -85,6 +85,24 @@ uv run geodemand episodes compare --events C:\Work\Data\GeoDemand\artifacts\cand
 Supported policies are `conservative`, `balanced`, and `broad`. Use
 `--max-rows` for bounded smoke runs; full default runs process the complete
 eligible cohort.
+
+## MRMS Feasibility
+
+Milestone 0.7A adds targeted MRMS feasibility commands. The default policy for
+physical verification is conservative; balanced is used to inspect possible
+merge candidates, and broad remains an upper sensitivity scenario.
+
+```powershell
+uv run geodemand mrms selfcheck --working-root C:\Work\Data\GeoDemand\mrms
+uv run geodemand mrms inspect-episodes --episode-root C:\Work\Data\GeoDemand\artifacts\episode_comparison_full
+uv run geodemand mrms sample --episode-root EPISODE_OUTPUT_ROOT --output-root C:\Work\Data\GeoDemand\mrms
+uv run geodemand mrms inventory --sample C:\Work\Data\GeoDemand\mrms\manifests\verification_sample.parquet --output-root C:\Work\Data\GeoDemand\mrms --max-episodes 3
+uv run geodemand mrms fetch --download-plan C:\Work\Data\GeoDemand\mrms\inventory\mrms_download_plan.csv --working-root C:\Work\Data\GeoDemand\mrms --max-episodes 5
+uv run geodemand mrms extract --sample C:\Work\Data\GeoDemand\mrms\manifests\verification_sample.parquet --file-manifest C:\Work\Data\GeoDemand\mrms\manifests\mrms_file_manifest.parquet --output-root C:\Work\Data\GeoDemand\mrms
+uv run geodemand mrms assess --metrics-root C:\Work\Data\GeoDemand\mrms\metrics
+```
+
+MRMS downloads are cached locally and must not be committed.
 
 ## Groundsource Required Fields
 

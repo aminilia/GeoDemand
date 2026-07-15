@@ -2,11 +2,11 @@
 
 ## Milestone Boundary
 
-Milestone 0.6B builds the reproducible foundation plus real Groundsource schema
+Milestone 0.7A builds the reproducible foundation plus real Groundsource schema
 discovery, data auditing, global/U.S. spatial enrichment, and candidate U.S.
-event cohort construction, and candidate episode clustering. It does not
-include NOAA or MRMS ingestion, Google Trends collection, machine-learning
-models, final event confirmation, maps,
+event cohort construction, candidate episode clustering, and targeted MRMS
+feasibility checks. It does not include national MRMS extraction, Google Trends
+collection, machine-learning models, final event confirmation, maps,
 demographic features, urban classification, or forecast evaluation.
 
 ## Source Layout
@@ -125,6 +125,19 @@ sorted member event IDs. Episodes inherit a deterministic temporal split from
 episode start date, and split-boundary diagnostics flag components containing
 members from multiple cohort splits. Runtime metadata is written to manifests;
 scientific summaries use deterministic JSON ordering.
+
+## MRMS Feasibility
+
+MRMS support is implemented as an offline-testable subsystem with lazy optional
+imports for `s3fs`, `xarray`, `cfgrib`, and `eccodes`. The ordinary test suite
+uses mocked S3 listings and tiny synthetic metric fixtures; real NOAA access is
+kept opt-in.
+
+The subsystem separates deterministic sample selection, S3 inventory, compressed
+file caching, metric extraction, and coherence assessment. It inventories object
+keys before downloading, globally deduplicates objects, validates cache files,
+and keeps volatile execution details in manifests. Physical coherence categories
+are provisional review labels and do not mutate episode membership.
 
 ## Profiling
 

@@ -26,6 +26,16 @@ from geodemand.ingestion.groundsource import (
     validate_groundsource,
 )
 from geodemand.logging import configure_logging
+from geodemand.mrms import (
+    MrmsError,
+    assess_mrms,
+    discover_episode_outputs,
+    extract_mrms,
+    fetch_mrms,
+    inventory_mrms,
+    sample_mrms,
+    selfcheck_mrms,
+)
 from geodemand.spatial import SpatialEnrichmentError, enrich_spatial
 
 app = typer.Typer(help="GeoDemand-FF research pipeline CLI.")
@@ -33,10 +43,12 @@ data_app = typer.Typer(help="Data inspection, filtering, and profiling commands.
 boundaries_app = typer.Typer(help="Boundary inspection and preparation commands.")
 cohort_app = typer.Typer(help="Candidate event cohort commands.")
 episodes_app = typer.Typer(help="Candidate episode clustering commands.")
+mrms_app = typer.Typer(help="MRMS feasibility and physical-verification commands.")
 app.add_typer(data_app, name="data")
 app.add_typer(boundaries_app, name="boundaries")
 app.add_typer(cohort_app, name="cohort")
 app.add_typer(episodes_app, name="episodes")
+app.add_typer(mrms_app, name="mrms")
 
 
 @app.callback()
@@ -367,6 +379,129 @@ def compare_episodes_command(
         )
     except EpisodeError as exc:
         raise typer.BadParameter(str(exc)) from exc
+    typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@mrms_app.command("selfcheck")
+def mrms_selfcheck_command(
+    working_root: Annotated[
+        Path, typer.Option("--working-root", file_okay=False, dir_okay=True)
+    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    sample_grib: Annotated[
+        Path | None,
+        typer.Option("--sample-grib", exists=True, file_okay=True, dir_okay=False),
+    ] = None,
+) -> None:
+    typer.echo(selfcheck_mrms(working_root, sample_grib))
+
+
+@mrms_app.command("inspect-episodes")
+def mrms_inspect_episodes_command(
+    episode_root: Annotated[
+        Path,
+        typer.Option("--episode-root", exists=True, file_okay=False, dir_okay=True),
+    ],
+) -> None:
+    try:
+        outputs = discover_episode_outputs(episode_root)
+    except MrmsError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo({name: str(value) for name, value in outputs.__dict__.items()})
+
+
+@mrms_app.command("sample")
+def mrms_sample_command(
+    episode_root: Annotated[
+        Path,
+        typer.Option("--episode-root", exists=True, file_okay=False, dir_okay=True),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    seed: Annotated[int, typer.Option("--seed")] = 20260715,
+    max_episodes: Annotated[int, typer.Option("--max-episodes", min=1)] = 90,
+) -> None:
+    try:
+        artifacts = sample_mrms(episode_root, output_root, seed=seed, max_episodes=max_episodes)
+    except MrmsError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@mrms_app.command("inventory")
+def mrms_inventory_command(
+    sample_path: Annotated[
+        Path,
+        typer.Option("--sample", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    max_episodes: Annotated[int | None, typer.Option("--max-episodes", min=1)] = None,
+) -> None:
+    try:
+        artifacts = inventory_mrms(sample_path, output_root, max_episodes=max_episodes)
+    except MrmsError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@mrms_app.command("fetch")
+def mrms_fetch_command(
+    download_plan: Annotated[
+        Path,
+        typer.Option("--download-plan", exists=True, file_okay=True, dir_okay=False),
+    ],
+    working_root: Annotated[
+        Path,
+        typer.Option("--working-root", file_okay=False, dir_okay=True),
+    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    max_bytes: Annotated[int | None, typer.Option("--max-bytes", min=1)] = None,
+    max_episodes: Annotated[int | None, typer.Option("--max-episodes", min=1)] = None,
+    workers: Annotated[int, typer.Option("--workers", min=1)] = 2,
+) -> None:
+    try:
+        artifacts = fetch_mrms(
+            download_plan,
+            working_root,
+            max_bytes=max_bytes,
+            max_episodes=max_episodes,
+            workers=workers,
+        )
+    except MrmsError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@mrms_app.command("extract")
+def mrms_extract_command(
+    sample_path: Annotated[
+        Path,
+        typer.Option("--sample", exists=True, file_okay=True, dir_okay=False),
+    ],
+    file_manifest: Annotated[
+        Path,
+        typer.Option("--file-manifest", exists=True, file_okay=True, dir_okay=False),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", file_okay=False, dir_okay=True),
+    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+) -> None:
+    artifacts = extract_mrms(sample_path, file_manifest, output_root)
+    typer.echo({name: str(path) for name, path in artifacts.items()})
+
+
+@mrms_app.command("assess")
+def mrms_assess_command(
+    metrics_root: Annotated[
+        Path,
+        typer.Option("--metrics-root", exists=True, file_okay=False, dir_okay=True),
+    ],
+) -> None:
+    artifacts = assess_mrms(metrics_root)
     typer.echo({name: str(path) for name, path in artifacts.items()})
 
 
