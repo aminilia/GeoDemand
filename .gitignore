@@ -19,6 +19,7 @@ data/external/
 imerg/
 usgs/
 multisource_verification/
+trends/
 *.parquet
 *.jsonl
 

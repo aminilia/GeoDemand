@@ -183,3 +183,12 @@ This separation prevents absent physical observations from becoming negative
 labels and prevents sensitivity policies from silently rewriting analysis
 units. Stable content-derived IDs and post-build validation enforce record
 accounting and split isolation.
+
+## Trends Feasibility Layer
+
+The Trends layer separates request planning, immutable raw exports, canonical
+observations, normalization diagnostics, response metrics, terminology
+decisions, and episode feasibility. Backend identifiers share request and
+observation contracts, so manual official CSV ingestion remains functional when
+the official alpha API is unavailable. Volatile import time belongs in the
+manifest; scientific tables use sidecar export dates and deterministic ordering.

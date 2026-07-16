@@ -7,8 +7,8 @@ Milestone 0.6B provides package structure, data contracts, local GeoParquet
 Groundsource inspection, WKB geometry auditing, spatial enrichment, candidate
 U.S. event cohort construction, candidate episode clustering, sensitivity
 analysis, tests, and project documentation.
-It does not implement Google Trends ingestion, machine-learning models, national
-MRMS extraction, urban exposure, final event confirmation, or maps.
+It does not implement machine-learning models, national MRMS extraction, urban
+exposure, final event confirmation, or maps.
 
 ## Installation
 
@@ -196,3 +196,33 @@ membership rows with zero split leakage. It retained 19,030 episodes
 provisionally and queued 18,023 for review. MRMS episode evidence remains
 pending, so no physical merge, split, or support status was assigned. Two full
 builds matched across every generated file.
+
+## Google Trends Feasibility
+
+Milestone 0.8A adds a backend-neutral, manual-export-first feasibility pipeline.
+Google Trends values are request-relative 0-to-100 indices, not absolute search
+counts. The official API remains limited-access alpha; pytrends is not required,
+and experimental web retrieval is disabled by default.
+
+```powershell
+uv run geodemand trends official-api-selfcheck
+uv run geodemand trends pilot-sample --catalog-dir C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog\build_a --output-root C:\Work\Data\GeoDemand\trends --rules config\trends_rules.yaml
+uv run geodemand trends map-geographies --pilot C:\Work\Data\GeoDemand\trends\manifests\trends_pilot_episodes.parquet --output-root C:\Work\Data\GeoDemand\trends
+uv run geodemand trends plan --pilot C:\Work\Data\GeoDemand\trends\manifests\trends_pilot_episodes.parquet --geography C:\Work\Data\GeoDemand\trends\geography\geography_mapping.parquet --terms config\trends_terms.yaml --rules config\trends_rules.yaml --output-root C:\Work\Data\GeoDemand\trends
+```
+
+See [the Trends feasibility guide](docs/google_trends_feasibility.md). Real
+manual CSV exports and sidecars remain required before 0.8A can be accepted.
+
+The pilot rules require at least two Florida episodes. Deterministic same-year
+matched replacement preserves the 40-episode size and the year, coastal,
+membership, and footprint balances while recording full replacement lineage.
+
+Terminology version `0.8A-v3` replaces state-specific experimentation with five
+nationally standardized batches. Weather is retained as a context positive
+control, not assumed to be a normalization anchor; news and temperature require
+empirical anchor checks. The regenerated full plan has 200 rows, while the
+five-episode mini pilot has 25 unique requests plus an identical Florida Batch
+1 repeat across five states and four years. Batch 4 uses `outage`, `road closed`,
+`school closed`, and `traffic`; formal disruption phrases remain configured as
+secondary comparisons.

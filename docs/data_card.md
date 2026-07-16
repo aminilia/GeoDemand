@@ -150,3 +150,12 @@ The product supports reproducible episode-level research design and manual
 review. It is not confirmed flood truth. Remaining limitations include
 incomplete MRMS coverage, sparse gauge relevance, uncertain Groundsource
 completeness, and unresolved clustering candidates.
+
+## Google Trends Feasibility Data
+
+Trends observations are normalized and request-relative. They are not absolute
+search counts and cannot be compared across requests without explicit overlap
+or anchor diagnostics. State-level interest is associated with an episode's
+research window but does not identify searches inside its geometry. Zeros may
+reflect low volume, suppression, or relative scaling. Raw exports, sidecars,
+repeats, partial markers, and zero classifications must be preserved.

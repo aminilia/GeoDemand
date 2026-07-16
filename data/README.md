@@ -60,3 +60,7 @@ C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog\
 ```
 
 Do not commit its Parquet tables, review exports, summaries, or manifests.
+
+Google Trends exports and derived feasibility outputs belong under the ignored
+external root `C:\Work\Data\GeoDemand\trends\`. Preserve downloaded official
+CSVs and their sidecars under `raw/`; never edit or overwrite them in place.

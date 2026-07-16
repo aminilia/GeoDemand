@@ -42,3 +42,11 @@ The provisional catalog combines derived identifiers and metrics from the
 sources above. Its creation does not grant redistribution rights for source
 geometry, precipitation, or gauge data. Review all upstream terms before
 publishing or redistributing catalog artifacts.
+
+## Google Trends
+
+Google Trends exports are subject to Google's Terms of Service. Reused data and
+figures must be attributed to Google Trends according to the current official
+export and citation guidance. Trends and Google Ads are distinct sources and
+must not be conflated. Repository tests contain synthetic CSV structures only,
+not copied Google Trends observations.

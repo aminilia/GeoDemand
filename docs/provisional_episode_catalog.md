@@ -73,3 +73,7 @@ Review reasons are not mutually exclusive: 15,825 possible-undermerge, 4,173
 bridge-chaining, 540 geometry-review, 68 large-cluster, 68 maximum-distance, 59
 long-duration, 9 high-state-count, and 8 split-boundary flags. Two independent
 full builds produced identical SHA-256 hashes for all 20 generated files.
+
+Milestone 0.8A samples only retained, non-review, non-boundary episodes for
+search-interest feasibility. This sampling choice reduces initial ambiguity but
+does not turn provisional episodes into confirmed flood ground truth.

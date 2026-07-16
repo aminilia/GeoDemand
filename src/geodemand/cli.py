@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import date
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import pyarrow.parquet as pq
 import typer
@@ -64,6 +65,26 @@ from geodemand.observations import (
     write_quicklooks,
 )
 from geodemand.spatial import SpatialEnrichmentError, enrich_spatial
+from geodemand.trends import (
+    Backend,
+    TrendsError,
+    assess_episodes,
+    calculate_metrics,
+    evaluate_terms,
+    import_csv_export,
+    inspect_trends,
+    map_geographies,
+    official_api_selfcheck,
+    plan_requests,
+    summarize_trends,
+    validate_imports,
+)
+from geodemand.trends import (
+    pilot_sample as trends_pilot_sample,
+)
+from geodemand.trends import (
+    write_quicklooks as write_trends_quicklooks,
+)
 from geodemand.usgs import (
     DataretrievalUsgsClient,
     UsgsError,
@@ -84,6 +105,7 @@ imerg_app = typer.Typer(help="NASA IMERG feasibility and extraction commands.")
 usgs_app = typer.Typer(help="USGS gauge-response verification commands.")
 observations_app = typer.Typer(help="Multi-source physical verification commands.")
 catalog_app = typer.Typer(help="Provisional physically informed episode catalog commands.")
+trends_app = typer.Typer(help="Google Trends feasibility and manual-export commands.")
 app.add_typer(data_app, name="data")
 app.add_typer(boundaries_app, name="boundaries")
 app.add_typer(cohort_app, name="cohort")
@@ -93,6 +115,7 @@ app.add_typer(imerg_app, name="imerg")
 app.add_typer(usgs_app, name="usgs")
 app.add_typer(observations_app, name="observations")
 app.add_typer(catalog_app, name="catalog")
+app.add_typer(trends_app, name="trends")
 
 
 @app.callback()
@@ -898,6 +921,169 @@ def catalog_summarize_command(
     try:
         _echo_json(summarize_catalog(catalog_dir))
     except CatalogError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@trends_app.command("inspect")
+def trends_inspect_command(
+    catalog_dir: Annotated[Path, typer.Option("--catalog-dir", exists=True, file_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Inspect catalog inputs and existing local Trends artifacts without modification."""
+    _run_trends(lambda: inspect_trends(catalog_dir, output_root))
+
+
+@trends_app.command("official-api-selfcheck")
+def trends_official_api_selfcheck_command(
+    config_path: Annotated[
+        Path | None,
+        typer.Option("--config", exists=True, file_okay=True, dir_okay=False),
+    ] = None,
+) -> None:
+    """Report official alpha API availability without exposing secrets or inventing endpoints."""
+    _echo_json(official_api_selfcheck(config_path))
+
+
+@trends_app.command("pilot-sample")
+def trends_pilot_sample_command(
+    catalog_dir: Annotated[Path, typer.Option("--catalog-dir", exists=True, file_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    """Select the deterministic 40-episode state-level feasibility pilot."""
+    if dry_run:
+        _run_trends(lambda: inspect_trends(catalog_dir, output_root))
+        return
+    _run_trends(lambda: trends_pilot_sample(catalog_dir, output_root, rules_path))
+
+
+@trends_app.command("map-geographies")
+def trends_map_geographies_command(
+    pilot_path: Annotated[Path, typer.Option("--pilot", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Map pilot episodes to deterministic U.S. state Trends geographies."""
+    _run_trends(lambda: map_geographies(pilot_path, output_root))
+
+
+@trends_app.command("plan")
+def trends_plan_command(
+    pilot_path: Annotated[Path, typer.Option("--pilot", exists=True, dir_okay=False)],
+    geography_path: Annotated[Path, typer.Option("--geography", exists=True, dir_okay=False)],
+    terms_path: Annotated[Path, typer.Option("--terms", exists=True, dir_okay=False)],
+    rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    backend: Annotated[Backend, typer.Option("--backend")] = "manual_csv",
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    """Generate bounded request batches and manual Explore links without fetching data."""
+    if dry_run:
+        _echo_json({"backend": backend, "fetch_performed": False})
+        return
+    _run_trends(
+        lambda: plan_requests(
+            pilot_path, geography_path, terms_path, rules_path, output_root, backend
+        )
+    )
+
+
+@trends_app.command("import-csv")
+def trends_import_csv_command(
+    csv_path: Annotated[Path, typer.Option("--csv", exists=True, dir_okay=False)],
+    sidecar_path: Annotated[Path, typer.Option("--sidecar", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Import one unchanged official Interest over time CSV using required sidecar metadata."""
+    _run_trends(lambda: import_csv_export(csv_path, sidecar_path, output_root))
+
+
+@trends_app.command("validate-imports")
+def trends_validate_imports_command(
+    observations_path: Annotated[Path, typer.Option("--observations", exists=True, dir_okay=False)],
+    plan_path: Annotated[Path | None, typer.Option("--plan", exists=True, dir_okay=False)] = None,
+) -> None:
+    """Validate observation identity, repeat preservation, and request-plan lineage."""
+    _run_trends(lambda: validate_imports(observations_path, plan_path))
+
+
+@trends_app.command("metrics")
+def trends_metrics_command(
+    observations_path: Annotated[Path, typer.Option("--observations", exists=True, dir_okay=False)],
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Calculate guarded baseline, peak, anchor, suppression, and repeat metrics."""
+    _run_trends(lambda: calculate_metrics(observations_path, plan_path, rules_path, output_root))
+
+
+@trends_app.command("evaluate-terms")
+def trends_evaluate_terms_command(
+    metrics_path: Annotated[Path, typer.Option("--metrics", exists=True, dir_okay=False)],
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    terms_path: Annotated[Path, typer.Option("--terms", exists=True, dir_okay=False)],
+    rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Classify terminology using coverage, volume, stability, and geographic consistency."""
+    _run_trends(
+        lambda: evaluate_terms(metrics_path, plan_path, terms_path, rules_path, output_root)
+    )
+
+
+@trends_app.command("assess")
+def trends_assess_command(
+    pilot_path: Annotated[Path, typer.Option("--pilot", exists=True, dir_okay=False)],
+    geography_path: Annotated[Path, typer.Option("--geography", exists=True, dir_okay=False)],
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    metrics_path: Annotated[
+        Path | None, typer.Option("--metrics", exists=True, dir_okay=False)
+    ] = None,
+) -> None:
+    """Assess per-episode Trends feasibility without treating the catalog as ground truth."""
+    _run_trends(
+        lambda: assess_episodes(pilot_path, geography_path, plan_path, metrics_path, output_root)
+    )
+
+
+@trends_app.command("quicklooks")
+def trends_quicklooks_command(
+    observations_path: Annotated[Path, typer.Option("--observations", exists=True, dir_okay=False)],
+    metrics_path: Annotated[Path, typer.Option("--metrics", exists=True, dir_okay=False)],
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Write deterministic relative-interest SVG quicklooks for review categories."""
+    _run_trends(
+        lambda: write_trends_quicklooks(observations_path, metrics_path, plan_path, output_root)
+    )
+
+
+@trends_app.command("summarize")
+def trends_summarize_command(
+    output_root: Annotated[Path, typer.Option("--output-root", exists=True, file_okay=False)],
+) -> None:
+    """Combine deterministic Trends feasibility summaries and acceptance status."""
+    _run_trends(lambda: summarize_trends(output_root))
+
+
+def _run_trends(operation: Callable[[], Any]) -> None:
+    try:
+        result = operation()
+        if isinstance(result, dict):
+            _echo_json(
+                {
+                    key: str(value) if isinstance(value, Path) else value
+                    for key, value in result.items()
+                }
+            )
+        elif isinstance(result, list):
+            _echo_json([str(value) if isinstance(value, Path) else value for value in result])
+        else:
+            _echo_json(result)
+    except TrendsError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
 

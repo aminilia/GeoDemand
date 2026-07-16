@@ -120,3 +120,8 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+markers = [
+  "trends_official_api_integration: opt-in official Google Trends API integration",
+  "trends_manual_csv_integration: opt-in real manual CSV integration",
+  "trends_classic_experimental_integration: opt-in classic web technical check",
+]

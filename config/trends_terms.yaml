@@ -1,0 +1,95 @@
+dictionary_version: 0.8A-v3
+
+standardized_batches:
+  - batch_id: batch_1_flood_awareness
+    display_label: Flood awareness
+    concepts: [context_weather, flood, flooding, flash_flood, context_heavy_rain]
+  - batch_id: batch_2_broad_consequences
+    display_label: Broad consequences
+    concepts: [context_weather, water_damage, cleanup, mold, insurance]
+  - batch_id: batch_3_public_response
+    display_label: Public response
+    concepts: [context_weather, fema, emergency, evacuation, shelter]
+  - batch_id: batch_4_disruption
+    display_label: Disruption
+    concepts: [context_weather, outage, road_closed, school_closed, traffic]
+  - batch_id: batch_5_specific_recovery
+    display_label: Specific recovery
+    concepts: [context_weather, flood_cleanup, water_removal, flood_insurance, fema_assistance]
+
+broad_specific_pairs:
+  - {pair_id: fema_assistance, broad_concept_id: fema, specific_concept_id: fema_assistance}
+  - {pair_id: cleanup_flood_cleanup, broad_concept_id: cleanup, specific_concept_id: flood_cleanup}
+  - {pair_id: insurance_flood_insurance, broad_concept_id: insurance, specific_concept_id: flood_insurance}
+  - {pair_id: shelter_emergency_shelter, broad_concept_id: shelter, specific_concept_id: emergency_shelter}
+  - {pair_id: evacuation_flood_evacuation, broad_concept_id: evacuation, specific_concept_id: flood_evacuation}
+  - {pair_id: mold_mold_removal, broad_concept_id: mold, specific_concept_id: mold_removal}
+  - {pair_id: basement_wet_basement, broad_concept_id: basement, specific_concept_id: wet_basement}
+  - {pair_id: outage_power_outage, broad_concept_id: outage, specific_concept_id: power_outage}
+  - {pair_id: outage_no_power, broad_concept_id: outage, specific_concept_id: no_power}
+  - {pair_id: road_closed_road_closure, broad_concept_id: road_closed, specific_concept_id: road_closure}
+  - {pair_id: road_closed_flooded_roads, broad_concept_id: road_closed, specific_concept_id: flooded_roads}
+  - {pair_id: school_closed_school_closure, broad_concept_id: school_closed, specific_concept_id: school_closure}
+  - {pair_id: roads_closed_road_closure, broad_concept_id: roads_closed, specific_concept_id: road_closure}
+  - {pair_id: schools_closed_school_closure, broad_concept_id: schools_closed, specific_concept_id: school_closure}
+
+interpretation_notes:
+  outage: Broad service-disruption signal; not proof of an electricity outage.
+  traffic: Not flood-specific without supporting flood or weather-term increases.
+  road_closed: Natural-language alternative to the formal noun phrase road closure.
+  school_closed: Natural-language alternative to the formal noun phrase school closure.
+  closure: Excluded as a standalone primary term because it is highly ambiguous.
+
+concepts:
+  - {concept_id: context_weather, query_text: weather, query_type: term, semantic_family: context, terminology_tier: context, intended_response_stage: context, expected_volume: high, active: true, anchor_candidate: false, context_candidate: true, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: context_rain, query_text: rain, query_type: term, semantic_family: context, terminology_tier: context, intended_response_stage: context, expected_volume: high, active: true, anchor_candidate: false, context_candidate: true, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: context_storm, query_text: storm, query_type: term, semantic_family: context, terminology_tier: context, intended_response_stage: context, expected_volume: high, active: true, anchor_candidate: false, context_candidate: true, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: context_heavy_rain, query_text: heavy rain, query_type: term, semantic_family: context, terminology_tier: context, intended_response_stage: context, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: true, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: anchor_news, query_text: news, query_type: term, semantic_family: anchor_control, terminology_tier: anchor_candidate, intended_response_stage: control, expected_volume: high, active: true, anchor_candidate: true, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: anchor_temperature, query_text: temperature, query_type: term, semantic_family: anchor_control, terminology_tier: anchor_candidate, intended_response_stage: control, expected_volume: high, active: true, anchor_candidate: true, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+
+  - {concept_id: flood, query_text: flood, query_type: term, semantic_family: flood_awareness, terminology_tier: primary_broad, intended_response_stage: awareness, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: flooding, query_text: flooding, query_type: term, semantic_family: flood_awareness, terminology_tier: primary_broad, intended_response_stage: awareness, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: flash_flood, query_text: flash flood, query_type: term, semantic_family: flood_awareness, terminology_tier: primary_broad, intended_response_stage: awareness, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: flood_warning, query_text: flood warning, query_type: term, semantic_family: flood_awareness, terminology_tier: secondary_specific, intended_response_stage: awareness, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: flood_watch, query_text: flood watch, query_type: term, semantic_family: flood_awareness, terminology_tier: secondary_specific, intended_response_stage: awareness, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+
+  - {concept_id: emergency, query_text: emergency, query_type: term, semantic_family: immediate_response, terminology_tier: primary_broad, intended_response_stage: immediate_need, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: evacuation, query_text: evacuation, query_type: term, semantic_family: immediate_response, terminology_tier: primary_broad, intended_response_stage: immediate_need, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: shelter, query_text: shelter, query_type: term, semantic_family: immediate_response, terminology_tier: primary_broad, intended_response_stage: immediate_need, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: emergency_shelter, query_text: emergency shelter, query_type: term, semantic_family: immediate_response, terminology_tier: secondary_specific, intended_response_stage: immediate_need, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: flood_evacuation, query_text: flood evacuation, query_type: term, semantic_family: immediate_response, terminology_tier: secondary_specific, intended_response_stage: immediate_need, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: water_rescue, query_text: water rescue, query_type: term, semantic_family: immediate_response, terminology_tier: exploratory_low_volume, intended_response_stage: immediate_need, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+
+  - {concept_id: water_damage, query_text: water damage, query_type: term, semantic_family: damage_cleanup, terminology_tier: primary_broad, intended_response_stage: recovery, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: cleanup, query_text: cleanup, query_type: term, semantic_family: damage_cleanup, terminology_tier: primary_broad, intended_response_stage: recovery, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: mold, query_text: mold, query_type: term, semantic_family: damage_cleanup, terminology_tier: primary_broad, intended_response_stage: recovery, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: basement, query_text: basement, query_type: term, semantic_family: damage_cleanup, terminology_tier: primary_broad, intended_response_stage: recovery, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: flood_cleanup, query_text: flood cleanup, query_type: term, semantic_family: damage_cleanup, terminology_tier: secondary_specific, intended_response_stage: recovery, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: water_removal, query_text: water removal, query_type: term, semantic_family: damage_cleanup, terminology_tier: secondary_specific, intended_response_stage: recovery, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: mold_removal, query_text: mold removal, query_type: term, semantic_family: damage_cleanup, terminology_tier: secondary_specific, intended_response_stage: recovery, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: wet_basement, query_text: wet basement, query_type: term, semantic_family: damage_cleanup, terminology_tier: secondary_specific, intended_response_stage: recovery, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: water_damage_repair, query_text: water damage repair, query_type: term, semantic_family: damage_cleanup, terminology_tier: secondary_specific, intended_response_stage: recovery, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+
+  - {concept_id: fema, query_text: FEMA, query_type: term, semantic_family: assistance_recovery, terminology_tier: primary_broad, intended_response_stage: recovery, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: insurance, query_text: insurance, query_type: term, semantic_family: assistance_recovery, terminology_tier: primary_broad, intended_response_stage: recovery, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: disaster_relief, query_text: disaster relief, query_type: term, semantic_family: assistance_recovery, terminology_tier: primary_broad, intended_response_stage: recovery, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: claim, query_text: claim, query_type: term, semantic_family: assistance_recovery, terminology_tier: primary_broad, intended_response_stage: recovery, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: fema_assistance, query_text: FEMA assistance, query_type: term, semantic_family: assistance_recovery, terminology_tier: secondary_specific, intended_response_stage: recovery, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: flood_insurance, query_text: flood insurance, query_type: term, semantic_family: assistance_recovery, terminology_tier: secondary_specific, intended_response_stage: recovery, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: insurance_claim, query_text: insurance claim, query_type: term, semantic_family: assistance_recovery, terminology_tier: secondary_specific, intended_response_stage: recovery, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: disaster_assistance, query_text: disaster assistance, query_type: term, semantic_family: assistance_recovery, terminology_tier: exploratory_low_volume, intended_response_stage: recovery, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+
+  - {concept_id: outage, query_text: outage, query_type: term, semantic_family: disruption, terminology_tier: primary_broad, intended_response_stage: immediate_need, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: road_closed, query_text: road closed, query_type: term, semantic_family: disruption, terminology_tier: primary_broad, intended_response_stage: immediate_need, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: school_closed, query_text: school closed, query_type: term, semantic_family: disruption, terminology_tier: primary_broad, intended_response_stage: immediate_need, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: traffic, query_text: traffic, query_type: term, semantic_family: disruption, terminology_tier: primary_broad, intended_response_stage: immediate_need, expected_volume: high, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v2}
+  - {concept_id: power_outage, query_text: power outage, query_type: term, semantic_family: disruption, terminology_tier: secondary_specific, intended_response_stage: immediate_need, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: road_closure, query_text: road closure, query_type: term, semantic_family: disruption, terminology_tier: secondary_specific, intended_response_stage: immediate_need, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: school_closure, query_text: school closure, query_type: term, semantic_family: disruption, terminology_tier: secondary_specific, intended_response_stage: immediate_need, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: flooded_roads, query_text: flooded roads, query_type: term, semantic_family: disruption, terminology_tier: secondary_specific, intended_response_stage: immediate_need, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: no_power, query_text: no power, query_type: term, semantic_family: disruption, terminology_tier: secondary_specific, intended_response_stage: immediate_need, expected_volume: medium, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: roads_closed, query_text: roads closed, query_type: term, semantic_family: disruption, terminology_tier: exploratory_low_volume, intended_response_stage: immediate_need, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: schools_closed, query_text: schools closed, query_type: term, semantic_family: disruption, terminology_tier: exploratory_low_volume, intended_response_stage: immediate_need, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: road_flooding, query_text: road flooding, query_type: term, semantic_family: disruption, terminology_tier: exploratory_low_volume, intended_response_stage: immediate_need, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}
+  - {concept_id: electricity_outage, query_text: electricity outage, query_type: term, semantic_family: disruption, terminology_tier: exploratory_low_volume, intended_response_stage: immediate_need, expected_volume: low, active: true, anchor_candidate: false, context_candidate: false, exclusion_reason: null, version: 0.8A-v3}

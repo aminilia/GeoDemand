@@ -1,0 +1,37 @@
+rule_version: 0.8A-v1
+selection_seed: 20260715
+pilot_per_year: 10
+pilot_years: [2022, 2023, 2024, 2025]
+required_states: [FL]
+minimum_required_state_episodes: 2
+eligibility:
+  statuses: [retained_provisionally]
+  maximum_duration_days: 4
+  maximum_member_count: 25
+request:
+  backend: manual_csv
+  category: 0
+  search_property: web_search
+  baseline_days: 28
+  post_days: 28
+  minimum_window_days: 60
+  maximum_targets_per_batch: 4
+  comparison_context_concept_id: context_weather
+  normalization_anchor_concept_id: null
+normalization:
+  minimum_anchor_interest: 5.0
+  minimum_baseline_days: 14
+  minimum_post_days: 14
+  near_zero_standard_deviation: 0.001
+  minimum_anchor_overlap_days: 14
+  stable_repeat_correlation: 0.80
+  stable_repeat_peak_tolerance_days: 3
+  event_sensitive_anchor_lift_fraction: 0.25
+suppression:
+  low_volume_zero_fraction: 0.50
+  all_zero_fraction: 1.0
+  isolated_spike_multiplier: 5.0
+terminology:
+  primary_minimum_usable_fraction: 0.60
+  secondary_minimum_usable_fraction: 0.30
+  unstable_repeat_fraction: 0.50
