@@ -5,8 +5,8 @@
 Milestone 0.7A builds the reproducible foundation plus real Groundsource schema
 discovery, data auditing, global/U.S. spatial enrichment, and candidate U.S.
 event cohort construction, candidate episode clustering, and targeted MRMS
-feasibility checks. It does not include national MRMS extraction, Google Trends
-collection, machine-learning models, final event confirmation, maps,
+feasibility checks. It does not include national MRMS extraction, automated
+national Google Trends collection, machine-learning models, final event confirmation, maps,
 demographic features, urban classification, or forecast evaluation.
 
 ## Source Layout
@@ -192,3 +192,18 @@ decisions, and episode feasibility. Backend identifiers share request and
 observation contracts, so manual official CSV ingestion remains functional when
 the official alpha API is unavailable. Volatile import time belongs in the
 manifest; scientific tables use sidecar export dates and deterministic ordering.
+
+Event-study analysis is isolated in `trends_event_study.py`. It consumes
+immutable observations and explicit request plans, then writes phase,
+concurrence, control-adjusted, attribution, and diagnostic outputs. Request
+role, geography, geography level, batch, episode, concept, and terminology
+version remain explicit at every stage. Cross-geography arithmetic is routed
+through a scale validator that permits only within-series baseline-standardized
+lifts; raw request-relative indices cannot enter state-minus-national or
+treated-minus-control calculations.
+
+Control selection indexes provisional episode intervals by state before
+applying the configured temporal buffer. This avoids repeated full-catalog
+scans while retaining deterministic ranking. Population tier, climate class,
+and Trends-availability metadata are optional because unavailable covariates
+must not be invented; missing values are recorded as unknown.

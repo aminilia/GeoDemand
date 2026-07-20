@@ -159,7 +159,7 @@ def test_manual_csv_import_metrics_repeats_and_quicklooks(tmp_path: Path) -> Non
     assert "reported_zero" not in str(flood["metric_quality_reasons"])
 
     term_paths = evaluate_terms(artifacts["metrics"], plan, TERMS, RULES, output)
-    assert len(_rows(term_paths["feasibility"])) == 47
+    assert len(_rows(term_paths["feasibility"])) == 62
     pair_rows = _rows(term_paths["broad_specific_parquet"])
     assert len(pair_rows) == 14
     assert {
@@ -265,6 +265,11 @@ def test_official_api_unavailable_and_cli_help() -> None:
     assert result.exit_code == 0
     assert "official-api-selfcheck" in result.stdout
     assert "import-csv" in result.stdout
+    assert "select-controls" in result.stdout
+    assert "phase-metrics" in result.stdout
+    assert "concurrence" in result.stdout
+    assert "control-adjusted-metrics" in result.stdout
+    assert "attribute-peaks" in result.stdout
 
 
 def test_standardized_batches_and_weather_context_contract(tmp_path: Path) -> None:

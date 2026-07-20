@@ -226,3 +226,11 @@ five-episode mini pilot has 25 unique requests plus an identical Florida Batch
 1 repeat across five states and four years. Batch 4 uses `outage`, `road closed`,
 `school closed`, and `traffic`; formal disruption phrases remain configured as
 secondary comparisons.
+
+The opt-in event-study extension adds anticipatory, immediate, early, and
+extended-recovery phases; behavioral-demand proxies; flood/weather concurrence;
+national diagnostics; deterministic matched controls; control-adjusted
+standardized lifts; and provisional peak attribution. It never subtracts raw
+independently normalized Trends indices. See
+[the Trends feasibility guide](docs/google_trends_feasibility.md) for commands
+and interpretation limits.

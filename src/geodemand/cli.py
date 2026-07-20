@@ -85,6 +85,13 @@ from geodemand.trends import (
 from geodemand.trends import (
     write_quicklooks as write_trends_quicklooks,
 )
+from geodemand.trends_event_study import (
+    attribute_peaks,
+    calculate_concurrence,
+    calculate_control_adjusted_metrics,
+    calculate_phase_metrics,
+    select_controls,
+)
 from geodemand.usgs import (
     DataretrievalUsgsClient,
     UsgsError,
@@ -975,6 +982,11 @@ def trends_plan_command(
     rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
     output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
     backend: Annotated[Backend, typer.Option("--backend")] = "manual_csv",
+    include_behavioral_state: Annotated[bool, typer.Option("--include-behavioral-state")] = False,
+    include_national: Annotated[bool, typer.Option("--include-national")] = False,
+    controls_path: Annotated[
+        Path | None, typer.Option("--controls", exists=True, dir_okay=False)
+    ] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
 ) -> None:
     """Generate bounded request batches and manual Explore links without fetching data."""
@@ -983,7 +995,15 @@ def trends_plan_command(
         return
     _run_trends(
         lambda: plan_requests(
-            pilot_path, geography_path, terms_path, rules_path, output_root, backend
+            pilot_path,
+            geography_path,
+            terms_path,
+            rules_path,
+            output_root,
+            backend,
+            include_behavioral_state,
+            include_national,
+            controls_path,
         )
     )
 
@@ -1029,6 +1049,104 @@ def trends_evaluate_terms_command(
     """Classify terminology using coverage, volume, stability, and geographic consistency."""
     _run_trends(
         lambda: evaluate_terms(metrics_path, plan_path, terms_path, rules_path, output_root)
+    )
+
+
+@trends_app.command("select-controls")
+def trends_select_controls_command(
+    pilot_path: Annotated[Path, typer.Option("--pilot", exists=True, dir_okay=False)],
+    catalog_path: Annotated[Path, typer.Option("--catalog", exists=True, dir_okay=False)],
+    rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    metadata_path: Annotated[
+        Path | None, typer.Option("--state-metadata", exists=True, dir_okay=False)
+    ] = None,
+) -> None:
+    """Select deterministic flood-free candidate control states for pilot episodes."""
+    _run_trends(
+        lambda: select_controls(pilot_path, catalog_path, rules_path, output_root, metadata_path)
+    )
+
+
+@trends_app.command("phase-metrics")
+def trends_phase_metrics_command(
+    observations_path: Annotated[Path, typer.Option("--observations", exists=True, dir_okay=False)],
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    terms_path: Annotated[Path, typer.Option("--terms", exists=True, dir_okay=False)],
+    rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Calculate baseline-separated anticipatory and recovery response metrics."""
+    _run_trends(
+        lambda: calculate_phase_metrics(
+            observations_path, plan_path, terms_path, rules_path, output_root
+        )
+    )
+
+
+@trends_app.command("concurrence")
+def trends_concurrence_command(
+    observations_path: Annotated[Path, typer.Option("--observations", exists=True, dir_okay=False)],
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    terms_path: Annotated[Path, typer.Option("--terms", exists=True, dir_okay=False)],
+    rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    phase_metrics_path: Annotated[
+        Path | None, typer.Option("--phase-metrics", exists=True, dir_okay=False)
+    ] = None,
+) -> None:
+    """Measure flood/weather concurrence and standardized national spike diagnostics."""
+    _run_trends(
+        lambda: calculate_concurrence(
+            observations_path,
+            plan_path,
+            terms_path,
+            rules_path,
+            output_root,
+            phase_metrics_path,
+        )
+    )
+
+
+@trends_app.command("control-adjusted-metrics")
+def trends_control_adjusted_metrics_command(
+    phase_metrics_path: Annotated[
+        Path, typer.Option("--phase-metrics", exists=True, dir_okay=False)
+    ],
+    controls_path: Annotated[Path, typer.Option("--controls", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Compare treated and control within-series standardized phase lifts."""
+    _run_trends(
+        lambda: calculate_control_adjusted_metrics(phase_metrics_path, controls_path, output_root)
+    )
+
+
+@trends_app.command("attribute-peaks")
+def trends_attribute_peaks_command(
+    phase_metrics_path: Annotated[
+        Path, typer.Option("--phase-metrics", exists=True, dir_okay=False)
+    ],
+    concurrence_path: Annotated[Path, typer.Option("--concurrence", exists=True, dir_okay=False)],
+    rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    control_adjusted_path: Annotated[
+        Path | None, typer.Option("--control-adjusted", exists=True, dir_okay=False)
+    ] = None,
+    national_diagnostics_path: Annotated[
+        Path | None, typer.Option("--national-diagnostics", exists=True, dir_okay=False)
+    ] = None,
+) -> None:
+    """Assign provisional peak-attribution categories while preserving evidence."""
+    _run_trends(
+        lambda: attribute_peaks(
+            phase_metrics_path,
+            concurrence_path,
+            output_root,
+            rules_path,
+            control_adjusted_path,
+            national_diagnostics_path,
+        )
     )
 
 

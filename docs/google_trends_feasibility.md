@@ -112,6 +112,61 @@ configured event-lift threshold is labeled `event_sensitive_anchor` and is not
 used for ratio normalization. The pipeline never promotes an anchor by raw
 interest magnitude alone.
 
+## Event-study extension
+
+Rule version `0.8A-v2` separates the longer baseline from four response phases:
+
+- Anticipatory: seven days before episode start through the preceding day.
+- Immediate: episode start through two days after episode end.
+- Early recovery: days three through seven after episode end.
+- Extended recovery: days eight through 28 after episode end.
+
+Each phase reports mean, maximum, absolute peak lift, and within-series
+baseline-standardized lift. The overall peak retains its date, phase, and lead
+or lag from episode start. A pre-event peak is preserved as anticipatory
+evidence rather than automatically dismissed.
+
+The `behavioral_demand_proxy` family contains retailer brands (Walmart, Home
+Depot, and Lowe's), preparation products (generator, bottled water, batteries,
+and sandbags), and damage-mitigation products (sump pump, wet vacuum, and
+dehumidifier). Each concept records proxy type, interpretation scope,
+promotion sensitivity, seasonal sensitivity, and ambiguity. These are candidate
+behavioral signals, never flood-specific outcomes. Heat, heat wave, snow,
+tornado, and hurricane are optional diagnostic context terms for selected
+ambiguous cases only.
+
+Strong event concurrence means peaks are at most two days apart; moderate
+concurrence means at most seven days. Correlations require at least 14 aligned
+observations. National and matched-control requests are opt-in and limited to
+the five-episode mini pilot. National comparisons use two batches containing
+weather/flood plus Walmart, Home Depot, Lowe's, generator, and bottled water.
+Separate files support role-specific inspection, while
+`event_study_request_plan.parquet` combines all 50 optional treated, national,
+and control definitions for import validation and downstream metrics.
+
+State and national raw 0-to-100 values are never subtracted. For series `s` and
+phase `p`, the comparison is:
+
+`z(s,p) = (phase_mean(s,p) - baseline_mean(s)) / baseline_sd(s)`
+
+`adjusted_lift(p) = treated_z(p) - median(control_z_i(p))`
+
+The implementation rejects cross-geography subtraction unless the declared
+scale is `within_series_baseline_standardized_lift`.
+
+Controls are flood-free during the episode window plus a seven-day buffer and
+cannot be states intersected by the same multistate episode. Ranking favors the
+same Census region, then matching population tier, broad climate class, and
+known Trends availability when metadata exist. Deterministic state-code order
+breaks ties. These criteria do not establish causal exchangeability.
+
+Peak attribution stores every component flag and uses
+`likely_event_associated`, `possibly_event_associated`,
+`likely_national_or_promotional`, `weather_related_not_flood_specific`,
+`unrelated_or_ambiguous`, and `insufficient_evidence`. A retailer peak is not
+direct flood-demand evidence, and a weather peak without flood-awareness
+support may represent heat or another nonflood event.
+
 ## Real pilot workflow
 
 ```powershell
@@ -121,6 +176,12 @@ uv run geodemand trends map-geographies --pilot C:\Work\Data\GeoDemand\trends\ma
 uv run geodemand trends plan --pilot C:\Work\Data\GeoDemand\trends\manifests\trends_pilot_episodes.parquet --geography C:\Work\Data\GeoDemand\trends\geography\geography_mapping.parquet --terms config\trends_terms.yaml --rules config\trends_rules.yaml --output-root C:\Work\Data\GeoDemand\trends
 uv run geodemand trends import-csv --csv EXPORT.csv --sidecar EXPORT.json --output-root C:\Work\Data\GeoDemand\trends
 uv run geodemand trends validate-imports --observations C:\Work\Data\GeoDemand\trends\processed\trends_observations.parquet --plan C:\Work\Data\GeoDemand\trends\planning\terminology_mini_pilot_plan.parquet
+uv run geodemand trends select-controls --pilot C:\Work\Data\GeoDemand\trends\manifests\trends_pilot_episodes.parquet --catalog C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog\build_a\episodes.parquet --rules config\trends_rules.yaml --output-root C:\Work\Data\GeoDemand\trends
+uv run geodemand trends plan --pilot C:\Work\Data\GeoDemand\trends\manifests\trends_pilot_episodes.parquet --geography C:\Work\Data\GeoDemand\trends\geography\geography_mapping.parquet --terms config\trends_terms.yaml --rules config\trends_rules.yaml --output-root C:\Work\Data\GeoDemand\trends --include-behavioral-state --include-national --controls C:\Work\Data\GeoDemand\trends\controls\episode_control_states.parquet
+uv run geodemand trends phase-metrics --observations OBSERVATIONS.parquet --plan EVENT_STUDY_PLAN.parquet --terms config\trends_terms.yaml --rules config\trends_rules.yaml --output-root C:\Work\Data\GeoDemand\trends
+uv run geodemand trends concurrence --observations OBSERVATIONS.parquet --plan EVENT_STUDY_PLAN.parquet --terms config\trends_terms.yaml --rules config\trends_rules.yaml --phase-metrics PHASE_METRICS.parquet --output-root C:\Work\Data\GeoDemand\trends
+uv run geodemand trends control-adjusted-metrics --phase-metrics PHASE_METRICS.parquet --controls C:\Work\Data\GeoDemand\trends\controls\episode_control_states.parquet --output-root C:\Work\Data\GeoDemand\trends
+uv run geodemand trends attribute-peaks --phase-metrics PHASE_METRICS.parquet --concurrence CONCURRENCE.parquet --rules config\trends_rules.yaml --control-adjusted CONTROL_ADJUSTED.parquet --national-diagnostics NATIONAL_SPIKES.csv --output-root C:\Work\Data\GeoDemand\trends
 ```
 
 Start with `terminology_mini_pilot_plan.csv`: five episodes, each using all five
@@ -145,6 +206,12 @@ still requires at least
 five real official exports, three states, three years, one repeat, suppression
 and normalization results, terminology feasibility, and episode feasibility.
 No synthetic fixture may satisfy those gates.
+
+The opt-in local planning audit selected three controls for each of 40 pilot
+episodes. For the five-episode mini pilot it generated 10 treated comparison,
+10 national, and 30 control requests. Together with the 25 standard mini-pilot
+definitions, the deduplicated total is 75. These are plans only; no additional
+Google Trends data were downloaded.
 
 The current pilot requires two Florida episodes. The eligible population
 provided both without relaxation: a compact singleton from summer 2025 and a

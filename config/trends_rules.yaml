@@ -1,4 +1,4 @@
-rule_version: 0.8A-v1
+rule_version: 0.8A-v2
 selection_seed: 20260715
 pilot_per_year: 10
 pilot_years: [2022, 2023, 2024, 2025]
@@ -35,3 +35,25 @@ terminology:
   primary_minimum_usable_fraction: 0.60
   secondary_minimum_usable_fraction: 0.30
   unstable_repeat_fraction: 0.50
+event_study:
+  anticipatory_days: 7
+  immediate_post_end_days: 2
+  early_recovery_start_days: 3
+  early_recovery_end_days: 7
+  extended_recovery_start_days: 8
+  extended_recovery_end_days: 28
+  strong_concurrence_days: 2
+  moderate_concurrence_days: 7
+  minimum_correlation_observations: 14
+  national_concurrence_days: 2
+controls:
+  event_buffer_days: 7
+  maximum_controls: 3
+  same_region_score: 4.0
+  population_tier_score: 2.0
+  climate_class_score: 1.0
+  trends_availability_score: 1.0
+attribution:
+  minimum_positive_adjusted_lift: 0.0
+  national_spike_tolerance_days: 2
+  nonflood_context_concurrence_days: 2

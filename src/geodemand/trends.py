@@ -40,6 +40,11 @@ TERMINOLOGY_TIERS = {
     "context",
     "anchor_candidate",
 }
+PROXY_TYPES = {
+    "retailer_brand",
+    "preparation_product",
+    "damage_mitigation_product",
+}
 VALID_STATES = {
     "AL",
     "AK",
@@ -175,6 +180,10 @@ class TrendsSidecar(BaseModel):
     export_date: date
     source_filename: str
     episode_id: str
+    request_role: str = "treated_state"
+    treated_geography: str | None = None
+    batch_id: str | None = None
+    comparison_batch_id: str | None = None
     anchor_concept_id: str | None = None
     repeat_id: str | None = None
     notes: str = ""
@@ -241,6 +250,24 @@ def load_terms_config(path: Path) -> dict[str, Any]:  # noqa: PLR0912
             raise TrendsError(
                 f"Control concept {concept['concept_id']} must be anchor or context, not both."
             )
+        if concept["semantic_family"] == "behavioral_demand_proxy":
+            proxy_required = {
+                "proxy_type",
+                "interpretation_scope",
+                "promotion_sensitive",
+                "seasonal_sensitive",
+                "ambiguity_notes",
+            }
+            proxy_missing = sorted(proxy_required - set(concept))
+            if proxy_missing:
+                raise TrendsError(
+                    f"Behavioral proxy {concept['concept_id']} is missing: "
+                    + ", ".join(proxy_missing)
+                )
+            if concept["proxy_type"] not in PROXY_TYPES:
+                raise TrendsError(
+                    f"Invalid proxy type for {concept['concept_id']}: {concept['proxy_type']}"
+                )
     concept_ids = [str(row["concept_id"]) for row in concepts]
     if len(concept_ids) != len(set(concept_ids)):
         raise TrendsError("Terminology concept IDs must be unique.")
@@ -255,6 +282,18 @@ def load_terms_config(path: Path) -> dict[str, Any]:  # noqa: PLR0912
         unknown = sorted(set(members) - known)
         if unknown:
             raise TrendsError(f"Batch {batch.get('batch_id')} has unknown concepts: {unknown}")
+    national_batches = cast(list[dict[str, Any]], payload.get("national_comparison_batches", []))
+    for batch in national_batches:
+        members = [str(item) for item in cast(Sequence[Any], batch.get("concepts", []))]
+        if not members or len(members) > CONCEPTS_PER_BATCH:
+            raise TrendsError(
+                f"National batch {batch.get('batch_id')} must contain one to five concepts."
+            )
+        unknown = sorted(set(members) - known)
+        if unknown:
+            raise TrendsError(
+                f"National batch {batch.get('batch_id')} has unknown concepts: {unknown}"
+            )
     pairs = cast(list[dict[str, Any]], payload.get("broad_specific_pairs", []))
     for pair in pairs:
         unknown_pair = {
@@ -464,13 +503,16 @@ def map_geographies(pilot_path: Path, output_root: Path) -> dict[str, Path]:
     return {"mapping": mapping_path, "review": review_path, "summary": summary_path}
 
 
-def plan_requests(  # noqa: PLR0915
+def plan_requests(  # noqa: PLR0912, PLR0915
     pilot_path: Path,
     geography_path: Path,
     terms_path: Path,
     rules_path: Path,
     output_root: Path,
     backend: Backend = "manual_csv",
+    include_behavioral_state: bool = False,
+    include_national: bool = False,
+    controls_path: Path | None = None,
 ) -> dict[str, Path]:
     rules = load_yaml(rules_path)
     terms = load_terms_config(terms_path)
@@ -569,9 +611,96 @@ def plan_requests(  # noqa: PLR0915
             mini_rows.append(row)
             if str(mapping["state_abbreviation"]) == "FL" and batch_index == 1:
                 mini_rows.append({**row, **_repeat_filenames(str(row["request_id"]), "repeat_2")})
+    comparison_batches = cast(list[dict[str, Any]], terms.get("national_comparison_batches", []))
+    treated_comparison_rows = (
+        _comparison_plan_rows(
+            mini_episodes,
+            geography,
+            comparison_batches,
+            rules,
+            request_rules,
+            concept_by_id,
+            context_id,
+            normalization_anchor,
+            terminology_version,
+            backend,
+            "treated_state_comparison",
+        )
+        if include_behavioral_state
+        else []
+    )
+    national_rows = (
+        _comparison_plan_rows(
+            mini_episodes,
+            geography,
+            comparison_batches,
+            rules,
+            request_rules,
+            concept_by_id,
+            context_id,
+            normalization_anchor,
+            terminology_version,
+            backend,
+            "national_comparison",
+        )
+        if include_national
+        else []
+    )
+    control_rows = (
+        _control_plan_rows(
+            mini_episodes,
+            controls_path,
+            comparison_batches,
+            rules,
+            request_rules,
+            concept_by_id,
+            context_id,
+            normalization_anchor,
+            terminology_version,
+            backend,
+        )
+        if controls_path is not None
+        else []
+    )
+    treated_comparison_path = output / "treated_state_comparison_plan.parquet"
+    national_path = output / "national_comparison_plan.parquet"
+    control_path = output / "control_state_request_plan.parquet"
+    combined_event_study_path = output / "event_study_request_plan.parquet"
+    event_summary_path = output / "event_study_request_summary.json"
+    if treated_comparison_rows:
+        _write_parquet(treated_comparison_path, treated_comparison_rows)
+        _write_csv(treated_comparison_path.with_suffix(".csv"), treated_comparison_rows)
+    if national_rows:
+        _write_parquet(national_path, national_rows)
+        _write_csv(national_path.with_suffix(".csv"), national_rows)
+    if control_rows:
+        _write_parquet(control_path, control_rows)
+        _write_csv(control_path.with_suffix(".csv"), control_rows)
+    optional_rows = [*treated_comparison_rows, *national_rows, *control_rows]
+    if optional_rows:
+        _write_parquet(combined_event_study_path, optional_rows)
+        _write_csv(combined_event_study_path.with_suffix(".csv"), optional_rows)
+    _write_json(
+        event_summary_path,
+        {
+            "mini_pilot_episode_count": len(mini_episodes),
+            "treated_request_count": len(treated_comparison_rows),
+            "national_request_count": len(national_rows),
+            "control_request_count": len(control_rows),
+            "deduplicated_total_request_count": len(
+                {row["request_id"] for row in [*mini_rows, *optional_rows]}
+            ),
+            "standard_mini_pilot_unique_request_count": len(
+                {row["request_id"] for row in mini_rows}
+            ),
+            "optional_generation": True,
+        },
+    )
     _write_parquet(mini_parquet_path, mini_rows)
     _write_csv(mini_csv_path, mini_rows)
-    _write_sidecar_templates(output / "sidecars", [*plans, *mini_rows], concept_by_id)
+    _write_sidecar_templates(
+        output / "sidecars", [*plans, *mini_rows, *optional_rows], concept_by_id
+    )
     _write_json(
         mini_summary_path,
         {
@@ -606,7 +735,7 @@ def plan_requests(  # noqa: PLR0915
         }
     )
     _write_json(overall_manifest_path, overall_manifest)
-    return {
+    result = {
         "parquet": parquet_path,
         "csv": csv_path,
         "summary": summary_path,
@@ -617,6 +746,16 @@ def plan_requests(  # noqa: PLR0915
         "terminology_parquet": terminology_parquet_path,
         "terminology_csv": terminology_csv_path,
     }
+    if treated_comparison_rows:
+        result["treated_state_comparison"] = treated_comparison_path
+    if national_rows:
+        result["national_comparison"] = national_path
+    if control_rows:
+        result["control_state_requests"] = control_path
+    if optional_rows:
+        result["event_study_plan"] = combined_event_study_path
+        result["event_study_summary"] = event_summary_path
+    return result
 
 
 def import_csv_export(
@@ -662,6 +801,10 @@ def import_csv_export(
                     "request_id": sidecar.request_id,
                     "repeat_id": repeat_id,
                     "episode_id": sidecar.episode_id,
+                    "request_role": sidecar.request_role,
+                    "treated_geography": sidecar.treated_geography or sidecar.geography,
+                    "batch_id": sidecar.batch_id,
+                    "comparison_batch_id": sidecar.comparison_batch_id or sidecar.batch_id,
                     "backend": sidecar.backend,
                     "source_file": sidecar.source_filename,
                     "concept_id": concept_id,
@@ -1478,6 +1621,112 @@ def _request_window(start: date, end: date, rules: Mapping[str, Any]) -> dict[st
     }
 
 
+def _comparison_plan_rows(  # noqa: PLR0913
+    episodes: Sequence[Mapping[str, Any]],
+    geography: Mapping[str, Mapping[str, Any]],
+    batches: Sequence[Mapping[str, Any]],
+    rules: Mapping[str, Any],
+    request_rules: Mapping[str, Any],
+    concepts: Mapping[str, Mapping[str, Any]],
+    context_id: str,
+    normalization_anchor: Any,
+    terminology_version: str,
+    backend: Backend,
+    request_role: str,
+) -> list[dict[str, Any]]:
+    rows = []
+    for episode in sorted(episodes, key=lambda row: str(row["provisional_episode_id"])):
+        episode_id = str(episode["provisional_episode_id"])
+        treated_mapping = geography[episode_id]
+        request_mapping = (
+            {"trends_geography_identifier": "US", "geography_level": "country"}
+            if request_role == "national_comparison"
+            else treated_mapping
+        )
+        window = _request_window(
+            _as_date(episode["start_date"]), _as_date(episode["end_date"]), rules
+        )
+        for index, batch in enumerate(batches, 1):
+            rows.append(
+                _plan_row(
+                    episode_id,
+                    request_mapping,
+                    window,
+                    batch,
+                    index,
+                    request_rules,
+                    concepts,
+                    context_id,
+                    normalization_anchor,
+                    terminology_version,
+                    backend,
+                    "event_study_mini_pilot",
+                    "initial",
+                    request_role,
+                    str(treated_mapping["trends_geography_identifier"]),
+                    str(batch["batch_id"]),
+                )
+            )
+    return rows
+
+
+def _control_plan_rows(  # noqa: PLR0913
+    episodes: Sequence[Mapping[str, Any]],
+    controls_path: Path,
+    batches: Sequence[Mapping[str, Any]],
+    rules: Mapping[str, Any],
+    request_rules: Mapping[str, Any],
+    concepts: Mapping[str, Mapping[str, Any]],
+    context_id: str,
+    normalization_anchor: Any,
+    terminology_version: str,
+    backend: Backend,
+) -> list[dict[str, Any]]:
+    if not controls_path.exists():
+        raise TrendsError(f"Control-state selection is missing: {controls_path}")
+    controls_by_episode: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in _read_rows(controls_path):
+        controls_by_episode[str(row["treated_episode"])].append(row)
+    rows = []
+    for episode in sorted(episodes, key=lambda row: str(row["provisional_episode_id"])):
+        episode_id = str(episode["provisional_episode_id"])
+        treated_geography = f"US-{episode['primary_state']}"
+        window = _request_window(
+            _as_date(episode["start_date"]), _as_date(episode["end_date"]), rules
+        )
+        selected = sorted(
+            controls_by_episode.get(episode_id, []),
+            key=lambda row: (int(row["control_rank"]), str(row["control_state"])),
+        )
+        for control in selected:
+            mapping = {
+                "trends_geography_identifier": f"US-{control['control_state']}",
+                "geography_level": "state",
+            }
+            for index, batch in enumerate(batches, 1):
+                rows.append(
+                    _plan_row(
+                        episode_id,
+                        mapping,
+                        window,
+                        batch,
+                        index,
+                        request_rules,
+                        concepts,
+                        context_id,
+                        normalization_anchor,
+                        terminology_version,
+                        backend,
+                        "event_study_mini_pilot",
+                        "initial",
+                        "control_state",
+                        treated_geography,
+                        str(batch["batch_id"]),
+                    )
+                )
+    return rows
+
+
 def _explore_url(labels: Sequence[str], geography: str, window: Mapping[str, str]) -> str:
     query = quote(",".join(labels), safe="")
     timeframe = quote(f"{window['request_start_date']} {window['request_end_date']}", safe="")
@@ -1525,6 +1774,9 @@ def _plan_row(
     backend: Backend,
     stage: str,
     planned_repeat_id: str,
+    request_role: str = "treated_state",
+    treated_geography: str | None = None,
+    comparison_batch_id: str | None = None,
 ) -> dict[str, Any]:
     concept_ids = [str(item) for item in cast(Sequence[Any], batch["concepts"])]
     if concept_ids[0] != context_id:
@@ -1547,6 +1799,8 @@ def _plan_row(
     return {
         "request_id": request_id,
         "episode_id": episode_id,
+        "request_role": request_role,
+        "treated_geography": treated_geography or mapping["trends_geography_identifier"],
         "geography": mapping["trends_geography_identifier"],
         "geography_level": mapping["geography_level"],
         **window,
@@ -1558,6 +1812,7 @@ def _plan_row(
         "concept_ids": ";".join(concept_ids),
         "target_concepts": ";".join(concept_ids[1:]),
         "batch_id": batch["batch_id"],
+        "comparison_batch_id": comparison_batch_id or batch["batch_id"],
         "batch_index": batch_index,
         "group_count": len(concept_ids),
         "terminology_version": terminology_version,
@@ -1609,6 +1864,10 @@ def _write_sidecar_templates(
                 "export_date": "REQUIRED_AFTER_EXPORT",
                 "source_filename": plan["expected_output_filename"],
                 "episode_id": plan["episode_id"],
+                "request_role": plan.get("request_role", "treated_state"),
+                "treated_geography": plan.get("treated_geography", plan["geography"]),
+                "batch_id": plan["batch_id"],
+                "comparison_batch_id": plan.get("comparison_batch_id", plan["batch_id"]),
                 "anchor_concept_id": plan["anchor_concept"],
                 "repeat_id": plan["planned_repeat_id"],
                 "terminology_version": plan["terminology_version"],
