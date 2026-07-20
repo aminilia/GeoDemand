@@ -169,6 +169,14 @@ support may represent heat or another nonflood event.
 
 ## Real pilot workflow
 
+The manual workflow remains canonical. An experimental visible-browser
+assistant can perform the same official Explore export step for a tightly
+bounded plan selection while retaining the same sidecars and importer. It uses
+one page, a minimum 15-second delay, supervised approval, atomic CSV validation,
+and no anti-bot evasion. See
+[`google_trends_browser_export.md`](google_trends_browser_export.md) for
+selfcheck, filtering, status, retry, validation, and profile handling.
+
 ```powershell
 uv run geodemand trends official-api-selfcheck
 uv run geodemand trends pilot-sample --catalog-dir C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog\build_a --output-root C:\Work\Data\GeoDemand\trends --rules config\trends_rules.yaml

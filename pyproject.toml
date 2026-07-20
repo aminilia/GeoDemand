@@ -52,6 +52,9 @@ usgs = [
   "dataretrieval>=1.0",
   "requests-cache>=1.2",
 ]
+trends-browser = [
+  "playwright>=1.52,<2",
+]
 verification = [
   "cfgrib>=0.9.14",
   "dataretrieval>=1.0",
@@ -124,4 +127,6 @@ markers = [
   "trends_official_api_integration: opt-in official Google Trends API integration",
   "trends_manual_csv_integration: opt-in real manual CSV integration",
   "trends_classic_experimental_integration: opt-in classic web technical check",
+  "trends_browser_integration: opt-in visible-browser Google Trends integration",
+  "trends_browser_download_integration: opt-in supervised browser download integration",
 ]

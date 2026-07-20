@@ -20,6 +20,8 @@ imerg/
 usgs/
 multisource_verification/
 trends/
+.browser-profiles/
+.browser-downloads/
 *.parquet
 *.jsonl
 

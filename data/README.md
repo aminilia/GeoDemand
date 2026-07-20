@@ -64,3 +64,7 @@ Do not commit its Parquet tables, review exports, summaries, or manifests.
 Google Trends exports and derived feasibility outputs belong under the ignored
 external root `C:\Work\Data\GeoDemand\trends\`. Preserve downloaded official
 CSVs and their sidecars under `raw/`; never edit or overwrite them in place.
+The browser assistant writes operational attempt history under `manifests/` and
+uses temporary downloads only until validation and atomic rename complete.
+Persistent browser profiles and temporary browser downloads are local operator
+state, not research data, and must remain outside version control.

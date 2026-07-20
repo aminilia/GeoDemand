@@ -25,6 +25,8 @@ uv pip install -e ".[mrms]"
 uv pip install -e ".[imerg]"
 uv pip install -e ".[usgs]"
 uv pip install -e ".[verification]"
+uv pip install -e ".[trends-browser]"
+uv run python -m playwright install chromium
 ```
 
 ## Tests And Checks
@@ -199,10 +201,26 @@ builds matched across every generated file.
 
 ## Google Trends Feasibility
 
-Milestone 0.8A adds a backend-neutral, manual-export-first feasibility pipeline.
-Google Trends values are request-relative 0-to-100 indices, not absolute search
-counts. The official API remains limited-access alpha; pytrends is not required,
-and experimental web retrieval is disabled by default.
+Milestone 0.8A adds a backend-neutral, manual-export-first feasibility pipeline
+for evaluating flood-related Google Trends behavior. Google Trends values are
+request-relative 0-to-100 indices, not absolute search counts. The official
+Google Trends API remains limited-access alpha; `pytrends` is not required, and
+experimental web retrieval is disabled by default.
+
+An optional controlled Playwright assistant can perform the repetitive official
+Explore CSV export steps in a visible, one-request-at-a-time browser. It does
+not bypass challenges or replace manual ingestion; unchanged CSVs and lineage
+sidecars still enter through `trends import-csv`. Start with selfcheck and a
+dry-run bound:
+
+```powershell
+uv run geodemand trends browser-selfcheck --plan C:\Work\Data\GeoDemand\trends\planning\trends_request_plan.csv --download-dir C:\Work\Data\GeoDemand\trends\raw --browser chromium --request-id REQUEST_ID
+uv run geodemand trends export-browser --plan C:\Work\Data\GeoDemand\trends\planning\trends_request_plan.csv --output-root C:\Work\Data\GeoDemand\trends --mini-pilot --max-requests 1 --supervised --dry-run
+uv run geodemand trends export-status --plan C:\Work\Data\GeoDemand\trends\planning\trends_request_plan.csv --output-root C:\Work\Data\GeoDemand\trends --mini-pilot
+```
+
+See [the controlled browser export guide](docs/google_trends_browser_export.md)
+for request filters, profile handling, delays, recovery, and raw-file lineage.
 
 ```powershell
 uv run geodemand trends official-api-selfcheck
@@ -211,8 +229,11 @@ uv run geodemand trends map-geographies --pilot C:\Work\Data\GeoDemand\trends\ma
 uv run geodemand trends plan --pilot C:\Work\Data\GeoDemand\trends\manifests\trends_pilot_episodes.parquet --geography C:\Work\Data\GeoDemand\trends\geography\geography_mapping.parquet --terms config\trends_terms.yaml --rules config\trends_rules.yaml --output-root C:\Work\Data\GeoDemand\trends
 ```
 
-See [the Trends feasibility guide](docs/google_trends_feasibility.md). Real
-manual CSV exports and sidecars remain required before 0.8A can be accepted.
+See [the Trends feasibility guide](docs/google_trends_feasibility.md) for the
+manual-export workflow, request planning assumptions, interpretation limits, and
+event-study commands. Real manual CSV exports and sidecars remain required
+before producing empirical phase, concurrence, control-adjusted, or attribution
+results.
 
 The pilot rules require at least two Florida episodes. Deterministic same-year
 matched replacement preserves the 40-episode size and the year, coastal,
@@ -222,15 +243,158 @@ Terminology version `0.8A-v3` replaces state-specific experimentation with five
 nationally standardized batches. Weather is retained as a context positive
 control, not assumed to be a normalization anchor; news and temperature require
 empirical anchor checks. The regenerated full plan has 200 rows, while the
-five-episode mini pilot has 25 unique requests plus an identical Florida Batch
-1 repeat across five states and four years. Batch 4 uses `outage`, `road closed`,
+five-episode mini pilot has 25 unique requests plus an identical Florida Batch 1
+repeat across five states and four years. Batch 4 uses `outage`, `road closed`,
 `school closed`, and `traffic`; formal disruption phrases remain configured as
 secondary comparisons.
 
-The opt-in event-study extension adds anticipatory, immediate, early, and
-extended-recovery phases; behavioral-demand proxies; flood/weather concurrence;
-national diagnostics; deterministic matched controls; control-adjusted
-standardized lifts; and provisional peak attribution. It never subtracts raw
-independently normalized Trends indices. See
-[the Trends feasibility guide](docs/google_trends_feasibility.md) for commands
-and interpretation limits.
+The opt-in event-study extension adds anticipatory, immediate, early-recovery,
+and extended-recovery phases; behavioral-demand proxies; flood/weather
+concurrence; national diagnostics; deterministic matched controls;
+control-adjusted standardized lifts; and provisional peak attribution. It never
+subtracts raw independently normalized Trends indices. Control-adjusted metrics
+are computed only from within-series baseline-standardized lifts:
+
+```text
+adjusted_lift = treated_standardized_lift - median(control_standardized_lifts)
+```
+
+### Milestone 0.8B Manual Export Workflow
+
+Milestone 0.8B uses the generated 0.8A event-study request plans to collect
+manual Google Trends CSV exports and produce empirical phase, concurrence,
+control-adjusted, and provisional attribution outputs.
+
+The canonical workspace is:
+
+```powershell
+$TRENDS_ROOT = "C:\Work\Data\GeoDemand\trends"
+$B_ROOT = "$TRENDS_ROOT\0.8B"
+$PLANNING = "$B_ROOT\planning"
+$FROZEN = "$B_ROOT\frozen"
+$RAW_EXPORTS = "$B_ROOT\raw_exports"
+$SIDECARS = "$B_ROOT\sidecars"
+$REPORTS = "$B_ROOT\reports"
+```
+
+If `uv` is unavailable, activate the project virtual environment and run the
+installed console command directly:
+
+```powershell
+python -m pip install -e .
+geodemand --help
+```
+
+Generate or refresh deterministic matched controls:
+
+```powershell
+geodemand trends select-controls `
+  --pilot "$TRENDS_ROOT\manifests\trends_pilot_episodes.parquet" `
+  --rules config\trends_rules.yaml `
+  --output-root $TRENDS_ROOT
+```
+
+Generate the 0.8B opt-in event-study request plans:
+
+```powershell
+geodemand trends plan `
+  --pilot "$TRENDS_ROOT\manifests\trends_pilot_episodes.parquet" `
+  --geography "$TRENDS_ROOT\geography\geography_mapping.parquet" `
+  --terms config\trends_terms.yaml `
+  --rules config\trends_rules.yaml `
+  --include-behavioral-state `
+  --include-national `
+  --controls "$TRENDS_ROOT\controls\episode_control_states.parquet" `
+  --output-root $B_ROOT
+```
+
+The planning command writes:
+
+```text
+$B_ROOT\planning\trends_request_plan.csv
+$B_ROOT\planning\event_study_request_plan.csv
+$B_ROOT\planning\treated_state_comparison_plan.csv
+$B_ROOT\planning\national_comparison_plan.csv
+$B_ROOT\planning\control_state_request_plan.csv
+$B_ROOT\planning\manual_export_instructions.md
+```
+
+Freeze the generated planning package before manual exports:
+
+```powershell
+New-Item -ItemType Directory -Force $FROZEN
+
+Copy-Item "$PLANNING\*.csv" $FROZEN -Force
+Copy-Item "$PLANNING\*.parquet" $FROZEN -Force
+Copy-Item "$PLANNING\*.json" $FROZEN -Force
+Copy-Item "$PLANNING\manual_export_instructions.md" $FROZEN -Force
+
+Get-ChildItem $FROZEN -File |
+  Get-FileHash -Algorithm SHA256 |
+  Select-Object Path, Hash |
+  Export-Csv "$FROZEN\frozen_planning_hashes.csv" -NoTypeInformation
+```
+
+Create a manual export checklist from the base and event-study plans:
+
+```powershell
+python -c "import pandas as pd, pathlib; root=pathlib.Path(r'C:\Work\Data\GeoDemand\trends\0.8B'); p=root/'planning'; out=root/'frozen'/'manual_export_checklist.csv'; frames=[];
+for name, source in [('base','trends_request_plan.csv'),('event_study','event_study_request_plan.csv')]:
+    df=pd.read_csv(p/source)
+    df.insert(0,'plan_source',name)
+    frames.append(df)
+combined=pd.concat(frames, ignore_index=True).drop_duplicates()
+combined.to_csv(out,index=False)
+print(out, len(combined))"
+```
+
+Manual Google Trends CSV exports must be saved unchanged under:
+
+```powershell
+New-Item -ItemType Directory -Force $RAW_EXPORTS
+New-Item -ItemType Directory -Force $SIDECARS
+New-Item -ItemType Directory -Force $REPORTS
+```
+
+```text
+$RAW_EXPORTS
+$SIDECARS
+```
+
+Each raw export should have a matching sidecar recording the request ID, terms,
+geography, date window, download time, and export method. Raw exports must not be
+edited manually.
+
+After exports are collected and validated, run empirical metrics:
+
+```powershell
+geodemand trends phase-metrics `
+  --plan "$FROZEN\manual_export_checklist.csv" `
+  --exports $RAW_EXPORTS `
+  --output "$REPORTS\phase_metrics.csv"
+```
+
+```powershell
+geodemand trends concurrence `
+  --phase-metrics "$REPORTS\phase_metrics.csv" `
+  --output "$REPORTS\concurrence_metrics.csv"
+```
+
+```powershell
+geodemand trends control-adjusted-metrics `
+  --phase-metrics "$REPORTS\phase_metrics.csv" `
+  --output "$REPORTS\control_adjusted_metrics.csv"
+```
+
+```powershell
+geodemand trends attribute-peaks `
+  --phase-metrics "$REPORTS\phase_metrics.csv" `
+  --concurrence "$REPORTS\concurrence_metrics.csv" `
+  --control-adjusted "$REPORTS\control_adjusted_metrics.csv" `
+  --output "$REPORTS\peak_attribution.csv"
+```
+
+Milestone 0.8B is accepted only after the frozen planning package, manual export
+checklist, raw exports, sidecars, empirical metrics, and summary report are
+produced and documented. Empirical interpretation remains provisional and must
+respect Google Trends' request-relative 0-to-100 scaling.

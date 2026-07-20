@@ -202,6 +202,19 @@ through a scale validator that permits only within-series baseline-standardized
 lifts; raw request-relative indices cannot enter state-minus-national or
 treated-minus-control calculations.
 
+The optional browser export adapter is isolated in `trends_browser.py`. It
+consumes an existing plan, verifies one official Explore page, stages a download
+atomically, validates it with the shared CSV parser, and writes an operational
+Parquet manifest plus a browser lineage sidecar. Playwright loads dynamically,
+so core and offline test installations do not require a browser runtime.
+Selectors are centralized behind a session protocol; ordinary tests substitute
+deterministic sessions and synthetic downloads.
+
+The adapter is transport-only. It does not normalize values, interpret
+interest, mutate downloaded bytes, or bypass `import-csv`. Volatile attempt
+metadata stays in the manifest. Credentials, cookies, profile contents, and
+account identifiers are outside the data model.
+
 Control selection indexes provisional episode intervals by state before
 applying the configured temporal buffer. This avoids repeated full-catalog
 scans while retaining deterministic ranking. Population tier, climate class,

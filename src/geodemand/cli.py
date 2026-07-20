@@ -85,6 +85,15 @@ from geodemand.trends import (
 from geodemand.trends import (
     write_quicklooks as write_trends_quicklooks,
 )
+from geodemand.trends_browser import (
+    BrowserName,
+    ExportOptions,
+    browser_selfcheck,
+    export_browser,
+    export_retry,
+    export_status,
+    export_validate,
+)
 from geodemand.trends_event_study import (
     attribute_peaks,
     calculate_concurrence,
@@ -949,6 +958,124 @@ def trends_official_api_selfcheck_command(
 ) -> None:
     """Report official alpha API availability without exposing secrets or inventing endpoints."""
     _echo_json(official_api_selfcheck(config_path))
+
+
+@trends_app.command("browser-selfcheck")
+def trends_browser_selfcheck_command(
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    download_dir: Annotated[Path, typer.Option("--download-dir", file_okay=False)],
+    browser: Annotated[BrowserName, typer.Option("--browser")] = "chromium",
+    headless: Annotated[bool, typer.Option("--headless/--visible")] = False,
+    profile_dir: Annotated[Path | None, typer.Option("--profile-dir", file_okay=False)] = None,
+    request_id: Annotated[str | None, typer.Option("--request-id")] = None,
+) -> None:
+    """Check a visible browser and one planned Explore page without downloading."""
+    _run_trends(
+        lambda: browser_selfcheck(
+            plan_path,
+            download_dir,
+            browser=browser,
+            headless=headless,
+            profile_dir=profile_dir,
+            request_id=request_id,
+        )
+    )
+
+
+@trends_app.command("export-browser")
+def trends_export_browser_command(  # noqa: PLR0913
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    browser: Annotated[BrowserName, typer.Option("--browser")] = "chromium",
+    headless: Annotated[bool, typer.Option("--headless/--visible")] = False,
+    profile_dir: Annotated[Path | None, typer.Option("--profile-dir", file_okay=False)] = None,
+    max_requests: Annotated[int, typer.Option("--max-requests", min=1)] = 1,
+    request_ids: Annotated[list[str] | None, typer.Option("--request-id")] = None,
+    episode_id: Annotated[str | None, typer.Option("--episode-id")] = None,
+    geography: Annotated[str | None, typer.Option("--geography")] = None,
+    batch_id: Annotated[str | None, typer.Option("--batch-id")] = None,
+    delay_seconds: Annotated[float, typer.Option("--delay-seconds", min=15.0)] = 15.0,
+    supervised: Annotated[bool, typer.Option("--supervised")] = False,
+    resume: Annotated[bool, typer.Option("--resume")] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+    stop_on_error: Annotated[bool, typer.Option("--stop-on-error")] = False,
+    stop_on_captcha: Annotated[
+        bool, typer.Option("--stop-on-captcha/--continue-on-captcha")
+    ] = True,
+    overwrite: Annotated[bool, typer.Option("--overwrite")] = False,
+    mini_pilot: Annotated[bool, typer.Option("--mini-pilot")] = False,
+) -> None:
+    """Export bounded official Explore CSVs through one controlled browser page."""
+    options = ExportOptions(
+        browser=browser,
+        headless=headless,
+        profile_dir=profile_dir,
+        max_requests=max_requests,
+        request_ids=set(request_ids or []),
+        episode_id=episode_id,
+        geography=geography,
+        batch_id=batch_id,
+        delay_seconds=delay_seconds,
+        supervised=supervised,
+        resume=resume,
+        dry_run=dry_run,
+        stop_on_error=stop_on_error,
+        stop_on_captcha=stop_on_captcha,
+        overwrite=overwrite,
+        mini_pilot=mini_pilot,
+    )
+    _run_trends(lambda: export_browser(plan_path, output_root, options))
+
+
+@trends_app.command("export-status")
+def trends_export_status_command(
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    mini_pilot: Annotated[bool, typer.Option("--mini-pilot")] = False,
+) -> None:
+    """Report latest browser-export outcomes and remaining planned requests."""
+    _run_trends(lambda: export_status(plan_path, output_root, mini_pilot))
+
+
+@trends_app.command("export-retry")
+def trends_export_retry_command(  # noqa: PLR0913
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    request_ids: Annotated[list[str], typer.Option("--request-id")],
+    browser: Annotated[BrowserName, typer.Option("--browser")] = "chromium",
+    headless: Annotated[bool, typer.Option("--headless/--visible")] = False,
+    profile_dir: Annotated[Path | None, typer.Option("--profile-dir", file_okay=False)] = None,
+    max_requests: Annotated[int, typer.Option("--max-requests", min=1)] = 1,
+    delay_seconds: Annotated[float, typer.Option("--delay-seconds", min=15.0)] = 15.0,
+    supervised: Annotated[bool, typer.Option("--supervised")] = False,
+    stop_on_error: Annotated[bool, typer.Option("--stop-on-error")] = False,
+    overwrite: Annotated[bool, typer.Option("--overwrite")] = False,
+) -> None:
+    """Retry only explicitly named requests whose latest attempt is retryable."""
+    selected = set(request_ids)
+    options = ExportOptions(
+        browser=browser,
+        headless=headless,
+        profile_dir=profile_dir,
+        max_requests=max_requests,
+        request_ids=selected,
+        delay_seconds=delay_seconds,
+        supervised=supervised,
+        stop_on_error=stop_on_error,
+        overwrite=overwrite,
+    )
+    _run_trends(lambda: export_retry(plan_path, output_root, selected, options))
+
+
+@trends_app.command("export-validate")
+def trends_export_validate_command(
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    request_ids: Annotated[list[str] | None, typer.Option("--request-id")] = None,
+    mini_pilot: Annotated[bool, typer.Option("--mini-pilot")] = False,
+) -> None:
+    """Validate downloaded CSVs and browser sidecars without opening a browser."""
+    _run_trends(lambda: export_validate(plan_path, output_root, set(request_ids or []), mini_pilot))
 
 
 @trends_app.command("pilot-sample")

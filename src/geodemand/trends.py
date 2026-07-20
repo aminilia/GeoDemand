@@ -20,7 +20,12 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 
 from geodemand import __version__
 
-Backend = Literal["official_api", "manual_csv", "classic_web_experimental"]
+Backend = Literal[
+    "official_api",
+    "manual_csv",
+    "classic_web_experimental",
+    "playwright_export_assistant",
+]
 PARSER_VERSION = "0.8A-v1"
 MAX_TARGETS_PER_BATCH = 4
 SMALL_FOOTPRINT_KM2 = 25.0
@@ -188,6 +193,14 @@ class TrendsSidecar(BaseModel):
     repeat_id: str | None = None
     notes: str = ""
     terminology_version: str = "unknown_legacy"
+    export_attempt_id: str | None = None
+    export_timestamp_utc: datetime | None = None
+    request_plan_sha256: str | None = None
+    csv_sha256: str | None = None
+    browser_type: str | None = None
+    browser_automation_version: str | None = None
+    verification_status: str | None = None
+    verification_warnings: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_parallel_fields(self) -> TrendsSidecar:
@@ -199,8 +212,8 @@ class TrendsSidecar(BaseModel):
         }
         if len(lengths) != 1:
             raise ValueError("Concept, label, query-type, and family lists must align.")
-        if self.backend != "manual_csv":
-            raise ValueError("CSV imports require backend=manual_csv.")
+        if self.backend not in {"manual_csv", "playwright_export_assistant"}:
+            raise ValueError("CSV imports require a manual or browser-export backend.")
         if self.end_date < self.start_date:
             raise ValueError("Sidecar end_date precedes start_date.")
         return self
@@ -950,6 +963,57 @@ def calculate_metrics(
         "suppression": suppression_path,
         "normalization": normalization_path,
         "repeat_stability": repeat_path,
+    }
+
+
+def validate_trends_csv(path: Path, expected_labels: Sequence[str] | None = None) -> dict[str, Any]:
+    header, raw_rows = _parse_export(path)
+    labels = header[1:]
+    if expected_labels is not None:
+        if len(labels) != len(expected_labels):
+            raise TrendsError(
+                f"CSV series count {len(labels)} does not match expected count "
+                f"{len(expected_labels)}."
+            )
+        for actual, expected in zip(labels, expected_labels, strict=True):
+            if expected.casefold() not in actual.casefold():
+                raise TrendsError(
+                    f"CSV label {actual!r} does not match expected label {expected!r}."
+                )
+    seen_dates: set[date] = set()
+    partial_count = 0
+    zero_count = 0
+    value_count = 0
+    for raw in raw_rows:
+        observation_date = _parse_export_date(raw[0])
+        if observation_date in seen_dates:
+            raise TrendsError(f"Duplicate date in Trends CSV: {observation_date}")
+        seen_dates.add(observation_date)
+        if len(raw) != len(header):
+            raise TrendsError(
+                f"Trends CSV row for {observation_date} has {len(raw)} columns; "
+                f"expected {len(header)}."
+            )
+        for value in raw[1:]:
+            interest, partial, _ = _parse_interest(value)
+            partial_count += int(partial)
+            zero_count += int(interest == 0)
+            value_count += int(interest is not None)
+    if not seen_dates:
+        raise TrendsError("Trends CSV contains no observations.")
+    return {
+        "valid": True,
+        "date_column": header[0],
+        "query_labels": labels,
+        "term_count": len(labels),
+        "row_count": len(seen_dates),
+        "value_count": value_count,
+        "zero_count": zero_count,
+        "partial_count": partial_count,
+        "minimum_date": min(seen_dates).isoformat(),
+        "maximum_date": max(seen_dates).isoformat(),
+        "sha256": _sha256_file(path),
+        "byte_count": path.stat().st_size,
     }
 
 
