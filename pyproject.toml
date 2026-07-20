@@ -38,6 +38,7 @@ trends-browser = [
 ]
 dev = [
   "build>=1.2",
+  "click>=8.1,<9",
   "mypy>=1.10",
   "pre-commit>=3.7",
   "pytest>=8.2",
