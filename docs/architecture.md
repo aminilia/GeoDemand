@@ -33,12 +33,16 @@ testable without shelling out.
 
 ## Data Contracts
 
-`geodemand.schemas` is the central versioned PyArrow schema registry for scientific
-tables. It defines required fields and types without imposing per-row object validation
-on multimillion-row pipelines. Physical evidence additionally requires explicit origin,
-dataset, product, manifest, decoder, commit, and rule provenance. Pydantic is restricted
-to control-plane configuration and Trends sidecar validation; it does not govern bulk
-scientific rows.
+`geodemand.schemas` is an evolving versioned PyArrow schema registry. It currently gives
+the strongest enforcement to physical-evidence provenance and selected newer artifacts;
+most historical production writers still retain module-specific schemas. Physical
+evidence requires explicit origin, dataset, product, manifest, decoder, commit, and rule
+provenance. Pydantic is restricted to control-plane configuration and Trends sidecar
+validation; it does not govern bulk scientific rows.
+
+The wheel packages Python code only. Scientific workflows require the cloned repository's
+versioned `config/` and `data/reference/` files supplied through explicit paths. A clean
+wheel help check proves command registration, not standalone end-to-end reproducibility.
 
 ## Groundsource Ingestion
 

@@ -249,6 +249,28 @@ def test_control_selection_regional_fallback_and_no_valid_state(tmp_path: Path) 
     assert summary["episodes_with_controls"] == 0
 
 
+def test_unknown_trends_availability_gets_no_score_and_is_reported(tmp_path: Path) -> None:
+    pilot = tmp_path / "pilot.parquet"
+    catalog = tmp_path / "catalog.parquet"
+    treated = _episode("e1", "TX", date(2024, 6, 10))
+    _write(pilot, [treated])
+    _write(catalog, [treated])
+    metadata = Path(__file__).parents[1] / "data" / "reference" / "us_state_matching_metadata.csv"
+    metadata_rows = _csv_rows(metadata)
+    assert {row["observed_trends_availability"] for row in metadata_rows} == {"unknown"}
+    assert {row["metadata_version"] for row in metadata_rows} == {"2026-07-v2"}
+    assert all(row["metadata_source"].startswith("Analyst-derived") for row in metadata_rows)
+    assert metadata.with_suffix(".md").exists()
+    paths = select_controls(pilot, catalog, RULES, tmp_path / "unknown", metadata)
+    selected = _rows(paths["controls"])
+    summary = json.loads(paths["summary"].read_text(encoding="utf-8"))
+    assert selected
+    assert all(row["trends_availability"] == "unknown" for row in selected)
+    assert all(row["trends_availability_score"] == 0.0 for row in selected)
+    assert summary["selected_controls_with_unknown_trends_availability"] == len(selected)
+    assert summary["trends_availability_scoring"] == "not_awarded_when_unknown"
+
+
 def test_control_adjusted_lift_and_raw_subtraction_guard(tmp_path: Path) -> None:
     phase = tmp_path / "phase.parquet"
     controls = tmp_path / "controls.parquet"
@@ -274,6 +296,84 @@ def test_control_adjusted_lift_and_raw_subtraction_guard(tmp_path: Path) -> None
     assert subtract_standardized_lifts(3.0, 1.5, STANDARDIZED_COMPARISON_SCALE) == 1.5
     with pytest.raises(TrendsError, match="baseline-standardized"):
         subtract_standardized_lifts(80.0, 20.0, "raw_google_trends_index")
+
+
+def test_cross_geography_comparisons_aggregate_unaligned_repeats(tmp_path: Path) -> None:
+    phase = tmp_path / "phase.parquet"
+    controls = tmp_path / "controls.parquet"
+    plan = tmp_path / "plan.parquet"
+    observations = tmp_path / "observations.parquet"
+    rows = [
+        _repeat_phase_row("treated", "treated_state_comparison", "US-FL", "t-a", 3.0),
+        _repeat_phase_row("treated", "treated_state_comparison", "US-FL", "t-b", 5.0),
+        _repeat_phase_row("national", "national_comparison", "US", "n-z", 2.0),
+        _repeat_phase_row("c1", "control_state", "US-GA", "c-a", 1.0),
+        _repeat_phase_row("c1", "control_state", "US-GA", "c-b", 2.0),
+        _repeat_phase_row("c1", "control_state", "US-GA", "c-c", 3.0),
+        _repeat_phase_row("c2", "control_state", "US-SC", "other", 1.0),
+    ]
+    _write(phase, rows)
+    _write(
+        controls,
+        [
+            {"treated_episode": "e1", "control_state": "GA"},
+            {"treated_episode": "e1", "control_state": "SC"},
+        ],
+    )
+    _write(
+        plan,
+        [
+            _plan("treated", role="treated_state_comparison"),
+            _plan("national", role="national_comparison", geography="US"),
+        ],
+    )
+    _write(observations, _observations("treated", {"walmart": date(2024, 6, 10)}))
+
+    first = calculate_control_adjusted_metrics(phase, controls, tmp_path / "first")
+    second = calculate_control_adjusted_metrics(phase, controls, tmp_path / "second")
+    immediate = next(
+        row for row in _rows(first["control_adjusted_metrics"]) if row["phase"] == "immediate"
+    )
+    assert immediate["treated_event_lift"] == 4.0
+    assert immediate["median_control_event_lift"] == 1.5
+    assert immediate["treated_repeat_count"] == 2
+    assert immediate["control_count"] == 2
+    assert immediate["control_repeat_counts"] == "c1:3;c2:1"
+    assert _sha(first["control_adjusted_metrics"]) == _sha(second["control_adjusted_metrics"])
+
+    national = calculate_concurrence(observations, plan, TERMS, RULES, tmp_path / "national", phase)
+    national_row = _csv_rows(national["national_spikes"])[0]
+    assert national_row["treated_repeat_count"] == "2"
+    assert national_row["national_repeat_count"] == "1"
+    assert float(national_row["state_minus_national_lift"]) == 2.0
+
+
+def test_aggregate_recomputes_dominant_phase_and_peak_agreement(tmp_path: Path) -> None:
+    plan = tmp_path / "plan.parquet"
+    observations = tmp_path / "observations.parquet"
+    _write(plan, [_plan("r1")])
+    _write(
+        observations,
+        [
+            *_observations("r1", {"walmart": date(2024, 6, 4)}, repeat_id="one"),
+            *_observations("r1", {"walmart": date(2024, 6, 11)}, repeat_id="two"),
+        ],
+    )
+    paths = calculate_phase_metrics(observations, plan, TERMS, RULES, tmp_path / "out")
+    aggregate = _rows(paths["phase_metrics_aggregated"])[0]
+    phase_values = {
+        phase: aggregate[f"{phase}_standardized_lift"]
+        for phase in ("anticipatory", "immediate", "early_recovery", "extended_recovery")
+    }
+    expected = max(phase_values, key=lambda phase: (phase_values[phase], phase))
+    assert aggregate["dominant_event_response_phase"] == expected
+    assert aggregate["dominant_standardized_phase_lift"] == phase_values[expected]
+    assert aggregate["global_peak_date"] is None
+    assert aggregate["global_peak_phase"] is None
+    assert aggregate["repeat_peak_date_agreement"] is False
+    assert aggregate["repeat_peak_date_range_days"] == 7
+    assert aggregate["repeat_dominant_phase_agreement"] is False
+    assert aggregate["aggregation_method"] == "arithmetic_mean_after_repeat_variability"
 
 
 @pytest.mark.parametrize(
@@ -668,6 +768,25 @@ def _phase_row(request_id: str, role: str, geography: str, lift: float) -> dict[
             f"{phase}_standardized_lift": lift
             for phase in ("anticipatory", "immediate", "early_recovery", "extended_recovery")
         },
+    }
+
+
+def _repeat_phase_row(
+    request_id: str, role: str, geography: str, repeat_id: str, lift: float
+) -> dict[str, object]:
+    return {
+        **_phase_row(request_id, role, geography, lift),
+        "repeat_id": repeat_id,
+        "export_attempt_id": f"attempt-{repeat_id}",
+        "global_peak_date": "2024-06-10",
+        "global_peak_phase": "immediate",
+        "global_peak_value": 80.0,
+        "peak_date": "2024-06-10",
+        "peak_phase": "immediate",
+        "dominant_event_response_phase": "immediate",
+        "metric_quality_status": "usable",
+        "repeat_stability_status": "stable",
+        "maximum_repeat_phase_lift_stddev": 0.1,
     }
 
 

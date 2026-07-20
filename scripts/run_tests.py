@@ -21,6 +21,7 @@ def main() -> int:
     env["TMP"] = str(runtime_dir)
     env["TEMP"] = str(runtime_dir)
     env["TMPDIR"] = str(runtime_dir)
+    env["PYTHONPATH"] = _repository_pythonpath(project_root, env.get("PYTHONPATH"))
 
     command = [
         sys.executable,
@@ -35,6 +36,13 @@ def main() -> int:
         return completed.returncode
     finally:
         shutil.rmtree(runtime_dir, ignore_errors=True)
+
+
+def _repository_pythonpath(project_root: Path, existing: str | None) -> str:
+    entries = [str(project_root / "src"), str(project_root)]
+    if existing:
+        entries.append(existing)
+    return os.pathsep.join(entries)
 
 
 if __name__ == "__main__":

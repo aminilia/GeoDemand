@@ -6,6 +6,7 @@ from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import yaml
 
 from geodemand.usgs import extract_usgs
 
@@ -87,14 +88,32 @@ def test_excluded_qualifier_prevents_response(tmp_path: Path) -> None:
     assert metric["quality_reasons"] == "excluded_qualifier"
 
 
+def test_production_response_thresholds_come_from_versioned_rules(tmp_path: Path) -> None:
+    rows = _observations("g1", baseline=1.0, rise=2.0)
+    default_metric = _extract(tmp_path / "default", rows, [_association("g1")])[0]
+    rules = yaml.safe_load(RULES.read_text(encoding="utf-8"))
+    rules["response"]["discharge"]["minimum_absolute_rise"] = 100.0
+    rules["response"]["discharge"]["minimum_relative_ratio"] = 100.0
+    strict_rules = tmp_path / "strict_rules.yaml"
+    strict_rules.write_text(yaml.safe_dump(rules, sort_keys=True), encoding="utf-8")
+    strict_metric = _extract(
+        tmp_path / "strict", rows, [_association("g1")], rules_path=strict_rules
+    )[0]
+    assert default_metric["response_detected"] is True
+    assert strict_metric["response_detected"] is False
+
+
 def _extract(
-    root: Path, observations: list[dict[str, Any]], associations: list[dict[str, Any]]
+    root: Path,
+    observations: list[dict[str, Any]],
+    associations: list[dict[str, Any]],
+    rules_path: Path = RULES,
 ) -> list[dict[str, Any]]:
     observation_path = root / "observations.parquet"
     association_path = root / "associations.parquet"
     _write(observation_path, observations)
     _write(association_path, associations)
-    paths = extract_usgs(observation_path, association_path, root, RULES)
+    paths = extract_usgs(observation_path, association_path, root, rules_path)
     return pq.read_table(paths["usgs_gauge_response_metrics"]).to_pylist()
 
 

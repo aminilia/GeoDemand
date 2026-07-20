@@ -9,9 +9,11 @@ from typing import Any
 from click.testing import CliRunner
 from typer.main import get_command
 
-from geodemand.cli import app
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path[:0] = [str(ROOT / "src"), str(ROOT)]
+
+from geodemand.cli import app  # noqa: E402
+
 TOKEN_PATTERN = re.compile(r'"[^"]*"|\'[^\']*\'|\S+')
 
 

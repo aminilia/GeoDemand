@@ -30,7 +30,6 @@ from geodemand.usgs import (
     discover_usgs,
     extract_usgs,
     fetch_usgs,
-    response_metrics,
     selfcheck_usgs,
 )
 
@@ -132,7 +131,6 @@ def test_usgs_discover_fetch_extract_and_no_gauge_unknown(tmp_path: Path) -> Non
     )
     metrics = pq.read_table(extracted["usgs_gauge_response_metrics"]).to_pylist()
     assert any(row["response_detected"] for row in metrics)
-    assert response_metrics([0.0, 0.0, 1.0])["relative_rise"] is None
 
     no_gauge = discover_usgs(sample, tmp_path / "nogauge", client=FakeUsgsClient(no_gauges=True))
     fetched_empty = fetch_usgs(no_gauge["usgs_request_plan"], tmp_path / "nogauge", client=client)

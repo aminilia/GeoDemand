@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import sys
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -12,11 +13,12 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from shapely.geometry import Polygon
 
-from geodemand.catalog import build_provisional_catalog, discover_catalog_inputs
-from geodemand.episodes import build_episodes, compare_episode_policies
-from geodemand.trends_event_study import calculate_phase_metrics
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path[:0] = [str(ROOT / "src"), str(ROOT)]
+
+from geodemand.catalog import build_provisional_catalog, discover_catalog_inputs  # noqa: E402
+from geodemand.episodes import build_episodes, compare_episode_policies  # noqa: E402
+from geodemand.trends_event_study import calculate_phase_metrics  # noqa: E402
 
 
 def main() -> int:

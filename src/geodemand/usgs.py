@@ -27,8 +27,6 @@ DEFAULT_RADIUS_KM = 50.0
 FALLBACK_RADIUS_KM = 100.0
 MAX_GAUGES_PER_EPISODE = 3
 MAX_ATTEMPTS = 3
-ZERO_BASELINE_EPSILON = 1e-9
-RESPONSE_RATIO_THRESHOLD = 1.5
 EPISODE_BUFFER_KM = 25.0
 MIN_CADENCE_OBSERVATIONS = 2
 
@@ -389,31 +387,6 @@ def extract_usgs(
     return {
         "usgs_gauge_response_metrics": metrics_path,
         "usgs_episode_response_summary": summary_path,
-    }
-
-
-def response_metrics(values: Sequence[float], pre_count: int = 3) -> dict[str, Any]:
-    if not values:
-        return {"response_detected": False, "response_assessment_reason": "missing_observations"}
-    pre = list(values[:pre_count]) or [values[0]]
-    event = list(values[pre_count:]) or list(values)
-    pre_median = sorted(pre)[len(pre) // 2]
-    event_max = max(event)
-    absolute_rise = event_max - pre_median
-    relative_rise = None if abs(pre_median) < ZERO_BASELINE_EPSILON else event_max / pre_median
-    rates = [values[index + 1] - values[index] for index in range(len(values) - 1)]
-    max_rate = max(rates) if rates else 0.0
-    detected = absolute_rise > 0 and (
-        relative_rise is None or relative_rise >= RESPONSE_RATIO_THRESHOLD or max_rate > 0
-    )
-    return {
-        "pre_event_median": pre_median,
-        "event_maximum": event_max,
-        "absolute_rise": absolute_rise,
-        "relative_rise": relative_rise,
-        "maximum_positive_rate_of_change": max_rate,
-        "response_detected": detected,
-        "response_assessment_reason": "rise_detected" if detected else "no_clear_rise",
     }
 
 

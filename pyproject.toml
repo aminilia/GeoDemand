@@ -90,6 +90,7 @@ python_version = "3.11"
 strict = true
 warn_unused_configs = true
 packages = ["geodemand"]
+mypy_path = "src"
 
 [[tool.mypy.overrides]]
 module = [
