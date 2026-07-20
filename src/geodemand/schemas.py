@@ -8,20 +8,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 SCHEMA_VERSION = "1.0.0"
-PHYSICAL_EVIDENCE_SCHEMA_VERSION = "physical-evidence-v1"
 DataOrigin = Literal["observed", "synthetic_fixture"]
 ALLOWED_DATA_ORIGINS = frozenset({"observed", "synthetic_fixture"})
-
-PROVENANCE_FIELDS = [
-    pa.field("schema_version", pa.string(), nullable=False),
-    pa.field("data_origin", pa.string(), nullable=False),
-    pa.field("source_dataset", pa.string(), nullable=False),
-    pa.field("source_product", pa.string(), nullable=False),
-    pa.field("source_manifest_hash", pa.string(), nullable=False),
-    pa.field("decoder_version", pa.string(), nullable=False),
-    pa.field("code_commit", pa.string(), nullable=False),
-    pa.field("rule_version", pa.string(), nullable=False),
-]
 
 
 def _schema(name: str, fields: Sequence[pa.Field]) -> pa.Schema:
@@ -78,91 +66,10 @@ SCHEMAS: dict[str, pa.Schema] = {
         [
             pa.field("provisional_episode_id", pa.string(), nullable=False),
             pa.field("source_conservative_episode_id", pa.string(), nullable=False),
-            pa.field("mrms_status", pa.string()),
-            pa.field("usgs_status", pa.string()),
+            pa.field("balanced_merges_multiple_conservative_episodes", pa.bool_()),
+            pa.field("balanced_crosses_split_boundary", pa.bool_()),
             pa.field("rule_version", pa.string(), nullable=False),
         ],
-    ),
-    "mrms_episode_metrics": pa.schema(
-        [
-            *PROVENANCE_FIELDS,
-            pa.field("episode_id", pa.string(), nullable=False),
-            pa.field("coverage_fraction", pa.float64()),
-            pa.field("max_gridcell_1h_mm", pa.float64()),
-        ],
-        metadata={
-            b"geodemand.schema_name": b"mrms_episode_metrics",
-            b"geodemand.schema_version": PHYSICAL_EVIDENCE_SCHEMA_VERSION.encode(),
-        },
-    ),
-    "mrms_member_metrics": pa.schema(
-        [
-            *PROVENANCE_FIELDS,
-            pa.field("episode_id", pa.string(), nullable=False),
-            pa.field("event_record_id", pa.string(), nullable=False),
-            pa.field("max_1h_mm", pa.float64()),
-        ],
-        metadata={
-            b"geodemand.schema_name": b"mrms_member_metrics",
-            b"geodemand.schema_version": PHYSICAL_EVIDENCE_SCHEMA_VERSION.encode(),
-        },
-    ),
-    "imerg_episode_metrics": pa.schema(
-        [
-            *PROVENANCE_FIELDS,
-            pa.field("episode_id", pa.string(), nullable=False),
-            pa.field("coverage_fraction", pa.float64()),
-            pa.field("maximum_gridcell_30m_mm", pa.float64()),
-        ],
-        metadata={
-            b"geodemand.schema_name": b"imerg_episode_metrics",
-            b"geodemand.schema_version": PHYSICAL_EVIDENCE_SCHEMA_VERSION.encode(),
-        },
-    ),
-    "imerg_member_metrics": pa.schema(
-        [
-            *PROVENANCE_FIELDS,
-            pa.field("episode_id", pa.string(), nullable=False),
-            pa.field("event_record_id", pa.string(), nullable=False),
-            pa.field("maximum_30m_mm", pa.float64()),
-        ],
-        metadata={
-            b"geodemand.schema_name": b"imerg_member_metrics",
-            b"geodemand.schema_version": PHYSICAL_EVIDENCE_SCHEMA_VERSION.encode(),
-        },
-    ),
-    "usgs_observations": pa.schema(
-        [
-            *PROVENANCE_FIELDS,
-            pa.field("episode_id", pa.string(), nullable=False),
-            pa.field("monitoring_location_id", pa.string(), nullable=False),
-            pa.field("parameter_code", pa.string(), nullable=False),
-            pa.field("time_utc", pa.string(), nullable=False),
-            pa.field("value", pa.float64()),
-            pa.field("unit", pa.string()),
-            pa.field("qualifier", pa.string()),
-            pa.field("approval_status", pa.string()),
-            pa.field("backend", pa.string()),
-        ],
-        metadata={
-            b"geodemand.schema_name": b"usgs_observations",
-            b"geodemand.schema_version": PHYSICAL_EVIDENCE_SCHEMA_VERSION.encode(),
-        },
-    ),
-    "usgs_response_metrics": pa.schema(
-        [
-            *PROVENANCE_FIELDS,
-            pa.field("episode_id", pa.string(), nullable=False),
-            pa.field("monitoring_location_id", pa.string(), nullable=False),
-            pa.field("parameter_code", pa.string(), nullable=False),
-            pa.field("response_score", pa.float64()),
-            pa.field("response_detected", pa.bool_()),
-            pa.field("association_quality", pa.string()),
-        ],
-        metadata={
-            b"geodemand.schema_name": b"usgs_response_metrics",
-            b"geodemand.schema_version": PHYSICAL_EVIDENCE_SCHEMA_VERSION.encode(),
-        },
     ),
     "trends_observations": _schema(
         "trends_observations",
@@ -250,30 +157,6 @@ def validate_required_fields(table: pa.Table, name: str) -> None:
             raise ValueError(
                 f"{name}.{field.name} has type {table.schema.field(field.name).type}; "
                 f"expected {field.type}."
-            )
-
-
-def validate_physical_evidence_provenance(
-    table: pa.Table, label: str, *, require_observed: bool = True
-) -> None:
-    required = {field.name for field in PROVENANCE_FIELDS}
-    missing = sorted(required - set(table.column_names))
-    if missing:
-        raise ValueError(f"{label} is missing provenance fields: {', '.join(missing)}")
-    for row_index, row in enumerate(table.select(sorted(required)).to_pylist()):
-        if row["schema_version"] != PHYSICAL_EVIDENCE_SCHEMA_VERSION:
-            raise ValueError(
-                f"{label} row {row_index} has unsupported schema_version: {row['schema_version']!r}"
-            )
-        origin = row["data_origin"]
-        if origin not in ALLOWED_DATA_ORIGINS:
-            raise ValueError(f"{label} row {row_index} has invalid data_origin: {origin!r}")
-        if require_observed and origin != "observed":
-            raise ValueError(f"{label} row {row_index} has rejected data_origin: {origin!r}")
-        empty = sorted(name for name in required if row.get(name) in {None, ""})
-        if empty:
-            raise ValueError(
-                f"{label} row {row_index} has empty provenance fields: {', '.join(empty)}"
             )
 
 

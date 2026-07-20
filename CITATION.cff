@@ -6,4 +6,4 @@ authors:
   - family-names: "Ilia"
     given-names: "Amin"
 license: MIT
-abstract: "A reproducible geospatial event-study pipeline for constructing candidate U.S. flood episodes and measuring state-level search-interest responses around them."
+abstract: "GeoDemand-FF is a reproducible geospatial event-study pipeline for constructing candidate U.S. flood episodes from reported flood footprints and evaluating state-level search-interest responses before and after those episodes."

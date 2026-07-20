@@ -14,6 +14,9 @@ import yaml
 from geodemand.trends import VALID_STATES, TrendsError, map_geographies, plan_requests
 from geodemand.trends_event_study import (
     STANDARDIZED_COMPARISON_SCALE,
+    _logical_concurrence_rows,
+    _logical_phase_rows,
+    _national_comparisons,
     calculate_concurrence,
     calculate_control_adjusted_metrics,
     calculate_phase_metrics,
@@ -157,6 +160,41 @@ def test_insufficient_observations_skip_correlation(tmp_path: Path) -> None:
     assert walmart["weather_context_correlation"] is None
 
 
+def test_per_repeat_concurrence_is_preserved_and_aggregate_is_separate(tmp_path: Path) -> None:
+    plan = tmp_path / "plan.parquet"
+    observations = tmp_path / "observations.parquet"
+    _write(plan, [_plan("r1", concepts="context_weather;flood;walmart")])
+    rows = []
+    for repeat_id, flood_peak in (
+        ("repeat-1", date(2024, 6, 10)),
+        ("repeat-2", date(2024, 6, 18)),
+    ):
+        rows.extend(
+            _observations(
+                "r1",
+                {
+                    "walmart": date(2024, 6, 9),
+                    "flood": flood_peak,
+                    "context_weather": date(2024, 6, 9),
+                },
+                repeat_id=repeat_id,
+            )
+        )
+    _write(observations, rows)
+    phase = calculate_phase_metrics(observations, plan, TERMS, RULES, tmp_path / "out")
+    paths = calculate_concurrence(
+        observations, plan, TERMS, RULES, tmp_path / "out", phase["phase_metrics"]
+    )
+    per_repeat = [row for row in _rows(paths["concurrence"]) if row["concept_id"] == "walmart"]
+    aggregate = next(
+        row for row in _rows(paths["concurrence_aggregated"]) if row["concept_id"] == "walmart"
+    )
+    assert {row["repeat_id"] for row in per_repeat} == {"repeat-1", "repeat-2"}
+    assert [row["simultaneous_flood_awareness_flag"] for row in per_repeat] == [True, False]
+    assert aggregate["strong_flood_concurrent_repeat_fraction"] == 0.5
+    assert aggregate["concurrence_consensus_status"] == "minority_only"
+
+
 def test_national_retailer_spike_uses_standardized_lifts(tmp_path: Path) -> None:
     plan = tmp_path / "plan.parquet"
     observations = tmp_path / "observations.parquet"
@@ -175,6 +213,7 @@ def test_national_retailer_spike_uses_standardized_lifts(tmp_path: Path) -> None
     )
     row = _csv_rows(paths["national_spikes"])[0]
     assert row["national_concurrent_spike_flag"] == "True"
+    assert row["national_concurrence_status"] == "concurrent"
     assert row["comparison_scale"] == STANDARDIZED_COMPARISON_SCALE
     assert row["raw_index_subtraction_performed"] == "False"
 
@@ -494,9 +533,11 @@ def test_peak_attribution_categories(
         "proxy_type": proxy_type,
     }
     concurrence = {
-        "simultaneous_flood_awareness_flag": flood,
-        "simultaneous_weather_attention_flag": weather,
-        "simultaneous_nonflood_weather_flag": nonflood,
+        "repeat_count": 1,
+        "concurrence_consensus_status": "not_repeated",
+        "strong_flood_concurrent_repeat_fraction": float(flood),
+        "weather_concurrent_repeat_fraction": float(weather),
+        "nonflood_weather_concurrent_repeat_fraction": float(nonflood),
     }
     control_row = (
         {
@@ -507,12 +548,193 @@ def test_peak_attribution_categories(
         if control is not None
         else None
     )
-    national_row = {"national_concurrent_spike_flag": national} if national is not None else None
+    national_row = (
+        {
+            "national_concurrence_status": "concurrent" if national else "not_concurrent",
+            "national_concurrent_spike_flag": national,
+        }
+        if national is not None
+        else None
+    )
     category, reasons = classify_peak_attribution(
         phase, concurrence, control_row, national_row, _rules()["attribution"]
     )
     assert category == expected
     assert reasons
+
+
+@pytest.mark.parametrize(
+    ("flags", "differences", "status", "fraction"),
+    [
+        ([True, False], [1, 8], "minority_only", 0.5),
+        ([True, True], [1, 2], "unanimous", 1.0),
+        ([True, True, False], [1, 2, 8], "majority", 2 / 3),
+        ([True, False, False], [1, 8, 9], "minority_only", 1 / 3),
+        ([False, False], [8, 9], "none", 0.0),
+        ([False, False], [None, None], "insufficient_repeat_evidence", 0.0),
+    ],
+)
+def test_repeat_concurrence_consensus_metrics(
+    flags: list[bool],
+    differences: list[int | None],
+    status: str,
+    fraction: float,
+) -> None:
+    rows = [
+        _concurrence_row(f"repeat-{index}", flag, difference)
+        for index, (flag, difference) in enumerate(zip(flags, differences, strict=True), 1)
+    ]
+    aggregate = _logical_concurrence_rows(rows)[0]
+    assert aggregate["repeat_count"] == len(flags)
+    assert aggregate["strong_flood_concurrent_repeat_count"] == sum(flags)
+    assert aggregate["strong_flood_concurrent_repeat_fraction"] == pytest.approx(fraction)
+    assert aggregate["concurrence_consensus_status"] == status
+    assert aggregate["any_repeat_strong_flood_concurrence"] is any(flags)
+
+
+def test_concurrence_aggregate_does_not_copy_disagreeing_repeat_values() -> None:
+    first = _concurrence_row("repeat-1", True, 1)
+    second = _concurrence_row("repeat-2", False, 8)
+    second.update(
+        {
+            "flood_awareness_concept_id": "flooding",
+            "weather_context_concept_id": "context_rain",
+            "nonflood_weather_concept_id": "context_heat",
+            "flood_awareness_peak_date": "2024-06-18",
+            "demand_proxy_peak_date": "2024-06-17",
+            "flood_awareness_correlation": 0.2,
+            "weather_context_correlation": 0.3,
+        }
+    )
+    aggregate = _logical_concurrence_rows([first, second])[0]
+    assert aggregate["flood_awareness_concept_id"] is None
+    assert aggregate["weather_context_concept_id"] is None
+    assert aggregate["nonflood_weather_concept_id"] is None
+    assert aggregate["repeat_flood_awareness_concept_agreement"] is False
+    assert aggregate["repeat_weather_context_concept_agreement"] is False
+    assert aggregate["repeat_nonflood_context_concept_agreement"] is False
+    assert aggregate["flood_awareness_peak_date"] is None
+    assert aggregate["demand_proxy_peak_date"] is None
+    assert aggregate["demand_flood_peak_difference_days"] is None
+    assert aggregate["flood_peak_difference_median_days"] == 4.5
+    assert aggregate["flood_peak_difference_range_days"] == 7.0
+    assert aggregate["flood_awareness_correlation"] is None
+    assert aggregate["flood_awareness_correlation_median"] == 0.35
+    assert aggregate["flood_awareness_correlation_minimum"] == 0.2
+    assert aggregate["flood_awareness_correlation_maximum"] == 0.5
+    assert aggregate["flood_awareness_correlation_valid_repeat_count"] == 2
+
+
+def test_concurrence_aggregation_is_deterministic() -> None:
+    rows = [
+        _concurrence_row("repeat-2", False, 8),
+        _concurrence_row("repeat-1", True, 1),
+    ]
+    assert _logical_concurrence_rows(rows) == _logical_concurrence_rows(list(reversed(rows)))
+
+
+def test_two_repeat_consensus_requires_unanimity_for_attribution() -> None:
+    phase = _attribution_phase()
+    control = _usable_control()
+    rules = _rules()["attribution"]
+    minority = _logical_concurrence_rows(
+        [_concurrence_row("repeat-1", True, 1), _concurrence_row("repeat-2", False, 8)]
+    )[0]
+    unanimous = _logical_concurrence_rows(
+        [_concurrence_row("repeat-1", True, 1), _concurrence_row("repeat-2", True, 2)]
+    )[0]
+    national = {"national_concurrence_status": "not_concurrent"}
+    assert classify_peak_attribution(phase, minority, control, national, rules)[0] != (
+        "event_consistent_signal"
+    )
+    assert classify_peak_attribution(phase, unanimous, control, national, rules)[0] == (
+        "event_consistent_signal"
+    )
+
+
+def test_two_of_three_repeats_satisfy_configured_consensus() -> None:
+    phase = _attribution_phase()
+    phase["repeat_count"] = 3
+    phase["repeat_stability_status"] = "stable"
+    concurrence = _logical_concurrence_rows(
+        [
+            _concurrence_row("repeat-1", True, 1),
+            _concurrence_row("repeat-2", True, 2),
+            _concurrence_row("repeat-3", False, 8),
+        ]
+    )[0]
+    category, _ = classify_peak_attribution(
+        phase,
+        concurrence,
+        _usable_control(),
+        {"national_concurrence_status": "not_concurrent"},
+        _rules()["attribution"],
+    )
+    assert category == "event_consistent_signal"
+
+
+@pytest.mark.parametrize(
+    ("state_dates", "national_dates", "status"),
+    [
+        (
+            ["2024-06-10", "2024-06-12"],
+            ["2024-06-10", "2024-06-10"],
+            "indeterminate_state_repeat_disagreement",
+        ),
+        (
+            ["2024-06-10", "2024-06-10"],
+            ["2024-06-10", "2024-06-12"],
+            "indeterminate_national_repeat_disagreement",
+        ),
+        (
+            ["2024-06-10", "2024-06-12"],
+            ["2024-06-10", "2024-06-13"],
+            "indeterminate_both_repeat_disagreement",
+        ),
+    ],
+)
+def test_national_repeat_disagreement_is_indeterminate(
+    state_dates: list[str], national_dates: list[str], status: str
+) -> None:
+    rows = [
+        *_dated_phase_repeats("state", "treated_state_comparison", "US-FL", state_dates),
+        *_dated_phase_repeats("national", "national_comparison", "US", national_dates),
+    ]
+    comparison = _national_comparisons(_logical_phase_rows(rows), _rules()["event_study"])[0]
+    assert comparison["national_concurrence_status"] == status
+    assert comparison["national_concurrent_spike_flag"] is None
+    assert comparison["state_repeat_count"] == 2
+    assert comparison["national_repeat_count"] == 2
+
+
+def test_indeterminate_national_evidence_downgrades_event_attribution() -> None:
+    category, reasons = classify_peak_attribution(
+        _attribution_phase(),
+        _logical_concurrence_rows([_concurrence_row("repeat-1", True, 1)])[0],
+        _usable_control(),
+        {"national_concurrence_status": "indeterminate_national_repeat_disagreement"},
+        _rules()["attribution"],
+    )
+    assert category == "possibly_event_consistent"
+    assert "national_concurrence_indeterminate_or_unavailable" in reasons
+
+
+def test_retailer_promotional_classification_requires_confirmed_national_concurrence() -> None:
+    phase = _attribution_phase(proxy_type="retailer_brand")
+    no_flood = _logical_concurrence_rows([_concurrence_row("repeat-1", False, 8)])[0]
+    rules = _rules()["attribution"]
+    confirmed = classify_peak_attribution(
+        phase, no_flood, None, {"national_concurrence_status": "concurrent"}, rules
+    )[0]
+    indeterminate = classify_peak_attribution(
+        phase,
+        no_flood,
+        None,
+        {"national_concurrence_status": "indeterminate_state_repeat_disagreement"},
+        rules,
+    )[0]
+    assert confirmed == "likely_national_or_promotional"
+    assert indeterminate != "likely_national_or_promotional"
 
 
 def test_optional_request_plans_are_bounded_and_deterministic(tmp_path: Path) -> None:
@@ -787,6 +1009,71 @@ def _repeat_phase_row(
         "metric_quality_status": "usable",
         "repeat_stability_status": "stable",
         "maximum_repeat_phase_lift_stddev": 0.1,
+    }
+
+
+def _dated_phase_repeats(
+    request_id: str, role: str, geography: str, peak_dates: list[str]
+) -> list[dict[str, object]]:
+    rows = []
+    for index, peak_date in enumerate(peak_dates, 1):
+        row = _repeat_phase_row(request_id, role, geography, f"repeat-{index}", 1.0)
+        row["global_peak_date"] = peak_date
+        row["peak_date"] = peak_date
+        rows.append(row)
+    return rows
+
+
+def _concurrence_row(
+    repeat_id: str, flood_concurrent: bool, difference: int | None
+) -> dict[str, object]:
+    return {
+        "provisional_episode_id": "e1",
+        "episode_id": "e1",
+        "request_id": "state",
+        "repeat_id": repeat_id,
+        "export_attempt_id": f"attempt-{repeat_id}",
+        "request_role": "treated_state_comparison",
+        "geography": "US-FL",
+        "geography_level": "state",
+        "batch_id": "national_1_retailer_context",
+        "comparison_batch_id": "national_1_retailer_context",
+        "concept_id": "walmart",
+        "terminology_version": "0.8A-v3",
+        "proxy_type": "preparation_product",
+        "flood_awareness_concept_id": "flood",
+        "weather_context_concept_id": "context_weather",
+        "nonflood_weather_concept_id": None,
+        "flood_awareness_peak_date": "2024-06-10",
+        "demand_proxy_peak_date": "2024-06-09",
+        "demand_flood_peak_difference_days": difference,
+        "simultaneous_flood_awareness_flag": flood_concurrent,
+        "moderate_flood_awareness_flag": difference is not None and difference <= 7,
+        "simultaneous_weather_attention_flag": False,
+        "simultaneous_nonflood_weather_flag": False,
+        "flood_awareness_correlation": 0.5,
+        "weather_context_correlation": 0.4,
+    }
+
+
+def _attribution_phase(proxy_type: str = "preparation_product") -> dict[str, object]:
+    return {
+        "metric_quality_status": "usable",
+        "peak_phase": "immediate",
+        "dominant_event_response_phase": "immediate",
+        "dominant_standardized_phase_lift": 1.0,
+        "dominant_robust_phase_lift": 1.0,
+        "repeat_count": 1,
+        "repeat_stability_status": "not_repeated",
+        "proxy_type": proxy_type,
+    }
+
+
+def _usable_control() -> dict[str, object]:
+    return {
+        "adjusted_event_lift": 1.0,
+        "control_count": 3,
+        "control_quality_status": "usable",
     }
 
 

@@ -26,10 +26,10 @@ RULES = Path(__file__).parents[1] / "config" / "catalog_rules.yaml"
 
 
 def test_catalog_build_is_deterministic_and_preserves_accounting(
-    catalog_inputs: tuple[Path, Path, Path, Path, Path], tmp_path: Path
+    catalog_inputs: tuple[Path, Path, Path], tmp_path: Path
 ) -> None:
-    cohort, episodes, comparison, mrms, usgs = catalog_inputs
-    inputs = discover_catalog_inputs(cohort, episodes, comparison, mrms, usgs)
+    cohort, episodes, comparison = catalog_inputs
+    inputs = discover_catalog_inputs(cohort, episodes, comparison)
     first = build_provisional_catalog(inputs, tmp_path / "first", RULES)
     second = build_provisional_catalog(inputs, tmp_path / "second", RULES)
 
@@ -44,15 +44,12 @@ def test_catalog_build_is_deterministic_and_preserves_accounting(
     assert validation["valid"] is True
     assert all(row["source_conservative_episode_id"] for row in membership)
     assert evidence["c1"]["balanced_merges_multiple_conservative_episodes"] is True
-    assert evidence["c4"]["usgs_hydrologic_response_supported"] is None
-    assert evidence["c4"]["usgs_status"] == "no_suitable_gauge"
-    assert all(row["imerg_status"] == "deferred" for row in evidence.values())
     assert {
         row["source_conservative_episode_id"]: row["provisional_catalog_status"] for row in catalog
     } == {
         "c1": "merge_candidate",
         "c2": "merge_candidate",
-        "c3": "split_candidate",
+        "c3": "manual_review_required",
         "c4": "retained_provisionally",
     }
     assert all(
@@ -65,16 +62,16 @@ def test_catalog_build_is_deterministic_and_preserves_accounting(
             assert _sha256(path) == _sha256(second[name])
     assert _sha256(first["manifest"]) == _sha256(second["manifest"])
     manifest = json.loads(first["manifest"].read_text(encoding="utf-8"))
-    assert "usgs_episode_summary" in manifest["input_hashes"]
-    assert "mrms_episode_metrics" in manifest["input_hashes"]
+    assert "usgs_episode_summary" not in manifest["input_hashes"]
+    assert "mrms_episode_metrics" not in manifest["input_hashes"]
     metadata = pq.read_metadata(first["episodes"]).metadata
     assert metadata is not None and b"geo" in metadata
 
 
-def test_missing_evidence_is_pending_and_does_not_change_membership(
-    catalog_inputs: tuple[Path, Path, Path, Path, Path], tmp_path: Path
+def test_catalog_builds_without_physical_evidence_inputs(
+    catalog_inputs: tuple[Path, Path, Path], tmp_path: Path
 ) -> None:
-    cohort, episodes, comparison, _, _ = catalog_inputs
+    cohort, episodes, comparison = catalog_inputs
     inputs = discover_catalog_inputs(cohort, episodes, comparison)
     paths = build_provisional_catalog(inputs, tmp_path / "catalog", RULES)
     evidence = _rows(paths["episode_evidence"])
@@ -83,9 +80,9 @@ def test_missing_evidence_is_pending_and_does_not_change_membership(
         for row in _rows(paths["episodes"])
     }
 
-    assert all(row["mrms_status"] == "pending" for row in evidence)
-    assert all(row["usgs_status"] == "pending" for row in evidence)
-    assert statuses["c1"] == statuses["c2"] == "manual_review_required"
+    assert all("mrms_status" not in row for row in evidence)
+    assert all("usgs_status" not in row for row in evidence)
+    assert statuses["c1"] == statuses["c2"] == "merge_candidate"
     assert statuses["c3"] == "manual_review_required"
     assert statuses["c4"] == "retained_provisionally"
     assert all(
@@ -95,10 +92,10 @@ def test_missing_evidence_is_pending_and_does_not_change_membership(
 
 
 def test_stable_ids_and_split_boundary_protection(
-    catalog_inputs: tuple[Path, Path, Path, Path, Path], tmp_path: Path
+    catalog_inputs: tuple[Path, Path, Path], tmp_path: Path
 ) -> None:
     assert stable_provisional_id("v1", ["b", "a"]) == stable_provisional_id("v1", ["a", "b"])
-    cohort, episodes, comparison, mrms, usgs = catalog_inputs
+    cohort, episodes, comparison = catalog_inputs
     balanced = episodes / "balanced" / "episode_membership" / "part.parquet"
     rows = _rows(balanced)
     for row in rows:
@@ -106,7 +103,7 @@ def test_stable_ids_and_split_boundary_protection(
             row["episode_id"] = "b1"
     _write(balanced, rows)
     paths = build_provisional_catalog(
-        discover_catalog_inputs(cohort, episodes, comparison, mrms, usgs),
+        discover_catalog_inputs(cohort, episodes, comparison),
         tmp_path / "catalog",
         RULES,
     )
@@ -114,17 +111,17 @@ def test_stable_ids_and_split_boundary_protection(
         row for row in _rows(paths["episodes"]) if row["source_conservative_episode_id"] == "c4"
     )
     assert c4["split_boundary_flag"] is True
-    assert c4["provisional_catalog_status"] == "manual_review_required"
+    assert c4["provisional_catalog_status"] == "split_candidate"
     assert "split_boundary" in c4["manual_review_reasons"]
 
 
 def test_manual_decisions_reject_unknown_duplicates_and_incomplete_splits(
-    catalog_inputs: tuple[Path, Path, Path, Path, Path], tmp_path: Path
+    catalog_inputs: tuple[Path, Path, Path], tmp_path: Path
 ) -> None:
-    cohort, episodes, comparison, mrms, usgs = catalog_inputs
+    cohort, episodes, comparison = catalog_inputs
     catalog_dir = tmp_path / "catalog"
     build_provisional_catalog(
-        discover_catalog_inputs(cohort, episodes, comparison, mrms, usgs), catalog_dir, RULES
+        discover_catalog_inputs(cohort, episodes, comparison), catalog_dir, RULES
     )
     episode_id = _rows(catalog_dir / "episodes.parquet")[0]["provisional_episode_id"]
 
@@ -174,7 +171,7 @@ def test_manual_decisions_reject_unknown_duplicates_and_incomplete_splits(
                 "provisional_episode_id": by_source["c1"],
                 "merge_episode_ids": f"{by_source['c1']};{by_source['c4']}",
                 "reviewer_action": "merge",
-                "reviewer_reason": "physical review",
+                "reviewer_reason": "clustering review",
                 "reviewer_name": "reviewer",
             }
         ],
@@ -184,9 +181,9 @@ def test_manual_decisions_reject_unknown_duplicates_and_incomplete_splits(
 
 
 def test_catalog_cli_inspect_and_missing_required_inputs(
-    catalog_inputs: tuple[Path, Path, Path, Path, Path], tmp_path: Path
+    catalog_inputs: tuple[Path, Path, Path], tmp_path: Path
 ) -> None:
-    cohort, episodes, comparison, _, _ = catalog_inputs
+    cohort, episodes, comparison = catalog_inputs
     result = CliRunner().invoke(
         app,
         [
@@ -206,57 +203,11 @@ def test_catalog_cli_inspect_and_missing_required_inputs(
         discover_catalog_inputs(cohort, tmp_path / "missing", comparison)
 
 
-@pytest.mark.parametrize(
-    ("mutation", "message"),
-    [
-        ({"data_origin": "synthetic_fixture"}, "rejected data_origin"),
-        ({"schema_version": "unsupported"}, "unsupported schema_version"),
-        ({"source_manifest_hash": ""}, "empty provenance fields"),
-    ],
-)
-def test_catalog_rejects_untrusted_physical_evidence(
-    catalog_inputs: tuple[Path, Path, Path, Path, Path],
-    tmp_path: Path,
-    mutation: dict[str, str],
-    message: str,
-) -> None:
-    cohort, episodes, comparison, mrms, usgs = catalog_inputs
-    metrics_path = mrms / "episode_precipitation_metrics.parquet"
-    rows = _rows(metrics_path)
-    rows[0].update(mutation)
-    _write(metrics_path, rows)
-    with pytest.raises(CatalogError, match=message):
-        build_provisional_catalog(
-            discover_catalog_inputs(cohort, episodes, comparison, mrms, usgs),
-            tmp_path / "rejected-catalog",
-            RULES,
-        )
-
-
-def test_catalog_rejects_missing_data_origin(
-    catalog_inputs: tuple[Path, Path, Path, Path, Path], tmp_path: Path
-) -> None:
-    cohort, episodes, comparison, mrms, usgs = catalog_inputs
-    metrics_path = mrms / "episode_precipitation_metrics.parquet"
-    rows = _rows(metrics_path)
-    for row in rows:
-        row.pop("data_origin")
-    _write(metrics_path, rows)
-    with pytest.raises(CatalogError, match="missing provenance fields: data_origin"):
-        build_provisional_catalog(
-            discover_catalog_inputs(cohort, episodes, comparison, mrms, usgs),
-            tmp_path / "missing-origin-catalog",
-            RULES,
-        )
-
-
 @pytest.fixture()
-def catalog_inputs(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
+def catalog_inputs(tmp_path: Path) -> tuple[Path, Path, Path]:
     cohort = tmp_path / "cohort"
     episode_root = tmp_path / "policies"
     comparison = tmp_path / "comparison"
-    mrms = tmp_path / "mrms"
-    usgs = tmp_path / "usgs"
     events = [
         _event("e1", "2023-06-01", "CA", 0.0),
         _event("e2", "2023-06-01", "CA", 0.1),
@@ -292,100 +243,7 @@ def catalog_inputs(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
         "comparison,adjusted_rand_index\nconservative_vs_balanced,0.9\n", encoding="utf-8"
     )
 
-    metrics = []
-    coherence = []
-    for episode_id, peak in (
-        ("c1", "2023-06-01T12:00:00+00:00"),
-        ("c2", "2023-06-01T15:00:00+00:00"),
-        ("c3", "2024-06-01T12:00:00+00:00"),
-    ):
-        metrics.append(
-            {
-                "episode_id": episode_id,
-                "coverage_fraction": 1.0,
-                "quality_valid_fraction": 1.0,
-                "max_gridcell_1h_mm": 20.0,
-                "rainfall_peak_count": 2 if episode_id == "c3" else 1,
-                "largest_dry_gap_hours": 15 if episode_id == "c3" else 0,
-                "time_of_max_area_mean_utc": peak,
-            }
-        )
-        coherence.append(
-            {
-                "episode_id": episode_id,
-                "member_peak_time_range_hours": 16 if episode_id == "c3" else 2,
-                "median_member_timeseries_correlation": 0.2 if episode_id == "c3" else 0.9,
-                "minimum_member_timeseries_correlation": 0.1 if episode_id == "c3" else 0.8,
-                "multiple_precipitation_peak_flag": episode_id == "c3",
-                "provisional_category": "possibly_overmerged" if episode_id == "c3" else "coherent",
-            }
-        )
-    _write(
-        mrms / "episode_precipitation_metrics.parquet",
-        [{**row, **_observed_provenance("NOAA MRMS", "QPE")} for row in metrics],
-    )
-    _write(
-        mrms / "physical_coherence_assessment.parquet",
-        [{**row, **_observed_provenance("NOAA MRMS", "coherence")} for row in coherence],
-    )
-    _write(
-        usgs / "usgs_episode_response_summary.parquet",
-        [
-            {
-                "episode_id": "c1",
-                "candidate_gauge_count": 1,
-                "selected_gauge_count": 1,
-                "gauges_with_adequate_coverage": 1,
-                "gauges_with_detected_response": 1,
-                "hydrologic_response_supported": True,
-                "support_strength": "moderate",
-                "strongest_response_parameter": "discharge",
-                "no_gauge_reason": "",
-                **_observed_provenance("USGS Water Data", "00060"),
-            },
-            {
-                "episode_id": "c4",
-                "candidate_gauge_count": 0,
-                "selected_gauge_count": 0,
-                "no_gauge_reason": "none nearby",
-                **_observed_provenance("USGS Water Data", "00060"),
-            },
-        ],
-    )
-    _write(
-        usgs / "usgs_episode_gauge_associations.parquet",
-        [
-            {
-                "episode_id": "c1",
-                "association_quality": "inside_episode_geometry",
-                **_observed_provenance("USGS Water Data", "site metadata"),
-            }
-        ],
-    )
-    _write(
-        usgs / "usgs_gauge_response_metrics.parquet",
-        [
-            {
-                "episode_id": "c1",
-                "absolute_rise": 3.5,
-                **_observed_provenance("USGS Water Data", "00060"),
-            }
-        ],
-    )
-    return cohort, episode_root, comparison, mrms, usgs
-
-
-def _observed_provenance(dataset: str, product: str) -> dict[str, str]:
-    return {
-        "schema_version": "physical-evidence-v1",
-        "data_origin": "observed",
-        "source_dataset": dataset,
-        "source_product": product,
-        "source_manifest_hash": "0" * 64,
-        "decoder_version": "test-observed-adapter-v1",
-        "code_commit": "test-commit",
-        "rule_version": "test-rules-v1",
-    }
+    return cohort, episode_root, comparison
 
 
 def _policy(

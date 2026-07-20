@@ -16,15 +16,12 @@ import shapely
 import yaml
 
 from geodemand import __version__
-from geodemand.schemas import validate_physical_evidence_provenance
 
 CatalogStatus = Literal[
     "retained_provisionally",
     "merge_candidate",
     "split_candidate",
-    "physically_supported",
-    "weak_physical_support",
-    "insufficient_evidence",
+    "insufficient_episode_evidence",
     "manual_review_required",
     "excluded_from_analysis",
 ]
@@ -59,21 +56,12 @@ class CatalogInputs:
     balanced_manifest: Path
     clustering_sensitivity: Path
     clustering_agreement: Path
-    mrms_episode_metrics: Path | None
-    mrms_member_metrics: Path | None
-    mrms_coherence: Path | None
-    usgs_associations: Path | None
-    usgs_gauge_metrics: Path | None
-    usgs_episode_summary: Path | None
-    usgs_request_manifest: Path | None
 
 
 def discover_catalog_inputs(
     cohort_root: Path,
     episode_root: Path,
     comparison_root: Path,
-    mrms_root: Path | None = None,
-    usgs_root: Path | None = None,
 ) -> CatalogInputs:
     required = {
         "eligible event records": _find_dataset(cohort_root, "eligible_event_records"),
@@ -122,13 +110,6 @@ def discover_catalog_inputs(
         balanced_manifest=resolved["balanced manifest"],
         clustering_sensitivity=resolved["clustering sensitivity"],
         clustering_agreement=resolved["clustering agreement"],
-        mrms_episode_metrics=_optional_dataset(mrms_root, "episode_precipitation_metrics"),
-        mrms_member_metrics=_optional_dataset(mrms_root, "member_precipitation_metrics"),
-        mrms_coherence=_optional_dataset(mrms_root, "physical_coherence_assessment"),
-        usgs_associations=_optional_dataset(usgs_root, "usgs_episode_gauge_associations"),
-        usgs_gauge_metrics=_optional_dataset(usgs_root, "usgs_gauge_response_metrics"),
-        usgs_episode_summary=_optional_dataset(usgs_root, "usgs_episode_response_summary"),
-        usgs_request_manifest=_optional_dataset(usgs_root, "usgs_file_or_request_manifest"),
     )
 
 
@@ -173,15 +154,6 @@ def build_provisional_catalog(  # noqa: PLR0915
     conservative_membership = _read_rows(inputs.conservative_membership)
     balanced_membership = _read_rows(inputs.balanced_membership)
     conservative_edges = _read_rows(inputs.conservative_edges)
-    for label, evidence_path in (
-        ("MRMS episode metrics", inputs.mrms_episode_metrics),
-        ("MRMS member metrics", inputs.mrms_member_metrics),
-        ("MRMS coherence", inputs.mrms_coherence),
-        ("USGS associations", inputs.usgs_associations),
-        ("USGS gauge metrics", inputs.usgs_gauge_metrics),
-        ("USGS episode summary", inputs.usgs_episode_summary),
-    ):
-        _validate_observed_evidence(evidence_path, label)
     members_by_conservative = _group_members(conservative_membership)
     conservative_by_event = {
         str(row["event_record_id"]): str(row["episode_id"]) for row in conservative_membership
@@ -197,11 +169,6 @@ def build_provisional_catalog(  # noqa: PLR0915
         episode_id = conservative_by_event.get(str(edge["event_record_id_a"]))
         if episode_id:
             edge_counts[episode_id] += 1
-    mrms_metrics = _index_optional(inputs.mrms_episode_metrics)
-    mrms_coherence = _index_optional(inputs.mrms_coherence)
-    usgs_summaries = _index_optional(inputs.usgs_episode_summary)
-    usgs_associations = _group_optional(inputs.usgs_associations)
-    usgs_gauge_metrics = _group_optional(inputs.usgs_gauge_metrics)
     geo_metadata = _parquet_schema(inputs.conservative_episodes).metadata or {}
 
     episode_rows: list[dict[str, Any]] = []
@@ -229,13 +196,6 @@ def build_provisional_catalog(  # noqa: PLR0915
             for item in balanced_sources
         }
         balanced_crosses_split = len(balanced_splits) > 1
-        balanced_merge_supported = _balanced_merge_supported(
-            balanced_sources,
-            conservative_episode_by_id,
-            mrms_metrics,
-            mrms_coherence,
-            rules,
-        )
         evidence = _evidence_row(
             provisional_id,
             source_episode,
@@ -243,14 +203,7 @@ def build_provisional_catalog(  # noqa: PLR0915
             balanced_sources,
             edge_counts[source_id],
             sum(len(members_by_conservative[item]) for item in balanced_sources),
-            mrms_metrics.get(source_id),
-            mrms_coherence.get(source_id),
-            usgs_summaries.get(source_id),
-            usgs_associations.get(source_id, []),
-            usgs_gauge_metrics.get(source_id, []),
             balanced_crosses_split,
-            balanced_merge_supported,
-            rules,
         )
         status, review_reasons, evidence_strength = _catalog_decision(
             source_episode, evidence, rules
@@ -513,51 +466,8 @@ def _evidence_row(
     balanced_sources: Sequence[str],
     edge_count: int,
     balanced_member_count: int,
-    mrms: Mapping[str, Any] | None,
-    coherence: Mapping[str, Any] | None,
-    usgs: Mapping[str, Any] | None,
-    associations: Sequence[Mapping[str, Any]],
-    gauge_metrics: Sequence[Mapping[str, Any]],
     balanced_crosses_split: bool,
-    balanced_merge_supported: bool,
-    rules: Mapping[str, Any],
 ) -> dict[str, Any]:
-    mrms_status = "available" if mrms else "pending"
-    minimum_mrms_coverage = float(
-        cast(Mapping[str, Any], rules["mrms"])["minimum_coverage_fraction"]
-    )
-    if mrms and float(mrms.get("coverage_fraction", 0.0)) < minimum_mrms_coverage:
-        mrms_status = "insufficient_coverage"
-    minimum_mrms_quality = float(
-        cast(Mapping[str, Any], rules["mrms"])["minimum_quality_valid_fraction"]
-    )
-    if mrms and float(mrms.get("quality_valid_fraction", 0.0)) < minimum_mrms_quality:
-        mrms_status = "insufficient_coverage"
-    if usgs:
-        usgs_status = "no_suitable_gauge" if usgs.get("no_gauge_reason") else "available"
-    else:
-        usgs_status = "pending"
-    strongest_rise = max(
-        (
-            float(row["absolute_rise"])
-            for row in gauge_metrics
-            if row.get("absolute_rise") is not None
-        ),
-        default=None,
-    )
-    association_order = {
-        "inside_episode_geometry": 0,
-        "inside_25km_buffer": 1,
-        "nearby_within_50km": 2,
-        "fallback_within_100km": 3,
-        "uncertain_association": 4,
-        "no_suitable_gauge": 5,
-    }
-    best_association = min(
-        (str(row["association_quality"]) for row in associations),
-        key=lambda value: association_order.get(value, 99),
-        default="",
-    )
     return {
         "provisional_episode_id": provisional_id,
         "source_conservative_episode_id": str(source["episode_id"]),
@@ -574,47 +484,6 @@ def _evidence_row(
         "balanced_source_episode_count": len(balanced_sources),
         "balanced_total_member_count": balanced_member_count,
         "balanced_crosses_split_boundary": balanced_crosses_split,
-        "balanced_merge_physically_supported": balanced_merge_supported,
-        "mrms_status": mrms_status,
-        "mrms_coverage_fraction": _value(mrms, "coverage_fraction"),
-        "mrms_quality_valid_fraction": _value(mrms, "quality_valid_fraction"),
-        "mrms_max_1h_mm": _first_value(mrms, "max_gridcell_1h_mm", "maximum_gridcell_1h_mm"),
-        "mrms_max_3h_mm": _first_value(mrms, "max_gridcell_3h_mm", "maximum_gridcell_3h_mm"),
-        "mrms_max_6h_mm": _first_value(mrms, "max_gridcell_6h_mm", "maximum_gridcell_6h_mm"),
-        "mrms_total_area_mean_mm": _first_value(
-            mrms, "episode_total_area_mean_mm", "total_area_mean_mm"
-        ),
-        "mrms_rainfall_peak_count": _value(mrms, "rainfall_peak_count"),
-        "mrms_largest_dry_gap_hours": _value(mrms, "largest_dry_gap_hours"),
-        "mrms_member_peak_time_range_hours": _value(coherence, "member_peak_time_range_hours"),
-        "mrms_median_member_timeseries_correlation": _value(
-            coherence, "median_member_timeseries_correlation"
-        ),
-        "mrms_minimum_member_timeseries_correlation": _value(
-            coherence, "minimum_member_timeseries_correlation"
-        ),
-        "mrms_multiple_peak_flag": _value(coherence, "multiple_precipitation_peak_flag"),
-        "mrms_coherence_assessment": _value(coherence, "provisional_category"),
-        "usgs_status": usgs_status,
-        "usgs_candidate_gauge_count": _int_value(usgs, "candidate_gauge_count"),
-        "usgs_selected_gauge_count": _int_value(usgs, "selected_gauge_count"),
-        "usgs_adequate_coverage_gauge_count": _int_value(usgs, "gauges_with_adequate_coverage"),
-        "usgs_detected_response_count": _int_value(usgs, "gauges_with_detected_response"),
-        "usgs_best_association_quality": best_association,
-        "usgs_strongest_response_parameter": str(
-            usgs.get("strongest_response_parameter", "") if usgs else ""
-        ),
-        "usgs_strongest_absolute_rise": strongest_rise,
-        "usgs_shortest_precipitation_to_response_lag_hours": usgs.get(
-            "shortest_precipitation_to_response_lag"
-        )
-        if usgs
-        else None,
-        "usgs_hydrologic_response_supported": usgs.get("hydrologic_response_supported")
-        if usgs_status == "available" and usgs
-        else None,
-        "usgs_support_strength": usgs.get("support_strength") if usgs else None,
-        "imerg_status": "deferred",
     }
 
 
@@ -629,29 +498,15 @@ def _catalog_decision(
         reasons.append("geometry_review")
     if bool(evidence["balanced_merges_multiple_conservative_episodes"]):
         reasons.append("possible_undermerge")
-    mrms_available = evidence["mrms_status"] == "available"
-    if mrms_available:
-        split_conditions = _mrms_split_conditions(evidence, rules)
-        minimum = int(cast(Mapping[str, Any], rules["mrms"])["split_minimum_conditions"])
-        if len(split_conditions) >= minimum:
-            return "split_candidate", sorted(set(reasons + split_conditions)), "physical"
-        if (
-            bool(evidence["balanced_merges_multiple_conservative_episodes"])
-            and bool(evidence["balanced_merge_physically_supported"])
-            and not bool(evidence["balanced_crosses_split_boundary"])
-        ):
-            return "merge_candidate", sorted(set(reasons)), "physical"
-        meaningful = float(evidence.get("mrms_max_1h_mm") or 0.0) >= float(
-            cast(Mapping[str, Any], rules["mrms"])["meaningful_max_1h_mm"]
-        )
-        if meaningful and not reasons:
-            usgs_support = evidence.get("usgs_hydrologic_response_supported")
-            if usgs_support is True or evidence["usgs_status"] == "no_suitable_gauge":
-                return "physically_supported", [], "mrms_usgs"
-            return "weak_physical_support", ["weak_physical_signal"], "mrms"
+    if bool(evidence["balanced_merges_multiple_conservative_episodes"]) and not bool(
+        evidence["balanced_crosses_split_boundary"]
+    ):
+        return "merge_candidate", sorted(set(reasons)), "clustering_sensitivity"
+    if bool(evidence["balanced_crosses_split_boundary"]):
+        return "split_candidate", sorted(set(reasons)), "clustering_sensitivity"
     if reasons:
         return "manual_review_required", sorted(set(reasons)), "clustering_only"
-    return "retained_provisionally", [], "pending_physical_evidence"
+    return "retained_provisionally", [], "clustering_only"
 
 
 def _clustering_flags(source: Mapping[str, Any], rules: Mapping[str, Any]) -> dict[str, bool]:
@@ -665,65 +520,6 @@ def _clustering_flags(source: Mapping[str, Any], rules: Mapping[str, Any]) -> di
         "bridge_chaining": int(source.get("bridge_edge_count", 0)) > 0
         and int(source["member_count"]) > BRIDGE_MIN_MEMBER_COUNT,
     }
-
-
-def _mrms_split_conditions(evidence: Mapping[str, Any], rules: Mapping[str, Any]) -> list[str]:
-    mrms = cast(Mapping[str, Any], rules["mrms"])
-    conditions = []
-    if int(evidence.get("mrms_rainfall_peak_count") or 0) >= int(mrms["multiple_peak_minimum"]):
-        conditions.append("mrms_multiple_peaks")
-    if int(evidence.get("mrms_largest_dry_gap_hours") or 0) >= int(mrms["long_dry_gap_hours"]):
-        conditions.append("mrms_long_dry_gap")
-    correlation = evidence.get("mrms_median_member_timeseries_correlation")
-    if correlation is not None and float(correlation) < float(mrms["weak_median_correlation"]):
-        conditions.append("mrms_weak_member_correlation")
-    peak_range = evidence.get("mrms_member_peak_time_range_hours")
-    if peak_range is not None and float(peak_range) > float(mrms["large_peak_time_range_hours"]):
-        conditions.append("mrms_large_peak_time_range")
-    return conditions
-
-
-def _balanced_merge_supported(  # noqa: PLR0911
-    source_ids: Sequence[str],
-    episodes: Mapping[str, Mapping[str, Any]],
-    metrics: Mapping[str, Mapping[str, Any]],
-    coherence: Mapping[str, Mapping[str, Any]],
-    rules: Mapping[str, Any],
-) -> bool:
-    if len(source_ids) < MIN_MERGE_EPISODE_COUNT:
-        return False
-    mrms = cast(Mapping[str, Any], rules["mrms"])
-    peak_times: list[datetime] = []
-    for source_id in source_ids:
-        metric = metrics.get(source_id)
-        assessment = coherence.get(source_id)
-        if metric is None or assessment is None:
-            return False
-        if float(metric.get("coverage_fraction", 0.0)) < float(mrms["minimum_coverage_fraction"]):
-            return False
-        if float(metric.get("quality_valid_fraction", 0.0)) < float(
-            mrms["minimum_quality_valid_fraction"]
-        ):
-            return False
-        if float(metric.get("largest_dry_gap_hours", 0.0)) > float(
-            mrms["merge_maximum_dry_gap_hours"]
-        ):
-            return False
-        correlation = assessment.get("median_member_timeseries_correlation")
-        if correlation is None or float(correlation) < float(mrms["merge_minimum_correlation"]):
-            return False
-        peak = metric.get("time_of_max_area_mean_utc")
-        if peak is None:
-            return False
-        peak_times.append(datetime.fromisoformat(str(peak).replace("Z", "+00:00")))
-    source_splits = {
-        _split_for_date(_as_date(episodes[source_id]["episode_start_date"]), rules)
-        for source_id in source_ids
-    }
-    if len(source_splits) > 1:
-        return False
-    peak_range = (max(peak_times) - min(peak_times)).total_seconds() / 3600
-    return peak_range <= float(mrms["merge_maximum_peak_difference_hours"])
 
 
 def _review_row(
@@ -755,11 +551,9 @@ def _review_row(
         "duration_days": int(source["episode_duration_days"]),
         "states": str(source["state_codes"]),
         "candidate_split": split,
-        "mrms_status": evidence["mrms_status"],
-        "usgs_status": evidence["usgs_status"],
         "evidence_summary": (
-            f"mrms={evidence['mrms_status']};usgs={evidence['usgs_status']};"
-            f"balanced_sources={evidence['balanced_source_episode_count']}"
+            f"balanced_sources={evidence['balanced_source_episode_count']};"
+            f"balanced_crosses_split={evidence['balanced_crosses_split_boundary']}"
         ),
         "recommended_action": action,
         "reviewer_action": "",
@@ -772,7 +566,7 @@ def _review_row(
 
 def _recommended_action(review_type: str) -> str:
     return {
-        "possible_undermerge": "obtain_mrms",
+        "possible_undermerge": "inspect_cluster_membership",
         "split_boundary": "retain",
         "geometry_review": "inspect_geometry",
         "large_cluster": "inspect_timeseries",
@@ -782,8 +576,6 @@ def _recommended_action(review_type: str) -> str:
 
 
 def _review_type(reason: str) -> str:
-    if reason.startswith("mrms_"):
-        return "possible_overmerge"
     return {
         "high_state_count": "large_cluster",
         "maximum_member_distance": "possible_overmerge",
@@ -793,8 +585,7 @@ def _review_type(reason: str) -> str:
         "long_duration": "long_duration",
         "split_boundary": "split_boundary",
         "geometry_review": "geometry_review",
-        "weak_physical_signal": "weak_physical_signal",
-    }.get(reason, "insufficient_evidence")
+    }.get(reason, "insufficient_episode_evidence")
 
 
 def _initial_decision_row(
@@ -894,8 +685,6 @@ def _catalog_summary(
     source_count: int,
 ) -> dict[str, Any]:
     statuses = Counter(str(row["provisional_catalog_status"]) for row in episodes)
-    mrms = Counter(str(row["mrms_status"]) for row in evidence)
-    usgs = Counter(str(row["usgs_status"]) for row in evidence)
     splits = Counter(str(row["candidate_split"]) for row in episodes)
     return {
         "source_eligible_record_count": source_count,
@@ -903,18 +692,11 @@ def _catalog_summary(
         "provisional_episode_count": len(episodes),
         "total_membership_rows": len(membership),
         "retained_provisional_count": statuses["retained_provisionally"],
-        "physically_supported_count": statuses["physically_supported"],
-        "weak_physical_support_count": statuses["weak_physical_support"],
         "merge_candidate_count": statuses["merge_candidate"],
         "split_candidate_count": statuses["split_candidate"],
         "manual_review_count": sum(bool(row["manual_review_flag"]) for row in episodes),
-        "insufficient_evidence_count": statuses["insufficient_evidence"],
+        "insufficient_episode_evidence_count": statuses["insufficient_episode_evidence"],
         "excluded_count": statuses["excluded_from_analysis"],
-        "mrms_available_count": mrms["available"],
-        "mrms_pending_count": mrms["pending"],
-        "usgs_available_count": usgs["available"],
-        "no_suitable_gauge_count": usgs["no_suitable_gauge"],
-        "imerg_deferred_count": len(evidence),
         "development_episode_count": splits["development"],
         "validation_episode_count": splits["validation"],
         "test_episode_count": splits["test"],
@@ -957,13 +739,16 @@ def _write_summary_csvs(
         ["size_bin", "status", "count"],
     )
     _write_counter_csv(
-        output_dir / "evidence_status_counts.csv",
+        output_dir / "catalog_evidence_diagnostic_counts.csv",
         Counter(
-            (source, str(row[f"{source}_status"]))
+            (field, str(row[field]))
             for row in evidence
-            for source in ("mrms", "usgs", "imerg")
+            for field in (
+                "balanced_merges_multiple_conservative_episodes",
+                "balanced_crosses_split_boundary",
+            )
         ),
-        ["source", "status", "count"],
+        ["diagnostic", "value", "count"],
     )
     _write_counter_csv(
         output_dir / "manual_review_reason_counts.csv",
@@ -980,13 +765,6 @@ def _availability(inputs: CatalogInputs) -> dict[str, Any]:
         "conservative_policy": "available",
         "balanced_policy": "available",
         "clustering_comparison": "available",
-        "mrms_episode_metrics": "available" if inputs.mrms_episode_metrics else "pending",
-        "mrms_member_metrics": "available" if inputs.mrms_member_metrics else "pending",
-        "mrms_coherence": "available" if inputs.mrms_coherence else "pending",
-        "usgs_associations": "available" if inputs.usgs_associations else "pending",
-        "usgs_gauge_metrics": "available" if inputs.usgs_gauge_metrics else "pending",
-        "usgs_episode_summary": "available" if inputs.usgs_episode_summary else "pending",
-        "imerg": "deferred",
     }
 
 
@@ -1091,21 +869,8 @@ def _find_file(root: Path, name: str) -> Path | None:
     return matches[0] if matches else None
 
 
-def _optional_dataset(root: Path | None, name: str) -> Path | None:
-    return _find_dataset(root, name) if root and root.exists() else None
-
-
 def _read_rows(path: Path) -> list[dict[str, Any]]:
     return cast(list[dict[str, Any]], pq.read_table(path).to_pylist())
-
-
-def _validate_observed_evidence(path: Path | None, label: str) -> None:
-    if path is None:
-        return
-    try:
-        validate_physical_evidence_provenance(pq.read_table(path), label)
-    except ValueError as exc:
-        raise CatalogError(str(exc)) from exc
 
 
 def _row_count(path: Path) -> int:
@@ -1171,37 +936,6 @@ def _group_members(
     return {key: sorted(value) for key, value in grouped.items()}
 
 
-def _index_optional(path: Path | None) -> dict[str, dict[str, Any]]:
-    if path is None:
-        return {}
-    return {str(row["episode_id"]): row for row in _read_rows(path)}
-
-
-def _group_optional(path: Path | None) -> dict[str, list[dict[str, Any]]]:
-    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    if path:
-        for row in _read_rows(path):
-            grouped[str(row["episode_id"])].append(row)
-    return dict(grouped)
-
-
-def _value(row: Mapping[str, Any] | None, field: str) -> Any:
-    return row.get(field) if row else None
-
-
-def _int_value(row: Mapping[str, Any] | None, field: str) -> int:
-    value = row.get(field) if row else None
-    return int(value) if value is not None else 0
-
-
-def _first_value(row: Mapping[str, Any] | None, *fields: str) -> Any:
-    if row:
-        for field in fields:
-            if field in row:
-                return row[field]
-    return None
-
-
 def _as_date(value: Any) -> date:
     if isinstance(value, datetime):
         return value.date()
@@ -1262,13 +996,6 @@ def _input_hashes(inputs: CatalogInputs) -> dict[str, str]:
         "balanced_manifest": inputs.balanced_manifest,
         "clustering_sensitivity": inputs.clustering_sensitivity,
         "clustering_agreement": inputs.clustering_agreement,
-        "mrms_episode_metrics": inputs.mrms_episode_metrics,
-        "mrms_member_metrics": inputs.mrms_member_metrics,
-        "mrms_coherence": inputs.mrms_coherence,
-        "usgs_associations": inputs.usgs_associations,
-        "usgs_gauge_metrics": inputs.usgs_gauge_metrics,
-        "usgs_episode_summary": inputs.usgs_episode_summary,
-        "usgs_request_manifest": inputs.usgs_request_manifest,
     }
     return {
         name: _sha256_dataset(path) for name, path in sorted(sources.items()) if path is not None

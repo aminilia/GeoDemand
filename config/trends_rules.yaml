@@ -54,6 +54,9 @@ controls:
   climate_class_score: 1.0
   trends_availability_score: 1.0
 attribution:
+  minimum_strong_concurrence_repeat_fraction: 0.50
+  minimum_weather_concurrence_repeat_fraction: 0.50
+  require_unanimous_concurrence_when_two_repeats: true
   minimum_positive_adjusted_lift: 0.50
   minimum_standardized_phase_lift: 0.50
   minimum_robust_phase_lift: 0.50

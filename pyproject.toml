@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "geodemand-ff"
 version = "0.1.0"
-description = "Reproducible geospatial event-study pipeline for U.S. flood episodes and search-interest responses."
+description = "Reproducible geospatial event-study pipeline for candidate U.S. flood episodes and search-interest responses."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -33,31 +33,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-mrms = [
-  "cfgrib>=0.9.14",
-  "eccodes>=2.39",
-  "s3fs>=2025.5",
-  "xarray>=2025.1",
-]
-imerg = [
-  "earthaccess>=0.14",
-  "h5py>=3.11",
-  "xarray>=2025.1",
-]
-usgs = [
-  "dataretrieval>=1.0",
-]
 trends-browser = [
   "playwright>=1.52,<2",
-]
-verification = [
-  "cfgrib>=0.9.14",
-  "dataretrieval>=1.0",
-  "earthaccess>=0.14",
-  "eccodes>=2.39",
-  "h5py>=3.11",
-  "s3fs>=2025.5",
-  "xarray>=2025.1",
 ]
 dev = [
   "build>=1.2",
@@ -94,21 +71,13 @@ mypy_path = "src"
 
 [[tool.mypy.overrides]]
 module = [
-  "cfgrib",
-  "dataretrieval",
-  "earthaccess",
-  "eccodes",
-  "h5py",
   "pyarrow",
   "pyarrow.*",
   "pyogrio",
   "pyproj",
   "pyproj.*",
-  "s3fs",
   "shapely",
   "shapely.*",
-  "xarray",
-  "xarray.*",
   "yaml",
 ]
 ignore_missing_imports = true

@@ -18,6 +18,7 @@ sys.path[:0] = [str(ROOT / "src"), str(ROOT)]
 
 from geodemand.catalog import build_provisional_catalog, discover_catalog_inputs  # noqa: E402
 from geodemand.episodes import build_episodes, compare_episode_policies  # noqa: E402
+from geodemand.reproducibility import canonical_table_content_hash  # noqa: E402
 from geodemand.trends_event_study import calculate_phase_metrics  # noqa: E402
 
 
@@ -29,7 +30,7 @@ def main() -> int:
     return 0
 
 
-def run_demo(output_dir: Path) -> dict[str, str]:
+def run_demo(output_dir: Path) -> dict[str, dict[str, str]]:
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
@@ -75,14 +76,21 @@ def run_demo(output_dir: Path) -> dict[str, str]:
     manifest = {
         "data_origin": "synthetic_fixture",
         "candidate_rows": len(event_rows),
-        "artifacts": {
+        "raw_artifact_hashes": {
             "catalog": _sha256(catalog / "episodes.parquet"),
             "phase_metrics": _sha256(phase["phase_metrics"]),
             "plot": _sha256(plot),
         },
+        "canonical_content_hashes": {
+            "catalog": canonical_table_content_hash(catalog / "episodes.parquet"),
+            "phase_metrics": canonical_table_content_hash(phase["phase_metrics"]),
+        },
     }
     _json(output_dir / "demo_manifest.json", manifest)
-    return manifest["artifacts"]
+    return {
+        "raw_artifact_hashes": manifest["raw_artifact_hashes"],
+        "canonical_content_hashes": manifest["canonical_content_hashes"],
+    }
 
 
 def _event(event_id: str, x: float) -> dict[str, Any]:

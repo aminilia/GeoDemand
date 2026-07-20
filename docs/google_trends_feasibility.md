@@ -3,7 +3,7 @@
 Milestone 0.8A evaluates whether relative Google search interest can support a
 defensible pilot around provisional flood episodes. It does not perform a
 national extraction, estimate absolute search counts, confirm flood truth, or
-train a predictive model.
+fit a demand model.
 
 ## Access backends
 

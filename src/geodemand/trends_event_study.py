@@ -33,6 +33,7 @@ NONFLOOD_CONTEXT = {
 }
 CONTROL_CONCORDANCE_FRACTION = 0.75
 STANDARDIZED_COMPARISON_SCALE = "within_series_baseline_standardized_lift"
+TWO_REPEAT_COUNT = 2
 
 
 def response_phase_windows(
@@ -320,7 +321,11 @@ def calculate_concurrence(
             }
         )
     concurrence_path = output_root / "processed" / "trends_event_concurrence_metrics.parquet"
+    aggregate_concurrence_path = (
+        output_root / "processed" / "trends_event_concurrence_aggregated.parquet"
+    )
     _write_parquet(concurrence_path, output)
+    _write_parquet(aggregate_concurrence_path, _logical_concurrence_rows(output))
     phase_path = phase_metrics_path or (
         output_root / "processed" / "trends_phase_response_metrics.parquet"
     )
@@ -341,6 +346,7 @@ def calculate_concurrence(
     )
     return {
         "concurrence": concurrence_path,
+        "concurrence_aggregated": aggregate_concurrence_path,
         "national_spikes": national_path,
         "retailer_promotions": retailer_path,
     }
@@ -518,6 +524,24 @@ def attribute_peaks(  # noqa: PLR0913
             "simultaneous_weather_attention_flag": evidence.get(
                 "simultaneous_weather_attention_flag"
             ),
+            "concurrence_consensus_status": evidence.get("concurrence_consensus_status"),
+            "strong_flood_concurrent_repeat_count": evidence.get(
+                "strong_flood_concurrent_repeat_count"
+            ),
+            "strong_flood_concurrent_repeat_fraction": evidence.get(
+                "strong_flood_concurrent_repeat_fraction"
+            ),
+            "weather_concurrent_repeat_count": evidence.get("weather_concurrent_repeat_count"),
+            "weather_concurrent_repeat_fraction": evidence.get(
+                "weather_concurrent_repeat_fraction"
+            ),
+            "any_repeat_strong_flood_concurrence": evidence.get(
+                "any_repeat_strong_flood_concurrence"
+            ),
+            "any_repeat_weather_concurrence": evidence.get("any_repeat_weather_concurrence"),
+            "any_repeat_nonflood_weather_concurrence": evidence.get(
+                "any_repeat_nonflood_weather_concurrence"
+            ),
             "adjusted_event_lift": control.get("adjusted_event_lift") if control else None,
             "control_quality_status": control.get("control_quality_status")
             if control
@@ -525,6 +549,9 @@ def attribute_peaks(  # noqa: PLR0913
             "national_concurrent_spike_flag": national_row.get("national_concurrent_spike_flag")
             if national_row
             else None,
+            "national_concurrence_status": national_row.get("national_concurrence_status")
+            if national_row
+            else "insufficient_data",
             "metric_quality_status": phase["metric_quality_status"],
             "repeat_stability_status": phase.get("repeat_stability_status"),
             "treated_repeat_count": int(phase.get("repeat_count") or 1),
@@ -727,6 +754,29 @@ def _national_comparisons(
             _agreed_repeat_peak_date(state),
             _agreed_repeat_peak_date(comparison),
         )
+        state_agreement = bool(state.get("repeat_peak_date_agreement"))
+        national_agreement = bool(comparison.get("repeat_peak_date_agreement"))
+        state_has_peak = bool(state.get("repeat_peak_dates"))
+        national_has_peak = bool(comparison.get("repeat_peak_dates"))
+        if not state_has_peak or not national_has_peak:
+            concurrence_status = "insufficient_data"
+        elif not state_agreement and not national_agreement:
+            concurrence_status = "indeterminate_both_repeat_disagreement"
+        elif not state_agreement:
+            concurrence_status = "indeterminate_state_repeat_disagreement"
+        elif not national_agreement:
+            concurrence_status = "indeterminate_national_repeat_disagreement"
+        elif peak_difference is None:
+            concurrence_status = "insufficient_data"
+        elif peak_difference <= int(rules["national_concurrence_days"]):
+            concurrence_status = "concurrent"
+        else:
+            concurrence_status = "not_concurrent"
+        concurrent_flag = (
+            concurrence_status == "concurrent"
+            if concurrence_status in {"concurrent", "not_concurrent"}
+            else None
+        )
         output.append(
             {
                 "provisional_episode_id": state["provisional_episode_id"],
@@ -749,8 +799,15 @@ def _national_comparisons(
                 "state_peak_date": _iso(_agreed_repeat_peak_date(state)),
                 "national_peak_date": _iso(_agreed_repeat_peak_date(comparison)),
                 "state_national_peak_difference_days": peak_difference,
-                "national_concurrent_spike_flag": peak_difference is not None
-                and peak_difference <= int(rules["national_concurrence_days"]),
+                "national_concurrence_status": concurrence_status,
+                "national_concurrent_spike_flag": concurrent_flag,
+                "state_repeat_peak_date_agreement": state_agreement,
+                "national_repeat_peak_date_agreement": national_agreement,
+                "state_repeat_peak_date_range_days": state.get("repeat_peak_date_range_days"),
+                "national_repeat_peak_date_range_days": comparison.get(
+                    "repeat_peak_date_range_days"
+                ),
+                "state_repeat_count": int(state.get("repeat_count") or 1),
                 "comparison_scale": STANDARDIZED_COMPARISON_SCALE,
                 "treated_repeat_count": int(state.get("repeat_count") or 1),
                 "national_repeat_count": int(comparison.get("repeat_count") or 1),
@@ -785,9 +842,24 @@ def classify_peak_attribution(
         and standardized >= float(rules["minimum_standardized_phase_lift"])
         and (robust is None or robust >= float(rules["minimum_robust_phase_lift"]))
     )
-    flood = bool(concurrence.get("simultaneous_flood_awareness_flag"))
-    weather = bool(concurrence.get("simultaneous_weather_attention_flag"))
-    nonflood_weather = bool(concurrence.get("simultaneous_nonflood_weather_flag"))
+    flood = _consensus_support(
+        concurrence,
+        "strong_flood_concurrent_repeat_fraction",
+        float(rules["minimum_strong_concurrence_repeat_fraction"]),
+        bool(rules["require_unanimous_concurrence_when_two_repeats"]),
+    )
+    weather = _consensus_support(
+        concurrence,
+        "weather_concurrent_repeat_fraction",
+        float(rules["minimum_weather_concurrence_repeat_fraction"]),
+        bool(rules["require_unanimous_concurrence_when_two_repeats"]),
+    )
+    nonflood_weather = _consensus_support(
+        concurrence,
+        "nonflood_weather_concurrent_repeat_fraction",
+        float(rules["minimum_weather_concurrence_repeat_fraction"]),
+        bool(rules["require_unanimous_concurrence_when_two_repeats"]),
+    )
     adjusted = _optional_float(control.get("adjusted_event_lift")) if control else None
     control_support = bool(
         adjusted is not None
@@ -803,7 +875,11 @@ def classify_peak_attribution(
         and repeat_count > 1
         and phase.get("repeat_stability_status") != "stable"
     )
-    national_spike = bool(national and national.get("national_concurrent_spike_flag"))
+    national_status = (
+        str(national.get("national_concurrence_status")) if national else "insufficient_data"
+    )
+    national_spike = national_status == "concurrent"
+    national_absent = national_status == "not_concurrent"
     retailer = phase.get("proxy_type") == "retailer_brand"
     if (
         event_phase
@@ -811,7 +887,7 @@ def classify_peak_attribution(
         and flood
         and control_support
         and repeat_stable
-        and not national_spike
+        and national_absent
     ):
         return "event_consistent_signal", [
             "phase_specific_effect_size",
@@ -841,6 +917,8 @@ def classify_peak_attribution(
         ]
         if not repeat_stable:
             reasons.append("unstable_repeats")
+        if national_status not in {"concurrent", "not_concurrent"}:
+            reasons.append("national_concurrence_indeterminate_or_unavailable")
         return "possibly_event_consistent", reasons
     return "unrelated_or_ambiguous", [
         "no_supported_event_phase_effect"
@@ -1216,21 +1294,146 @@ def _logical_concurrence_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[st
     for row in rows:
         grouped[(str(row["request_id"]), str(row["concept_id"]))].append(row)
     output = []
-    flag_fields = (
-        "simultaneous_flood_awareness_flag",
-        "moderate_flood_awareness_flag",
-        "simultaneous_weather_attention_flag",
-        "simultaneous_nonflood_weather_flag",
-    )
     for repeats in grouped.values():
-        aggregate = dict(sorted(repeats, key=lambda row: str(row.get("repeat_id")))[0])
+        ordered = sorted(repeats, key=lambda row: str(row.get("repeat_id")))
+        aggregate = dict(ordered[0])
+        repeat_count = len(ordered)
         aggregate["repeat_id"] = "aggregated_after_variability"
-        aggregate["repeat_count"] = len(repeats)
-        aggregate["aggregation_method"] = "logical_request_any_repeat_concurrence"
-        for field in flag_fields:
-            aggregate[field] = any(bool(row.get(field)) for row in repeats)
+        aggregate["export_attempt_id"] = "aggregated_after_variability"
+        aggregate["repeat_export_attempt_ids"] = ";".join(
+            sorted(
+                str(row["export_attempt_id"])
+                for row in ordered
+                if row.get("export_attempt_id") not in {None, ""}
+            )
+        )
+        aggregate["repeat_count"] = repeat_count
+        aggregate["aggregation_method"] = "logical_request_repeat_consensus_v1"
+        count_fields = {
+            "strong_flood_concurrent_repeat_count": "simultaneous_flood_awareness_flag",
+            "moderate_flood_concurrent_repeat_count": "moderate_flood_awareness_flag",
+            "weather_concurrent_repeat_count": "simultaneous_weather_attention_flag",
+            "nonflood_weather_concurrent_repeat_count": "simultaneous_nonflood_weather_flag",
+        }
+        for count_field, source_field in count_fields.items():
+            count = sum(bool(row.get(source_field)) for row in ordered)
+            fraction_field = count_field.replace("_count", "_fraction")
+            aggregate[count_field] = count
+            aggregate[fraction_field] = count / repeat_count
+        aggregate["any_repeat_strong_flood_concurrence"] = bool(
+            aggregate["strong_flood_concurrent_repeat_count"]
+        )
+        aggregate["any_repeat_weather_concurrence"] = bool(
+            aggregate["weather_concurrent_repeat_count"]
+        )
+        aggregate["any_repeat_nonflood_weather_concurrence"] = bool(
+            aggregate["nonflood_weather_concurrent_repeat_count"]
+        )
+        valid_differences = [
+            value
+            for row in ordered
+            if (value := _optional_float(row.get("demand_flood_peak_difference_days"))) is not None
+        ]
+        aggregate["flood_peak_difference_median_days"] = (
+            statistics.median(valid_differences) if valid_differences else None
+        )
+        aggregate["flood_peak_difference_range_days"] = (
+            max(valid_differences) - min(valid_differences) if valid_differences else None
+        )
+        aggregate["concurrence_consensus_status"] = _concurrence_consensus_status(
+            repeat_count,
+            int(aggregate["strong_flood_concurrent_repeat_count"]),
+            len(valid_differences),
+        )
+        _set_repeat_agreement_fields(aggregate, ordered)
+        _set_correlation_summaries(aggregate, ordered)
+        for field in (
+            "simultaneous_flood_awareness_flag",
+            "moderate_flood_awareness_flag",
+            "simultaneous_weather_attention_flag",
+            "simultaneous_nonflood_weather_flag",
+        ):
+            aggregate[field] = ordered[0].get(field) if repeat_count == 1 else None
         output.append(aggregate)
     return sorted(output, key=lambda row: (str(row["request_id"]), str(row["concept_id"])))
+
+
+def _concurrence_consensus_status(
+    repeat_count: int, concurrent_count: int, valid_evidence_count: int
+) -> str:
+    if valid_evidence_count == 0:
+        return "insufficient_repeat_evidence"
+    if repeat_count == 1:
+        return "not_repeated"
+    if concurrent_count == repeat_count:
+        return "unanimous"
+    if concurrent_count > repeat_count / 2:
+        return "majority"
+    if concurrent_count > 0:
+        return "minority_only"
+    return "none"
+
+
+def _set_repeat_agreement_fields(
+    aggregate: dict[str, Any], repeats: Sequence[Mapping[str, Any]]
+) -> None:
+    concept_fields = {
+        "flood_awareness_concept_id": "repeat_flood_awareness_concept_agreement",
+        "weather_context_concept_id": "repeat_weather_context_concept_agreement",
+        "nonflood_weather_concept_id": "repeat_nonflood_context_concept_agreement",
+    }
+    for field, agreement_field in concept_fields.items():
+        values = [str(row[field]) for row in repeats if row.get(field) not in {None, ""}]
+        agreement = len(values) == len(repeats) and len(set(values)) == 1
+        aggregate[agreement_field] = agreement
+        aggregate[field] = values[0] if agreement else None
+        aggregate[f"repeat_{field}s"] = ";".join(sorted(set(values)))
+    for field in ("flood_awareness_peak_date", "demand_proxy_peak_date"):
+        values = [str(row[field]) for row in repeats if row.get(field) not in {None, ""}]
+        agreement = len(values) == len(repeats) and len(set(values)) == 1
+        aggregate[f"repeat_{field}_agreement"] = agreement
+        aggregate[f"repeat_{field}s"] = ";".join(sorted(values))
+        aggregate[field] = values[0] if agreement else None
+    differences = [
+        value
+        for row in repeats
+        if (value := _optional_float(row.get("demand_flood_peak_difference_days"))) is not None
+    ]
+    aggregate["demand_flood_peak_difference_days"] = (
+        differences[0] if len(differences) == len(repeats) and len(set(differences)) == 1 else None
+    )
+
+
+def _set_correlation_summaries(
+    aggregate: dict[str, Any], repeats: Sequence[Mapping[str, Any]]
+) -> None:
+    for source, prefix in (
+        ("flood_awareness_correlation", "flood_awareness_correlation"),
+        ("weather_context_correlation", "weather_context_correlation"),
+    ):
+        values = [
+            value for row in repeats if (value := _optional_float(row.get(source))) is not None
+        ]
+        aggregate[f"{prefix}_median"] = statistics.median(values) if values else None
+        aggregate[f"{prefix}_minimum"] = min(values) if values else None
+        aggregate[f"{prefix}_maximum"] = max(values) if values else None
+        aggregate[f"{prefix}_valid_repeat_count"] = len(values)
+        aggregate[source] = values[0] if len(repeats) == 1 and values else None
+
+
+def _consensus_support(
+    concurrence: Mapping[str, Any],
+    fraction_field: str,
+    minimum_fraction: float,
+    require_unanimous_for_two: bool,
+) -> bool:
+    repeat_count = int(concurrence.get("repeat_count") or 1)
+    fraction = _optional_float(concurrence.get(fraction_field))
+    if fraction is None:
+        return False
+    if repeat_count == TWO_REPEAT_COUNT and require_unanimous_for_two:
+        return fraction == 1.0
+    return fraction >= minimum_fraction
 
 
 def subtract_standardized_lifts(
