@@ -383,7 +383,7 @@ def extract_mrms(
 ) -> dict[str, Path]:
     del sample_path, file_manifest, output_root
     raise MrmsError(
-        "real_extraction_not_implemented: MRMS GRIB decoding and geometry-aware "
+        "real_mrms_extraction_not_implemented: MRMS GRIB decoding and geometry-aware "
         "episode extraction are pending; no metrics were written."
     )
 

@@ -35,7 +35,7 @@ flowchart LR
 | Provisional conservative episodes | 37,053 |
 | Duplicate episode memberships | 0 |
 | Cross-split membership leakage | 0 |
-| Offline tests | 140 collected: 138 passed, 2 opt-in skipped |
+| Offline tests | 148 collected: 146 passed, 2 opt-in skipped |
 
 The Groundsource audit had balanced row accounting, no rejected or quarantined rows,
 and 300 antimeridian-review flags. These records and clusters remain candidates, not
@@ -54,6 +54,12 @@ confirmed urban flash floods.
 | USGS | Configured nearby-gauge response workflow; not proof of hydrologic connectivity |
 | Google Trends | Manual-export and non-causal event-study workflow implemented; real evidence pilot pending |
 | Forecasting models | Not implemented |
+
+MRMS and IMERG inventory and bounded-fetch scaffolds are implemented, but decoded
+spatial episode extraction is pending. Production extraction commands cannot write
+synthetic physical metrics; synthetic physical evidence exists only in tests. The
+catalog assigns no physical-support status from an artifact unless its complete,
+supported provenance identifies it as observed data.
 
 ## Five-Minute Synthetic Quickstart
 

@@ -7,7 +7,9 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from typer.testing import CliRunner
 
+from geodemand.cli import app
 from geodemand.mrms import (
     MrmsError,
     closest_object,
@@ -128,11 +130,23 @@ def test_production_extract_refuses_to_emit_synthetic_metrics(
         sample["verification_sample"], tmp_path / "mrms", fs=fs, max_episodes=1
     )
     fetched = fetch_mrms(inventory["mrms_download_plan"], tmp_path / "mrms", fs=fs)
-    with pytest.raises(MrmsError, match="real_extraction_not_implemented"):
+    with pytest.raises(MrmsError, match="real_mrms_extraction_not_implemented"):
         extract_mrms(
             sample["verification_sample"], fetched["mrms_file_manifest"], tmp_path / "mrms"
         )
-    assert not (tmp_path / "mrms" / "metrics" / "episode_precipitation_metrics.parquet").exists()
+    for relative in (
+        "metrics/episode_precipitation_metrics.parquet",
+        "metrics/member_precipitation_metrics.parquet",
+        "metrics/episode_precipitation_timeseries.parquet",
+    ):
+        assert not (tmp_path / "mrms" / relative).exists()
+
+
+@pytest.mark.parametrize("command", ["selfcheck", "sample", "inventory", "fetch", "extract"])
+def test_mrms_cli_has_no_machine_specific_default(command: str) -> None:
+    result = CliRunner().invoke(app, ["mrms", command, "--help"])
+    assert result.exit_code == 0
+    assert r"C:\Work\Data\GeoDemand" not in result.output
 
 
 @pytest.fixture()

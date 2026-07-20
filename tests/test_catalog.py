@@ -233,6 +233,23 @@ def test_catalog_rejects_untrusted_physical_evidence(
         )
 
 
+def test_catalog_rejects_missing_data_origin(
+    catalog_inputs: tuple[Path, Path, Path, Path, Path], tmp_path: Path
+) -> None:
+    cohort, episodes, comparison, mrms, usgs = catalog_inputs
+    metrics_path = mrms / "episode_precipitation_metrics.parquet"
+    rows = _rows(metrics_path)
+    for row in rows:
+        row.pop("data_origin")
+    _write(metrics_path, rows)
+    with pytest.raises(CatalogError, match="missing provenance fields: data_origin"):
+        build_provisional_catalog(
+            discover_catalog_inputs(cohort, episodes, comparison, mrms, usgs),
+            tmp_path / "missing-origin-catalog",
+            RULES,
+        )
+
+
 @pytest.fixture()
 def catalog_inputs(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
     cohort = tmp_path / "cohort"

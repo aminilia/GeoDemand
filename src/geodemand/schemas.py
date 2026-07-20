@@ -10,6 +10,7 @@ import pyarrow.parquet as pq
 SCHEMA_VERSION = "1.0.0"
 PHYSICAL_EVIDENCE_SCHEMA_VERSION = "physical-evidence-v1"
 DataOrigin = Literal["observed", "synthetic_fixture"]
+ALLOWED_DATA_ORIGINS = frozenset({"observed", "synthetic_fixture"})
 
 PROVENANCE_FIELDS = [
     pa.field("schema_version", pa.string(), nullable=False),
@@ -249,6 +250,30 @@ def validate_required_fields(table: pa.Table, name: str) -> None:
             raise ValueError(
                 f"{name}.{field.name} has type {table.schema.field(field.name).type}; "
                 f"expected {field.type}."
+            )
+
+
+def validate_physical_evidence_provenance(
+    table: pa.Table, label: str, *, require_observed: bool = True
+) -> None:
+    required = {field.name for field in PROVENANCE_FIELDS}
+    missing = sorted(required - set(table.column_names))
+    if missing:
+        raise ValueError(f"{label} is missing provenance fields: {', '.join(missing)}")
+    for row_index, row in enumerate(table.select(sorted(required)).to_pylist()):
+        if row["schema_version"] != PHYSICAL_EVIDENCE_SCHEMA_VERSION:
+            raise ValueError(
+                f"{label} row {row_index} has unsupported schema_version: {row['schema_version']!r}"
+            )
+        origin = row["data_origin"]
+        if origin not in ALLOWED_DATA_ORIGINS:
+            raise ValueError(f"{label} row {row_index} has invalid data_origin: {origin!r}")
+        if require_observed and origin != "observed":
+            raise ValueError(f"{label} row {row_index} has rejected data_origin: {origin!r}")
+        empty = sorted(name for name in required if row.get(name) in {None, ""})
+        if empty:
+            raise ValueError(
+                f"{label} row {row_index} has empty provenance fields: {', '.join(empty)}"
             )
 
 

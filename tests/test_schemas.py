@@ -6,7 +6,14 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from geodemand.schemas import SCHEMAS, schema_for, validate_required_fields, write_rows
+from geodemand.schemas import (
+    PHYSICAL_EVIDENCE_SCHEMA_VERSION,
+    SCHEMAS,
+    schema_for,
+    validate_physical_evidence_provenance,
+    validate_required_fields,
+    write_rows,
+)
 
 
 def test_all_scientific_schemas_are_versioned_and_support_empty_outputs(
@@ -58,3 +65,20 @@ def test_nonempty_schema_write_is_explicit_and_deterministic(tmp_path: Path) -> 
 def test_unknown_schema_fails_clearly() -> None:
     with pytest.raises(ValueError, match="Unknown GeoDemand schema"):
         schema_for("not-a-schema")
+
+
+def test_shared_physical_provenance_accepts_observed_and_rejects_synthetic_imerg() -> None:
+    provenance = {
+        "schema_version": [PHYSICAL_EVIDENCE_SCHEMA_VERSION],
+        "data_origin": ["observed"],
+        "source_dataset": ["NASA GPM"],
+        "source_product": ["GPM_3IMERGHH_07"],
+        "source_manifest_hash": ["abc123"],
+        "decoder_version": ["decoder-v1"],
+        "code_commit": ["commit"],
+        "rule_version": ["rules-v1"],
+    }
+    validate_physical_evidence_provenance(pa.table(provenance), "IMERG episode metrics")
+    provenance["data_origin"] = ["synthetic_fixture"]
+    with pytest.raises(ValueError, match="rejected data_origin"):
+        validate_physical_evidence_provenance(pa.table(provenance), "IMERG episode metrics")

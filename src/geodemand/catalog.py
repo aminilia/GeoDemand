@@ -16,7 +16,7 @@ import shapely
 import yaml
 
 from geodemand import __version__
-from geodemand.schemas import PHYSICAL_EVIDENCE_SCHEMA_VERSION, PROVENANCE_FIELDS
+from geodemand.schemas import validate_physical_evidence_provenance
 
 CatalogStatus = Literal[
     "retained_provisionally",
@@ -1102,26 +1102,10 @@ def _read_rows(path: Path) -> list[dict[str, Any]]:
 def _validate_observed_evidence(path: Path | None, label: str) -> None:
     if path is None:
         return
-    table = pq.read_table(path)
-    required = {field.name for field in PROVENANCE_FIELDS}
-    missing = sorted(required - set(table.column_names))
-    if missing:
-        raise CatalogError(f"{label} is missing provenance fields: {', '.join(missing)}")
-    rows = table.select(sorted(required)).to_pylist()
-    for row_index, row in enumerate(rows):
-        if row["schema_version"] != PHYSICAL_EVIDENCE_SCHEMA_VERSION:
-            raise CatalogError(
-                f"{label} row {row_index} has unsupported schema_version: {row['schema_version']!r}"
-            )
-        if row["data_origin"] != "observed":
-            raise CatalogError(
-                f"{label} row {row_index} has rejected data_origin: {row['data_origin']!r}"
-            )
-        empty = sorted(name for name in required if row.get(name) in {None, ""})
-        if empty:
-            raise CatalogError(
-                f"{label} row {row_index} has empty provenance fields: {', '.join(empty)}"
-            )
+    try:
+        validate_physical_evidence_provenance(pq.read_table(path), label)
+    except ValueError as exc:
+        raise CatalogError(str(exc)) from exc
 
 
 def _row_count(path: Path) -> int:

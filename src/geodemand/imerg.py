@@ -308,7 +308,7 @@ def estimate_imerg_fetch(
 def extract_imerg(sample_path: Path, file_manifest: Path, output_root: Path) -> dict[str, Path]:
     del sample_path, file_manifest, output_root
     raise ImergError(
-        "real_extraction_not_implemented: IMERG HDF5 decoding and geometry-aware "
+        "real_imerg_extraction_not_implemented: IMERG HDF5 decoding and geometry-aware "
         "episode extraction are pending; no metrics were written."
     )
 

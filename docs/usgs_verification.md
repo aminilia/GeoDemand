@@ -35,7 +35,7 @@ Commands:
 uv run geodemand usgs selfcheck --working-root C:\Work\Data\GeoDemand\usgs
 uv run geodemand usgs discover --sample C:\Work\Data\GeoDemand\mrms\manifests\verification_sample.parquet --output-root C:\Work\Data\GeoDemand\usgs --max-episodes 5 --dry-run
 uv run geodemand usgs fetch --request-plan C:\Work\Data\GeoDemand\usgs\inventory\usgs_request_plan.csv --output-root C:\Work\Data\GeoDemand\usgs --max-episodes 5
-uv run geodemand usgs extract --observations C:\Work\Data\GeoDemand\usgs\cache\usgs_observations.parquet --associations C:\Work\Data\GeoDemand\usgs\inventory\usgs_episode_gauge_associations.parquet --output-root C:\Work\Data\GeoDemand\usgs
+uv run geodemand usgs extract --observations C:\Work\Data\GeoDemand\usgs\cache\usgs_observations.parquet --associations C:\Work\Data\GeoDemand\usgs\inventory\usgs_episode_gauge_associations.parquet --rules config\usgs_response_rules.yaml --output-root C:\Work\Data\GeoDemand\usgs
 ```
 
 `USGS_API_KEY` is optional. The code records only whether a key was present, not

@@ -50,7 +50,7 @@ construction.
 ```powershell
 geodemand trends phase-metrics --observations OBSERVATIONS --plan REQUEST_PLAN --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root TRENDS_OUTPUT
 geodemand trends concurrence --observations OBSERVATIONS --plan REQUEST_PLAN --terms config/trends_terms.yaml --rules config/trends_rules.yaml --phase-metrics PHASE_METRICS --output-root TRENDS_OUTPUT
-geodemand trends select-controls --pilot PILOT_EPISODES --geography GEOGRAPHY_MAPPING --state-metadata data/reference/us_state_matching_metadata.csv --observations OBSERVATIONS --output-root TRENDS_OUTPUT
+geodemand trends select-controls --pilot PILOT_EPISODES --catalog PROVISIONAL_CATALOG --rules config/trends_rules.yaml --state-metadata data/reference/us_state_matching_metadata.csv --output-root TRENDS_OUTPUT
 geodemand trends control-adjusted-metrics --phase-metrics PHASE_METRICS --controls CONTROL_SELECTION --output-root TRENDS_OUTPUT
 geodemand trends attribute-peaks --phase-metrics PHASE_METRICS --concurrence CONCURRENCE --control-adjusted CONTROL_ADJUSTED --rules config/trends_rules.yaml --output-root TRENDS_OUTPUT
 ```

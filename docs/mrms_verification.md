@@ -1,7 +1,7 @@
 # MRMS Physical Verification
 
 > Status: inventory and bounded fetch scaffolding are implemented. Production episode
-> extraction intentionally fails with `real_extraction_not_implemented`; synthetic metric
+> extraction intentionally fails with `real_mrms_extraction_not_implemented`; synthetic metric
 > generators exist only in tests.
 
 Milestone 0.7A adds targeted NOAA MRMS feasibility checks for provisional

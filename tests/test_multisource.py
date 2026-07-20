@@ -59,11 +59,14 @@ def test_imerg_conversion_inventory_fetch_and_extract(tmp_path: Path) -> None:
     assert client.download_count == len(rows)
     assert all(row["cache_hit"] for row in manifest)
 
-    with pytest.raises(ImergError, match="real_extraction_not_implemented"):
+    with pytest.raises(ImergError, match="real_imerg_extraction_not_implemented"):
         extract_imerg(sample, fetched["imerg_file_manifest"], tmp_path / "imerg")
-    assert not (
-        tmp_path / "imerg" / "metrics" / "imerg_episode_precipitation_metrics.parquet"
-    ).exists()
+    for relative in (
+        "metrics/imerg_episode_precipitation_metrics.parquet",
+        "metrics/imerg_member_precipitation_metrics.parquet",
+        "metrics/imerg_episode_precipitation_timeseries.parquet",
+    ):
+        assert not (tmp_path / "imerg" / relative).exists()
 
 
 def test_imerg_authentication_state_and_download_failure_cleanup(
