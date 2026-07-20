@@ -381,25 +381,11 @@ def extract_mrms(
     file_manifest: Path,
     output_root: Path,
 ) -> dict[str, Path]:
-    sample_rows = _read_rows(sample_path)
-    file_rows = _read_rows(file_manifest)
-    metrics = [_synthetic_episode_metrics(row, file_rows) for row in sample_rows]
-    member_rows = _synthetic_member_metrics(sample_rows)
-    timeseries_rows = _synthetic_timeseries(metrics)
-    metrics_root = output_root / "metrics"
-    metrics_root.mkdir(parents=True, exist_ok=True)
-    episode_path = metrics_root / "episode_precipitation_metrics.parquet"
-    member_path = metrics_root / "member_precipitation_metrics.parquet"
-    timeseries_path = metrics_root / "episode_timeseries"
-    _write_parquet(episode_path, metrics)
-    _write_parquet(member_path, member_rows)
-    timeseries_path.mkdir(parents=True, exist_ok=True)
-    _write_parquet(timeseries_path / "part-00000.parquet", timeseries_rows)
-    return {
-        "episode_precipitation_metrics": episode_path,
-        "member_precipitation_metrics": member_path,
-        "episode_timeseries": timeseries_path,
-    }
+    del sample_path, file_manifest, output_root
+    raise MrmsError(
+        "real_extraction_not_implemented: MRMS GRIB decoding and geometry-aware "
+        "episode extraction are pending; no metrics were written."
+    )
 
 
 def assess_mrms(metrics_root: Path) -> dict[str, Path]:
@@ -716,79 +702,6 @@ def _download_atomic(fs: S3Like, s3_uri: str, path: Path, expected_size: int) ->
         tmp_path.unlink(missing_ok=True)
         raise MrmsError(f"Downloaded size mismatch for {s3_uri}")
     tmp_path.replace(path)
-
-
-def _synthetic_episode_metrics(
-    row: Mapping[str, Any], files: list[dict[str, Any]]
-) -> dict[str, Any]:
-    start, end = _mrms_window(row)
-    available = len([item for item in files if item.get("product") == PRIMARY_PRODUCT])
-    expected = max(1, int((end - start).total_seconds() // 3600) + 1)
-    signal = float(int(row["member_count"]) * 5)
-    return {
-        "episode_id": row["episode_id"],
-        "policy": "conservative",
-        "mrms_window_start_utc": start.isoformat(),
-        "mrms_window_end_utc": end.isoformat(),
-        "expected_hour_count": expected,
-        "available_hour_count": min(expected, available),
-        "coverage_fraction": min(1.0, available / expected),
-        "max_gridcell_1h_mm": signal,
-        "max_area_mean_1h_mm": signal / 2,
-        "max_area_p90_1h_mm": signal * 0.8,
-        "max_gridcell_3h_mm": signal * 1.5,
-        "max_gridcell_6h_mm": signal * 2,
-        "max_gridcell_12h_mm": signal * 2.5,
-        "max_gridcell_24h_mm": signal * 3,
-        "episode_total_area_mean_mm": signal * 2,
-        "episode_total_area_max_mm": signal * 3,
-        "wet_area_fraction_1mm": 0.9,
-        "wet_area_fraction_10mm": 0.5,
-        "wet_area_fraction_25mm": 0.1,
-        "time_of_max_area_mean_utc": start.isoformat(),
-        "time_of_max_gridcell_utc": start.isoformat(),
-        "lag_from_episode_start_hours": 0,
-        "quality_mean": 90.0,
-        "quality_p10": 75.0,
-        "quality_valid_fraction": 1.0,
-        "rainfall_peak_count": 1,
-        "largest_dry_gap_hours": 0,
-    }
-
-
-def _synthetic_member_metrics(sample_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    rows = []
-    for sample in sample_rows:
-        for index in range(int(sample["member_count"])):
-            rows.append(
-                {
-                    "episode_id": sample["episode_id"],
-                    "event_record_id": f"{sample['episode_id']}:member:{index}",
-                    "max_1h_mm": 10.0,
-                    "max_3h_mm": 20.0,
-                    "max_6h_mm": 30.0,
-                    "total_mm": 40.0,
-                    "quality_mean": 90.0,
-                    "peak_time_utc": _mrms_window(sample)[0].isoformat(),
-                    "coverage_fraction": 1.0,
-                }
-            )
-    return rows
-
-
-def _synthetic_timeseries(metrics: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [
-        {
-            "episode_id": row["episode_id"],
-            "valid_time_utc": row["time_of_max_area_mean_utc"],
-            "area_mean_qpe_mm": row["max_area_mean_1h_mm"],
-            "area_max_qpe_mm": row["max_gridcell_1h_mm"],
-            "area_p90_qpe_mm": row["max_area_p90_1h_mm"],
-            "quality_mean": row["quality_mean"],
-            "valid_area_fraction": row["coverage_fraction"],
-        }
-        for row in metrics
-    ]
 
 
 def _assessment_row(episode: Mapping[str, Any], members: list[dict[str, Any]]) -> dict[str, Any]:

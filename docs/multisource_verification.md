@@ -35,9 +35,10 @@ Commands:
 uv run geodemand observations pilot-sample --sample C:\Work\Data\GeoDemand\mrms\manifests\verification_sample.parquet --output-dir C:\Work\Data\GeoDemand\multisource_verification
 uv run geodemand observations compare-precipitation --mrms-metrics MRMS_METRICS --mrms-timeseries MRMS_TIMESERIES --imerg-metrics IMERG_METRICS --imerg-timeseries IMERG_TIMESERIES --sample PILOT_SAMPLE --output-dir C:\Work\Data\GeoDemand\multisource_verification
 uv run geodemand observations assess --sample PILOT_SAMPLE --mrms-metrics MRMS_METRICS --imerg-metrics IMERG_METRICS --precipitation-comparison PRECIP_COMPARISON --usgs-summary USGS_SUMMARY --output-dir C:\Work\Data\GeoDemand\multisource_verification
-uv run geodemand observations quicklooks --assessment C:\Work\Data\GeoDemand\multisource_verification\multisource_episode_assessment.parquet --output-dir C:\Work\Data\GeoDemand\multisource_verification
+uv run geodemand observations review-stubs --assessment C:\Work\Data\GeoDemand\multisource_verification\multisource_episode_assessment.parquet --output-dir C:\Work\Data\GeoDemand\multisource_verification
 ```
 
-The scaffold writes deterministic quicklook placeholders in ordinary tests. Real
-multi-panel visual quicklooks require decoded precipitation grids and gauge
-series from the bounded pilot.
+The `review-stubs` command writes deterministic text selections for manual review; it
+does not claim to produce plots. Trends quicklooks are real deterministic SVGs. Real
+multi-panel physical-evidence plots require decoded precipitation grids, and MRMS and
+IMERG production extraction remains pending.

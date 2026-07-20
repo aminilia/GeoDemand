@@ -209,31 +209,31 @@ def assess_observations(
     return {"multisource_episode_assessment": assessment_path, "assessment_rules": rules_path}
 
 
-def write_quicklooks(
-    assessment_path: Path, output_dir: Path, max_quicklooks: int = 7
+def write_review_stubs(
+    assessment_path: Path, output_dir: Path, max_review_stubs: int = 7
 ) -> dict[str, Path]:
-    rows = _read_rows(assessment_path)[:max_quicklooks]
-    quicklook_dir = output_dir / "quicklooks"
-    quicklook_dir.mkdir(parents=True, exist_ok=True)
+    rows = _read_rows(assessment_path)[:max_review_stubs]
+    review_dir = output_dir / "review_stubs"
+    review_dir.mkdir(parents=True, exist_ok=True)
     manifest_rows = []
     for row in rows:
         filename = f"{row['episode_id']}_{row['integrated_evidence_category']}.txt"
-        path = quicklook_dir / filename
+        path = review_dir / filename
         path.write_text(
             "\n".join(
                 [
                     f"episode_id={row['episode_id']}",
                     f"category={row['integrated_evidence_category']}",
                     f"review={row['integrated_review_flag']}",
-                    "deterministic_quicklook_placeholder=true",
+                    "artifact_type=review_stub_not_visualization",
                 ]
             ),
             encoding="utf-8",
         )
-        manifest_rows.append({"episode_id": row["episode_id"], "quicklook_path": str(path)})
-    manifest_path = quicklook_dir / "quicklook_manifest.csv"
-    _write_csv(manifest_path, manifest_rows, ["episode_id", "quicklook_path"])
-    return {"quicklook_manifest": manifest_path}
+        manifest_rows.append({"episode_id": row["episode_id"], "review_stub_path": str(path)})
+    manifest_path = review_dir / "review_stub_manifest.csv"
+    _write_csv(manifest_path, manifest_rows, ["episode_id", "review_stub_path"])
+    return {"review_stub_manifest": manifest_path}
 
 
 def _comparison_row(

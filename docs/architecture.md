@@ -1,13 +1,12 @@
 # Architecture
 
-## Milestone Boundary
+## Current Boundary
 
-Milestone 0.7A builds the reproducible foundation plus real Groundsource schema
-discovery, data auditing, global/U.S. spatial enrichment, and candidate U.S.
-event cohort construction, candidate episode clustering, and targeted MRMS
-feasibility checks. It does not include national MRMS extraction, automated
-national Google Trends collection, machine-learning models, final event confirmation, maps,
-demographic features, urban classification, or forecast evaluation.
+The implemented system covers Groundsource schema discovery and bounded audit,
+global/U.S. spatial enrichment, candidate U.S. cohort construction, nested episode
+clustering, a provisional catalog, and a non-causal Google Trends event-study workflow.
+It does not implement real MRMS or IMERG episode extraction, machine-learning models,
+final event confirmation, universal urban classification, or forecast evaluation.
 
 ## Source Layout
 
@@ -19,7 +18,7 @@ research scripts.
 ## Dependency Management
 
 Dependencies live in `pyproject.toml` and are compatible with `uv`. Runtime
-dependencies include Typer, Pydantic, Polars, PyArrow, Shapely, PyProj, and
+dependencies include Typer, Pydantic, PyArrow, Shapely, PyProj, and
 Pyogrio. PyArrow is used for Parquet metadata and record-batch scanning; Shapely
 is used for WKB geometry decoding, representative-point extraction, STRtree
 queries, and topology operations. PyProj provides EPSG:6933 area calculations,
@@ -34,11 +33,12 @@ testable without shelling out.
 
 ## Data Contracts
 
-Pydantic models define stable research-facing records for flood events,
-geographic regions, search-interest observations, and event-region
-intersections. Raw Groundsource records are represented separately from
-canonical GeoDemand flood-event records because source columns may drift while
-internal research contracts should remain stable.
+`geodemand.schemas` is the central versioned PyArrow schema registry for scientific
+tables. It defines required fields and types without imposing per-row object validation
+on multimillion-row pipelines. Physical evidence additionally requires explicit origin,
+dataset, product, manifest, decoder, commit, and rule provenance. Pydantic is restricted
+to control-plane configuration and Trends sidecar validation; it does not govern bulk
+scientific rows.
 
 ## Groundsource Ingestion
 
@@ -133,19 +133,20 @@ imports for `s3fs`, `xarray`, `cfgrib`, and `eccodes`. The ordinary test suite
 uses mocked S3 listings and tiny synthetic metric fixtures; real NOAA access is
 kept opt-in.
 
-The subsystem separates deterministic sample selection, S3 inventory, compressed
-file caching, metric extraction, and coherence assessment. It inventories object
-keys before downloading, globally deduplicates objects, validates cache files,
-and keeps volatile execution details in manifests. Physical coherence categories
-are provisional review labels and do not mutate episode membership.
+The subsystem separates deterministic sample selection, S3 inventory, and compressed
+file caching. It inventories object keys before downloading, globally deduplicates
+objects, validates cache files, and keeps volatile execution details in manifests.
+Real GRIB decoding and episode extraction are pending; the production extraction command
+fails explicitly and cannot fabricate metrics. Assessment can consume only separately
+supplied observed evidence with complete provenance.
 
 ## Multi-Source Verification
 
-NASA IMERG and USGS are added as separate offline-testable adapters. IMERG
-provides satellite precipitation rates that are converted to half-hour
-accumulations before comparison with MRMS hourly precipitation. USGS provides
-gauge observations used as hydrologic-response evidence, not as direct
-precipitation measurements.
+NASA IMERG and USGS are separate offline-testable adapters. The implemented IMERG
+inventory/fetch scaffold documents the required rate-to-half-hour accumulation
+conversion, but real HDF5 geometry-aware extraction is pending and fails explicitly.
+USGS provides nearby gauge observations as contextual response evidence, not direct
+precipitation measurements or proof of hydrologic connectivity.
 
 The integrated assessment combines component evidence through explicit
 versioned rules written to `assessment_rules.json`. No gauge is represented as
@@ -217,6 +218,8 @@ account identifiers are outside the data model.
 
 Control selection indexes provisional episode intervals by state before
 applying the configured temporal buffer. This avoids repeated full-catalog
-scans while retaining deterministic ranking. Population tier, climate class,
-and Trends-availability metadata are optional because unavailable covariates
-must not be invented; missing values are recorded as unknown.
+scans while retaining deterministic ranking. Population tier, broad climate class,
+coastal status, and Trends-availability fields are versioned in
+`data/reference/us_state_matching_metadata.csv`. Matched status requires metadata-backed
+comparison; missing metadata is labeled `unmatched_fallback_control` rather than being
+presented as a match.

@@ -10,7 +10,6 @@ import pytest
 
 from geodemand.mrms import (
     MrmsError,
-    assess_mrms,
     closest_object,
     discover_episode_outputs,
     extract_mrms,
@@ -120,21 +119,20 @@ def test_precipitation_masking_rolling_and_peak_detection() -> None:
     assert peak_count([0, 2, 2, 0, 0, 0, 0, 0, 0, 3], dry_gap_hours=3) == 2
 
 
-def test_extract_and_assess_write_metrics(episode_root: Path, tmp_path: Path) -> None:
+def test_production_extract_refuses_to_emit_synthetic_metrics(
+    episode_root: Path, tmp_path: Path
+) -> None:
     sample = sample_mrms(episode_root, tmp_path / "sample", seed=7, max_episodes=2)
     fs = FakeS3()
     inventory = inventory_mrms(
         sample["verification_sample"], tmp_path / "mrms", fs=fs, max_episodes=1
     )
     fetched = fetch_mrms(inventory["mrms_download_plan"], tmp_path / "mrms", fs=fs)
-    extracted = extract_mrms(
-        sample["verification_sample"], fetched["mrms_file_manifest"], tmp_path / "mrms"
-    )
-    assessed = assess_mrms(tmp_path / "mrms" / "metrics")
-
-    assert pq.read_table(extracted["episode_precipitation_metrics"]).num_rows > 0
-    assert pq.read_table(extracted["member_precipitation_metrics"]).num_rows > 0
-    assert assessed["physical_coherence_assessment"].exists()
+    with pytest.raises(MrmsError, match="real_extraction_not_implemented"):
+        extract_mrms(
+            sample["verification_sample"], fetched["mrms_file_manifest"], tmp_path / "mrms"
+        )
+    assert not (tmp_path / "mrms" / "metrics" / "episode_precipitation_metrics.parquet").exists()
 
 
 @pytest.fixture()

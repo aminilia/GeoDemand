@@ -7,9 +7,11 @@ from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 
 from geodemand.imerg import (
     EarthaccessImergClient,
+    ImergError,
     aggregate_half_hours_to_hourly,
     extract_imerg,
     fetch_imerg,
@@ -21,7 +23,7 @@ from geodemand.observations import (
     assess_observations,
     compare_precipitation,
     pilot_sample,
-    write_quicklooks,
+    write_review_stubs,
 )
 from geodemand.usgs import (
     DataretrievalUsgsClient,
@@ -31,6 +33,9 @@ from geodemand.usgs import (
     response_metrics,
     selfcheck_usgs,
 )
+
+ROOT = Path(__file__).parents[1]
+USGS_RULES = ROOT / "config" / "usgs_response_rules.yaml"
 
 
 def test_imerg_conversion_inventory_fetch_and_extract(tmp_path: Path) -> None:
@@ -54,8 +59,11 @@ def test_imerg_conversion_inventory_fetch_and_extract(tmp_path: Path) -> None:
     assert client.download_count == len(rows)
     assert all(row["cache_hit"] for row in manifest)
 
-    extracted = extract_imerg(sample, fetched["imerg_file_manifest"], tmp_path / "imerg")
-    assert pq.read_table(extracted["imerg_episode_precipitation_metrics"]).num_rows == 4
+    with pytest.raises(ImergError, match="real_extraction_not_implemented"):
+        extract_imerg(sample, fetched["imerg_file_manifest"], tmp_path / "imerg")
+    assert not (
+        tmp_path / "imerg" / "metrics" / "imerg_episode_precipitation_metrics.parquet"
+    ).exists()
 
 
 def test_imerg_authentication_state_and_download_failure_cleanup(
@@ -109,10 +117,15 @@ def test_usgs_discover_fetch_extract_and_no_gauge_unknown(tmp_path: Path) -> Non
     assert any(row["association_quality"] == "inside_25km_buffer" for row in associations)
 
     fetched = fetch_usgs(discovered["usgs_request_plan"], tmp_path / "usgs", client=client)
+    observations = pq.read_table(fetched["usgs_observations"]).to_pylist()
+    assert observations
+    assert all(row["data_origin"] == "observed" for row in observations)
+    assert all(row["schema_version"] == "physical-evidence-v1" for row in observations)
     extracted = extract_usgs(
         fetched["usgs_observations"],
         discovered["usgs_episode_gauge_associations"],
         tmp_path / "usgs",
+        USGS_RULES,
     )
     metrics = pq.read_table(extracted["usgs_gauge_response_metrics"]).to_pylist()
     assert any(row["response_detected"] for row in metrics)
@@ -124,6 +137,7 @@ def test_usgs_discover_fetch_extract_and_no_gauge_unknown(tmp_path: Path) -> Non
         fetched_empty["usgs_observations"],
         no_gauge["usgs_episode_gauge_associations"],
         tmp_path / "nogauge",
+        USGS_RULES,
     )
     rows = pq.read_table(summary["usgs_episode_response_summary"]).to_pylist()
     assert all(row["hydrologic_response_supported"] == "unknown" for row in rows)
@@ -170,7 +184,7 @@ def test_dataretrieval_adapter_filters_and_normalizes_waterdata() -> None:
     assert observations[0]["approval_status"] == "provisional"
 
 
-def test_observations_pilot_compare_assess_and_quicklooks(tmp_path: Path) -> None:
+def test_observations_pilot_compare_assess_and_review_stubs(tmp_path: Path) -> None:
     sample = _sample(tmp_path)
     first = pilot_sample(sample, tmp_path / "pilot1", target_count=3)
     second = pilot_sample(sample, tmp_path / "pilot2", target_count=3)
@@ -202,8 +216,10 @@ def test_observations_pilot_compare_assess_and_quicklooks(tmp_path: Path) -> Non
     )
     rows = pq.read_table(assessed["multisource_episode_assessment"]).to_pylist()
     assert any(row["integrated_evidence_category"] for row in rows)
-    quicklooks = write_quicklooks(assessed["multisource_episode_assessment"], tmp_path / "multi")
-    assert quicklooks["quicklook_manifest"].exists()
+    review_stubs = write_review_stubs(
+        assessed["multisource_episode_assessment"], tmp_path / "multi"
+    )
+    assert review_stubs["review_stub_manifest"].exists()
 
 
 def test_pilot_sample_hash_and_coverage_are_deterministic(tmp_path: Path) -> None:
@@ -419,33 +435,19 @@ class FakeUsgsClient:
         start_utc: datetime,
         end_utc: datetime,
     ) -> list[dict[str, Any]]:
-        del monitoring_location_id, end_utc
+        del monitoring_location_id
         self.fetch_count += 1
+        hours = int((end_utc - start_utc).total_seconds() // 3600) + 1
         return [
             {
-                "time_utc": (start_utc + timedelta(hours=1)).isoformat(),
-                "value": 1.0,
-                "units": "ft3/s",
-                "qualifier": "",
-                "approval_status": "approved",
+                "time_utc": (start_utc + timedelta(hours=index)).isoformat(),
+                "value": 1.0 if index < 24 else 7.0,
+                "units": "ft3/s" if parameter_code == "00060" else "ft",
+                "qualifier": "P" if index == 25 else "",
+                "approval_status": "provisional" if index == 25 else "approved",
                 "parameter_code": parameter_code,
-            },
-            {
-                "time_utc": (start_utc + timedelta(hours=25)).isoformat(),
-                "value": 5.0,
-                "units": "ft3/s",
-                "qualifier": "P",
-                "approval_status": "provisional",
-                "parameter_code": parameter_code,
-            },
-            {
-                "time_utc": (start_utc + timedelta(hours=26)).isoformat(),
-                "value": 7.0,
-                "units": "ft3/s",
-                "qualifier": "",
-                "approval_status": "approved",
-                "parameter_code": parameter_code,
-            },
+            }
+            for index in range(hours)
         ]
 
 

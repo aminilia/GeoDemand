@@ -1,4 +1,4 @@
-rule_version: 0.8A-v2
+rule_version: 0.8A-v3
 selection_seed: 20260715
 pilot_per_year: 10
 pilot_years: [2022, 2023, 2024, 2025]
@@ -54,6 +54,11 @@ controls:
   climate_class_score: 1.0
   trends_availability_score: 1.0
 attribution:
-  minimum_positive_adjusted_lift: 0.0
+  minimum_positive_adjusted_lift: 0.50
+  minimum_standardized_phase_lift: 0.50
+  minimum_robust_phase_lift: 0.50
+  minimum_control_count: 2
+  require_stable_repeats_when_repeated: true
+  maximum_repeat_lift_stddev: 1.0
   national_spike_tolerance_days: 2
   nonflood_context_concurrence_days: 2

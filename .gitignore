@@ -10,6 +10,12 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+*.zip
 
 # Research data and derived local outputs
 data/raw/
@@ -24,8 +30,16 @@ trends/
 .browser-downloads/
 *.parquet
 *.jsonl
+*.grib
+*.grib2
+*.h5
+*.hdf5
+browser-profile*/
 
 # Local environment
 .env
 .env.*
 !.env.example
+.venv/
+venv/
+env/

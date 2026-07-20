@@ -16,6 +16,7 @@ import shapely
 import yaml
 
 from geodemand import __version__
+from geodemand.schemas import PHYSICAL_EVIDENCE_SCHEMA_VERSION, PROVENANCE_FIELDS
 
 CatalogStatus = Literal[
     "retained_provisionally",
@@ -172,6 +173,15 @@ def build_provisional_catalog(  # noqa: PLR0915
     conservative_membership = _read_rows(inputs.conservative_membership)
     balanced_membership = _read_rows(inputs.balanced_membership)
     conservative_edges = _read_rows(inputs.conservative_edges)
+    for label, evidence_path in (
+        ("MRMS episode metrics", inputs.mrms_episode_metrics),
+        ("MRMS member metrics", inputs.mrms_member_metrics),
+        ("MRMS coherence", inputs.mrms_coherence),
+        ("USGS associations", inputs.usgs_associations),
+        ("USGS gauge metrics", inputs.usgs_gauge_metrics),
+        ("USGS episode summary", inputs.usgs_episode_summary),
+    ):
+        _validate_observed_evidence(evidence_path, label)
     members_by_conservative = _group_members(conservative_membership)
     conservative_by_event = {
         str(row["event_record_id"]): str(row["episode_id"]) for row in conservative_membership
@@ -1087,6 +1097,31 @@ def _optional_dataset(root: Path | None, name: str) -> Path | None:
 
 def _read_rows(path: Path) -> list[dict[str, Any]]:
     return cast(list[dict[str, Any]], pq.read_table(path).to_pylist())
+
+
+def _validate_observed_evidence(path: Path | None, label: str) -> None:
+    if path is None:
+        return
+    table = pq.read_table(path)
+    required = {field.name for field in PROVENANCE_FIELDS}
+    missing = sorted(required - set(table.column_names))
+    if missing:
+        raise CatalogError(f"{label} is missing provenance fields: {', '.join(missing)}")
+    rows = table.select(sorted(required)).to_pylist()
+    for row_index, row in enumerate(rows):
+        if row["schema_version"] != PHYSICAL_EVIDENCE_SCHEMA_VERSION:
+            raise CatalogError(
+                f"{label} row {row_index} has unsupported schema_version: {row['schema_version']!r}"
+            )
+        if row["data_origin"] != "observed":
+            raise CatalogError(
+                f"{label} row {row_index} has rejected data_origin: {row['data_origin']!r}"
+            )
+        empty = sorted(name for name in required if row.get(name) in {None, ""})
+        if empty:
+            raise CatalogError(
+                f"{label} row {row_index} has empty provenance fields: {', '.join(empty)}"
+            )
 
 
 def _row_count(path: Path) -> int:

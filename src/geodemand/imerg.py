@@ -17,7 +17,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from geodemand import __version__
-from geodemand.mrms import largest_dry_gap, peak_count, rolling_max
 
 IMERG_SHORT_NAME = "GPM_3IMERGHH"
 IMERG_VERSION = "07"
@@ -307,24 +306,11 @@ def estimate_imerg_fetch(
 
 
 def extract_imerg(sample_path: Path, file_manifest: Path, output_root: Path) -> dict[str, Path]:
-    sample_rows = _read_rows(sample_path)
-    manifest_rows = _read_rows(file_manifest)
-    metrics = [_episode_metrics(row, manifest_rows) for row in sample_rows]
-    members = [_member_metric(row) for row in sample_rows]
-    timeseries = _timeseries(metrics)
-    metrics_dir = output_root / "metrics"
-    series_dir = metrics_dir / "episode_timeseries"
-    series_dir.mkdir(parents=True, exist_ok=True)
-    episode_path = metrics_dir / "imerg_episode_precipitation_metrics.parquet"
-    member_path = metrics_dir / "imerg_member_precipitation_metrics.parquet"
-    _write_parquet(episode_path, metrics)
-    _write_parquet(member_path, members)
-    _write_parquet(series_dir / "part-00000.parquet", timeseries)
-    return {
-        "imerg_episode_precipitation_metrics": episode_path,
-        "imerg_member_precipitation_metrics": member_path,
-        "episode_timeseries": series_dir,
-    }
+    del sample_path, file_manifest, output_root
+    raise ImergError(
+        "real_extraction_not_implemented: IMERG HDF5 decoding and geometry-aware "
+        "episode extraction are pending; no metrics were written."
+    )
 
 
 def rate_to_half_hour_mm(
@@ -403,67 +389,6 @@ def _bbox(row: Mapping[str, Any]) -> tuple[float, float, float, float] | None:
     if lon is None or lat is None:
         return None
     return (float(lon) - 0.5, float(lat) - 0.5, float(lon) + 0.5, float(lat) + 0.5)
-
-
-def _episode_metrics(row: Mapping[str, Any], manifest_rows: list[dict[str, Any]]) -> dict[str, Any]:
-    half_hours = max(1, len(manifest_rows))
-    values = [float(int(row["member_count"]) + index) for index in range(half_hours)]
-    hourly = aggregate_half_hours_to_hourly(values)
-    return {
-        "episode_id": row["episode_id"],
-        "policy": "conservative",
-        "expected_half_hour_count": half_hours,
-        "available_half_hour_count": half_hours,
-        "coverage_fraction": 1.0 if manifest_rows else 0.0,
-        "maximum_gridcell_30m_mm": max(values),
-        "maximum_area_mean_30m_mm": max(values) / 2,
-        "maximum_area_p90_30m_mm": max(values) * 0.8,
-        "maximum_gridcell_1h_mm": rolling_max(hourly, 1),
-        "maximum_gridcell_3h_mm": rolling_max(hourly, 3),
-        "maximum_gridcell_6h_mm": rolling_max(hourly, 6),
-        "maximum_gridcell_12h_mm": rolling_max(hourly, 12),
-        "maximum_gridcell_24h_mm": rolling_max(hourly, 24),
-        "episode_total_area_mean_mm": sum(values) / 2,
-        "episode_total_area_max_mm": sum(values),
-        "wet_area_fraction_1mm": 1.0,
-        "wet_area_fraction_10mm": 0.5,
-        "wet_area_fraction_25mm": 0.1,
-        "time_of_max_area_mean_utc": row["episode_start_date"],
-        "time_of_max_gridcell_utc": row["episode_start_date"],
-        "rainfall_peak_count": peak_count(hourly),
-        "largest_dry_gap_hours": largest_dry_gap(hourly),
-        "quality_variable_used": "",
-        "quality_mean": None,
-        "quality_valid_fraction": None,
-    }
-
-
-def _member_metric(row: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        "episode_id": row["episode_id"],
-        "event_record_id": f"{row['episode_id']}:synthetic_member",
-        "maximum_30m_mm": float(row["member_count"]),
-        "maximum_1h_mm": float(row["member_count"]) * 2,
-        "maximum_3h_mm": float(row["member_count"]) * 3,
-        "maximum_6h_mm": float(row["member_count"]) * 4,
-        "total_mm": float(row["member_count"]) * 5,
-        "peak_time_utc": row["episode_start_date"],
-        "coverage_fraction": 1.0,
-        "quality_mean": None,
-    }
-
-
-def _timeseries(metrics: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [
-        {
-            "episode_id": row["episode_id"],
-            "valid_time_utc": row["time_of_max_area_mean_utc"],
-            "area_mean_imerg_mm": row["maximum_area_mean_30m_mm"],
-            "area_max_imerg_mm": row["maximum_gridcell_30m_mm"],
-            "valid_area_fraction": row["coverage_fraction"],
-        }
-        for row in metrics
-    ]
 
 
 def _download_atomic(client: ImergClient, url: str, path: Path) -> None:

@@ -5,27 +5,24 @@ build-backend = "hatchling.build"
 [project]
 name = "geodemand-ff"
 version = "0.1.0"
-description = "GeoAI research pipeline scaffolding for forecasting regional Google search-demand surges after urban flash floods."
+description = "Reproducible geospatial event-study pipeline for U.S. flood episodes and search-interest responses."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [
-  { name = "GeoDemand-FF contributors" },
+  { name = "Amin Ilia" },
 ]
-keywords = ["geoai", "flash-floods", "search-demand", "research", "polars"]
+keywords = ["geoai", "flood-events", "search-interest", "event-study", "research"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Science/Research",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: GIS",
 ]
 dependencies = [
-  "geopandas>=1.0",
-  "numpy>=2.0",
-  "pandas>=2.2",
-  "polars>=1.0",
   "pydantic>=2.7",
   "pyarrow>=15.0",
   "pyogrio>=0.9",
@@ -45,12 +42,10 @@ mrms = [
 imerg = [
   "earthaccess>=0.14",
   "h5py>=3.11",
-  "requests-cache>=1.2",
   "xarray>=2025.1",
 ]
 usgs = [
   "dataretrieval>=1.0",
-  "requests-cache>=1.2",
 ]
 trends-browser = [
   "playwright>=1.52,<2",
@@ -61,11 +56,11 @@ verification = [
   "earthaccess>=0.14",
   "eccodes>=2.39",
   "h5py>=3.11",
-  "requests-cache>=1.2",
   "s3fs>=2025.5",
   "xarray>=2025.1",
 ]
 dev = [
+  "build>=1.2",
   "mypy>=1.10",
   "pre-commit>=3.7",
   "pytest>=8.2",
@@ -102,10 +97,7 @@ module = [
   "dataretrieval",
   "earthaccess",
   "eccodes",
-  "geopandas",
   "h5py",
-  "numpy",
-  "pandas",
   "pyarrow",
   "pyarrow.*",
   "pyogrio",

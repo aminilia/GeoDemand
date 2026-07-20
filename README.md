@@ -1,400 +1,127 @@
 # GeoDemand-FF
 
-GeoDemand-FF is a reproducible research scaffold for studying regional Google
-search-demand surges following urban flash floods.
+GeoDemand-FF is a reproducible geospatial event-study pipeline for constructing
+candidate U.S. flood episodes and measuring state-level search-interest responses
+around them. It provides deterministic data auditing, spatial enrichment, episode
+clustering, evidence provenance, and non-causal Google Trends event-study tools. It
+does not yet provide predictive forecasting or confirmed flood ground truth.
 
-Milestone 0.6B provides package structure, data contracts, local GeoParquet
-Groundsource inspection, WKB geometry auditing, spatial enrichment, candidate
-U.S. event cohort construction, candidate episode clustering, sensitivity
-analysis, tests, and project documentation.
-It does not implement machine-learning models, national MRMS extraction, urban
-exposure, final event confirmation, or maps.
+## Research Questions
 
-## Installation
+- Can a large global flood-footprint archive support a reproducible U.S. candidate-event cohort?
+- Which clustering assumptions materially change candidate episode membership?
+- Do state-level search-interest series show stable, event-associated responses around candidates?
+- How much can precipitation and nearby-gauge evidence strengthen later episode review?
+
+## Pipeline
+
+```mermaid
+flowchart LR
+    A["Groundsource GeoParquet"] --> B["Bounded audit"]
+    B --> C["Country and state enrichment"]
+    C --> D["U.S. candidate cohort"]
+    D --> E["Nested episode clustering"]
+    E --> F["Provisional catalog"]
+    F --> G["State-level Trends event study"]
+    H["MRMS / IMERG / USGS evidence"] -. "pending or targeted" .-> F
+```
+
+## Verified Results
+
+| Result | Verified value |
+|---|---:|
+| Groundsource records audited | 2,646,302 |
+| Eligible U.S. candidate records, 2022-2025 | 88,515 |
+| Provisional conservative episodes | 37,053 |
+| Duplicate episode memberships | 0 |
+| Cross-split membership leakage | 0 |
+| Offline tests | 140 collected: 138 passed, 2 opt-in skipped |
+
+The Groundsource audit had balanced row accounting, no rejected or quarantined rows,
+and 300 antimeridian-review flags. These records and clusters remain candidates, not
+confirmed urban flash floods.
+
+## Implementation Status
+
+| Component | Status |
+|---|---|
+| Groundsource GeoParquet audit | Complete for the confirmed 2026 local file |
+| Country and U.S. state enrichment | Implemented and full-data run completed |
+| Candidate cohort and episode clustering | Implemented; deterministic full-data outputs verified |
+| Provisional catalog | Implemented; physical support remains pending |
+| MRMS | Inventory/fetch scaffold implemented; real episode extraction pending |
+| NASA IMERG | Inventory/fetch scaffold implemented; real episode extraction pending |
+| USGS | Configured nearby-gauge response workflow; not proof of hydrologic connectivity |
+| Google Trends | Manual-export and non-causal event-study workflow implemented; real evidence pilot pending |
+| Forecasting models | Not implemented |
+
+## Five-Minute Synthetic Quickstart
+
+The demo uses only clearly labeled synthetic fixtures. It runs candidate clustering,
+builds a provisional catalog, computes repeat-aware Trends phase metrics, and writes a
+real deterministic SVG plot.
+
+PowerShell:
 
 ```powershell
 uv venv
 uv pip install -e ".[dev]"
-```
-
-Source-specific clients are optional so ordinary offline development does not
-install network and native decoding stacks unnecessarily:
-
-```powershell
-uv pip install -e ".[mrms]"
-uv pip install -e ".[imerg]"
-uv pip install -e ".[usgs]"
-uv pip install -e ".[verification]"
-uv pip install -e ".[trends-browser]"
-uv run python -m playwright install chromium
-```
-
-## Tests And Checks
-
-```powershell
-uv run ruff check .
-uv run ruff format --check .
-uv run mypy
+uv run python scripts/synthetic_demo.py --output-dir demo-output
+uv run python scripts/validate_documented_cli.py
 uv run python scripts/run_tests.py
 ```
 
-## First Data Audit
+POSIX shell:
 
-Use a local Parquet file. Do not commit raw or downloaded research data.
-
-```powershell
-uv run geodemand data inspect-groundsource --input PATH
-uv run geodemand data audit-groundsource --input PATH --output-dir AUDIT_DIR
-uv run geodemand data validate-groundsource --input PATH
-uv run geodemand data profile --input PATH --output REPORT_JSON
-uv run geodemand data filter-groundsource --input PATH --output OUTPUT_DIR --country US --country-boundaries BOUNDARIES
+```bash
+uv venv
+uv pip install -e '.[dev]'
+uv run python scripts/synthetic_demo.py --output-dir demo-output
+uv run python scripts/validate_documented_cli.py
+uv run python scripts/run_tests.py
 ```
 
-## Boundary Preparation And Spatial Enrichment
+Source-specific network and native clients are optional: `mrms`, `imerg`, `usgs`,
+`trends-browser`, and the combined `verification` extra. Ordinary tests do not make
+live external-service requests.
 
-Milestone 0.5E prepares local Natural Earth and Census boundary files, then
-streams Groundsource events through country and U.S. state spatial assignment.
-Use local archives; do not commit boundary archives or prepared outputs.
+## Key Engineering Features
 
-```powershell
-uv run geodemand boundaries inspect --boundary-root C:\Work\Data\GeoDemand\boundaries
-uv run geodemand boundaries prepare --boundary-root C:\Work\Data\GeoDemand\boundaries --output-dir C:\Work\Data\GeoDemand\artifacts\boundaries_prepared
-uv run geodemand data enrich-spatial --input C:\Work\Data\GeoDemand\groundsource\groundsource_2026.parquet --countries C:\Work\Data\GeoDemand\artifacts\boundaries_prepared\countries.parquet --states C:\Work\Data\GeoDemand\artifacts\boundaries_prepared\us_states.parquet --output-dir C:\Work\Data\GeoDemand\artifacts\groundsource_spatial
+- Bounded row-group and batch processing for multimillion-row GeoParquet audits.
+- Deterministic identifiers, manifests, scientific summaries, and clustering comparisons.
+- Versioned Arrow schemas and mandatory provenance for physical evidence.
+- Explicit quarantine, rejection, duplicate, geometry, and row-accounting policies.
+- Repeat-preserving Trends metrics with robust phase lifts and stability diagnostics.
+- Metadata-backed control-state selection with transparent fallback labels.
+- Portable test runtime and Python 3.11-3.13 CI.
+
+## Scientific Limitations
+
+Groundsource footprints are candidate observations, not validated flood ground truth.
+Spatial assignment inherits boundary-resolution uncertainty. Episode connectivity is
+sensitive to temporal and spatial policy choices. Nearby USGS response is geographic
+context, not proof that a gauge drains an event footprint. Google Trends indices are
+request-relative and event-study classifications are non-causal. Real MRMS and IMERG
+episode extraction and the real Google Trends evidence pilot remain pending.
+
+## Reproduction And Documentation
+
+- [Reproduction commands](docs/reproduction.md)
+- [Milestone record](docs/milestones.md)
+- [Architecture](docs/architecture.md)
+- [Data card](docs/data_card.md)
+- [Groundsource audit](docs/groundsource_audit.md)
+- [Episode catalog](docs/provisional_episode_catalog.md)
+- [Google Trends feasibility](docs/google_trends_feasibility.md)
+- [Data licenses and redistribution](DATA_LICENSES.md)
+
+Create a source-only public archive from a clean commit with:
+
+```bash
+git archive --format=zip --output GeoDemand-source.zip HEAD
 ```
 
-The enrichment command writes `events_enriched/`,
-`event_country_membership/`, `event_state_overlaps/`, `us_events/`,
-`spatial_enrichment_summary.json`, assignment-quality CSVs, boundary metadata,
-and a run manifest.
+## Citation And License
 
-## Candidate Event Cohort
-
-Milestone 0.6A builds candidate flood-event cohorts from corrected spatial
-enrichment outputs. Records are candidate events, not confirmed flash-flood
-events.
-
-```powershell
-uv run geodemand cohort inspect --events C:\Work\Data\GeoDemand\artifacts\spatial_enrichment_full\events_enriched --state-overlaps C:\Work\Data\GeoDemand\artifacts\spatial_enrichment_full\event_state_overlaps
-uv run geodemand cohort build --events C:\Work\Data\GeoDemand\artifacts\spatial_enrichment_full\events_enriched --state-overlaps C:\Work\Data\GeoDemand\artifacts\spatial_enrichment_full\event_state_overlaps --output-dir C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort --start-date 2022-01-01 --end-date 2025-12-31 --primary-domain conus
-```
-
-The default primary domain is the contiguous 48 states plus Washington, DC.
-Alaska, Hawaii, Puerto Rico, and other U.S. territories are preserved as
-secondary-domain records.
-
-## Candidate Episodes
-
-Milestone 0.6B clusters eligible candidate records into provisional candidate
-episodes. These clusters are for sensitivity analysis and downstream
-verification; they are not confirmed flood episodes.
-
-```powershell
-uv run geodemand episodes inspect --events C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\eligible_event_records --event-states C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\event_state_records
-uv run geodemand episodes build --events C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\eligible_event_records --event-states C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\event_state_records --output-dir C:\Work\Data\GeoDemand\artifacts\candidate_episodes --policy balanced
-uv run geodemand episodes compare --events C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\eligible_event_records --event-states C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full\event_state_records --output-dir C:\Work\Data\GeoDemand\artifacts\candidate_episode_sensitivity
-```
-
-Supported policies are `conservative`, `balanced`, and `broad`. Use
-`--max-rows` for bounded smoke runs; full default runs process the complete
-eligible cohort.
-
-## MRMS Feasibility
-
-Milestone 0.7A adds targeted MRMS feasibility commands. The default policy for
-physical verification is conservative; balanced is used to inspect possible
-merge candidates, and broad remains an upper sensitivity scenario.
-
-```powershell
-uv run geodemand mrms selfcheck --working-root C:\Work\Data\GeoDemand\mrms
-uv run geodemand mrms inspect-episodes --episode-root C:\Work\Data\GeoDemand\artifacts\episode_comparison_full
-uv run geodemand mrms sample --episode-root EPISODE_OUTPUT_ROOT --output-root C:\Work\Data\GeoDemand\mrms
-uv run geodemand mrms inventory --sample C:\Work\Data\GeoDemand\mrms\manifests\verification_sample.parquet --output-root C:\Work\Data\GeoDemand\mrms --max-episodes 3
-uv run geodemand mrms fetch --download-plan C:\Work\Data\GeoDemand\mrms\inventory\mrms_download_plan.csv --working-root C:\Work\Data\GeoDemand\mrms --max-episodes 5
-uv run geodemand mrms extract --sample C:\Work\Data\GeoDemand\mrms\manifests\verification_sample.parquet --file-manifest C:\Work\Data\GeoDemand\mrms\manifests\mrms_file_manifest.parquet --output-root C:\Work\Data\GeoDemand\mrms
-uv run geodemand mrms assess --metrics-root C:\Work\Data\GeoDemand\mrms\metrics
-```
-
-MRMS downloads are cached locally and must not be committed.
-
-## Multi-Source Verification
-
-Milestone 0.7B adds offline-testable NASA IMERG, USGS, and integrated
-multi-source commands. These commands produce feasibility evidence and review
-categories only; they do not relabel events.
-
-The deterministic pilot selector uses quota strata followed by a seeded
-coverage fill for years, seasons, states, and regions. Network clients and
-native decoders are installed through the optional `imerg`, `usgs`, and
-`verification` dependency groups. A real-data pilot remains gated on a populated
-episode-policy output and MRMS verification sample.
-
-```powershell
-uv run geodemand imerg selfcheck --working-root C:\Work\Data\GeoDemand\imerg
-uv run geodemand usgs selfcheck --working-root C:\Work\Data\GeoDemand\usgs
-uv run geodemand observations pilot-sample --sample C:\Work\Data\GeoDemand\mrms\manifests\verification_sample.parquet --output-dir C:\Work\Data\GeoDemand\multisource_verification
-uv run geodemand observations compare-precipitation --mrms-metrics MRMS_METRICS --mrms-timeseries MRMS_TIMESERIES --imerg-metrics IMERG_METRICS --imerg-timeseries IMERG_TIMESERIES --sample PILOT_SAMPLE --output-dir C:\Work\Data\GeoDemand\multisource_verification
-uv run geodemand observations assess --sample PILOT_SAMPLE --mrms-metrics MRMS_METRICS --imerg-metrics IMERG_METRICS --precipitation-comparison PRECIP_COMPARISON --usgs-summary USGS_SUMMARY --output-dir C:\Work\Data\GeoDemand\multisource_verification
-```
-
-## Groundsource Required Fields
-
-The confirmed Groundsource source is GeoParquet 0.4.0 with this schema:
-
-- `uuid`: string, required
-- `area_km2`: double, optional or nullable
-- `geometry`: binary WKB, required
-- `start_date`: string, required
-- `end_date`: string, optional or nullable
-- `__index_level_0__`: int64, ignored pandas index artifact
-
-The source does not provide country, state, latitude, or longitude columns.
-Representative coordinates are derived from WKB geometry with
-`representative_point()`, not centroid. Country filtering requires an explicit
-boundary dataset because country assignment is a later spatial-enrichment step.
-
-Spatial enrichment assigns countries with representative-point coverage,
-maximum-overlap fallback, single-intersection fallback, and explicit
-manual-review flags. U.S. state assignment runs only for events whose complete
-geometry intersects the United States boundary and ranks states by EPSG:6933
-overlap area.
-
-## Milestone 0.5D Results
-
-The full Groundsource audit for `groundsource_2026.parquet` verified SHA-256
-`77c266ba5a5176d983edca989a81ff73f21c556fd98c82e2131c2f8d172546ce` and
-processed 2,646,302 rows. Row accounting was balanced: 2,646,302 accepted
-canonical rows, 0 quarantined rows, and 0 rejected rows.
-
-All required and optional source fields had zero nulls. The dataset contained
-2,478,877 `Polygon` records and 167,425 `MultiPolygon` records; all geometries
-were valid, decodable, non-empty, and supported. The audit flagged 300 records
-for antimeridian review. Temporal coverage spans 2000-01-01 through
-2026-02-03, and no duplicate UUID groups were found.
-
-## Repository Policy
-
-This repository intentionally excludes research data and local outputs. Store
-raw data under ignored folders such as `data/raw/` or outside the repository.
-Keep credentials in local environment files only; this milestone does not need
-credentials.
-
-## Provisional Episode Catalog
-
-Milestone 0.7C builds a deterministic provisional physically informed episode
-catalog from conservative episode membership. Balanced relationships identify
-possible undermerges; clustering diagnostics identify possible overmerges.
-Neither changes membership without adequate physical evidence and review.
-Missing MRMS is pending, no suitable USGS gauge is unknown, and IMERG is
-deferred. See [the catalog guide](docs/provisional_episode_catalog.md).
-
-```powershell
-uv run geodemand catalog inspect --cohort-root C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full --episode-root C:\Work\Data\GeoDemand\artifacts\episode_policy_full --comparison-root C:\Work\Data\GeoDemand\artifacts\episode_comparison_full --mrms-root C:\Work\Data\GeoDemand\mrms --usgs-root C:\Work\Data\GeoDemand\usgs
-uv run geodemand catalog build-provisional --cohort-root C:\Work\Data\GeoDemand\artifacts\candidate_event_cohort_full --episode-root C:\Work\Data\GeoDemand\artifacts\episode_policy_full --comparison-root C:\Work\Data\GeoDemand\artifacts\episode_comparison_full --mrms-root C:\Work\Data\GeoDemand\mrms --usgs-root C:\Work\Data\GeoDemand\usgs --rules config\catalog_rules.yaml --output-dir C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog
-uv run geodemand catalog validate --catalog-dir C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog
-```
-
-The full 0.7C run produced 37,053 provisional episodes and 88,515 unique
-membership rows with zero split leakage. It retained 19,030 episodes
-provisionally and queued 18,023 for review. MRMS episode evidence remains
-pending, so no physical merge, split, or support status was assigned. Two full
-builds matched across every generated file.
-
-## Google Trends Feasibility
-
-Milestone 0.8A adds a backend-neutral, manual-export-first feasibility pipeline
-for evaluating flood-related Google Trends behavior. Google Trends values are
-request-relative 0-to-100 indices, not absolute search counts. The official
-Google Trends API remains limited-access alpha; `pytrends` is not required, and
-experimental web retrieval is disabled by default.
-
-An optional controlled Playwright assistant can perform the repetitive official
-Explore CSV export steps in a visible, one-request-at-a-time browser. It does
-not bypass challenges or replace manual ingestion; unchanged CSVs and lineage
-sidecars still enter through `trends import-csv`. Start with selfcheck and a
-dry-run bound:
-
-```powershell
-uv run geodemand trends browser-selfcheck --plan C:\Work\Data\GeoDemand\trends\planning\trends_request_plan.csv --download-dir C:\Work\Data\GeoDemand\trends\raw --browser chromium --request-id REQUEST_ID
-uv run geodemand trends export-browser --plan C:\Work\Data\GeoDemand\trends\planning\trends_request_plan.csv --output-root C:\Work\Data\GeoDemand\trends --mini-pilot --max-requests 1 --supervised --dry-run
-uv run geodemand trends export-status --plan C:\Work\Data\GeoDemand\trends\planning\trends_request_plan.csv --output-root C:\Work\Data\GeoDemand\trends --mini-pilot
-```
-
-See [the controlled browser export guide](docs/google_trends_browser_export.md)
-for request filters, profile handling, delays, recovery, and raw-file lineage.
-
-```powershell
-uv run geodemand trends official-api-selfcheck
-uv run geodemand trends pilot-sample --catalog-dir C:\Work\Data\GeoDemand\artifacts\provisional_episode_catalog\build_a --output-root C:\Work\Data\GeoDemand\trends --rules config\trends_rules.yaml
-uv run geodemand trends map-geographies --pilot C:\Work\Data\GeoDemand\trends\manifests\trends_pilot_episodes.parquet --output-root C:\Work\Data\GeoDemand\trends
-uv run geodemand trends plan --pilot C:\Work\Data\GeoDemand\trends\manifests\trends_pilot_episodes.parquet --geography C:\Work\Data\GeoDemand\trends\geography\geography_mapping.parquet --terms config\trends_terms.yaml --rules config\trends_rules.yaml --output-root C:\Work\Data\GeoDemand\trends
-```
-
-See [the Trends feasibility guide](docs/google_trends_feasibility.md) for the
-manual-export workflow, request planning assumptions, interpretation limits, and
-event-study commands. Real manual CSV exports and sidecars remain required
-before producing empirical phase, concurrence, control-adjusted, or attribution
-results.
-
-The pilot rules require at least two Florida episodes. Deterministic same-year
-matched replacement preserves the 40-episode size and the year, coastal,
-membership, and footprint balances while recording full replacement lineage.
-
-Terminology version `0.8A-v3` replaces state-specific experimentation with five
-nationally standardized batches. Weather is retained as a context positive
-control, not assumed to be a normalization anchor; news and temperature require
-empirical anchor checks. The regenerated full plan has 200 rows, while the
-five-episode mini pilot has 25 unique requests plus an identical Florida Batch 1
-repeat across five states and four years. Batch 4 uses `outage`, `road closed`,
-`school closed`, and `traffic`; formal disruption phrases remain configured as
-secondary comparisons.
-
-The opt-in event-study extension adds anticipatory, immediate, early-recovery,
-and extended-recovery phases; behavioral-demand proxies; flood/weather
-concurrence; national diagnostics; deterministic matched controls;
-control-adjusted standardized lifts; and provisional peak attribution. It never
-subtracts raw independently normalized Trends indices. Control-adjusted metrics
-are computed only from within-series baseline-standardized lifts:
-
-```text
-adjusted_lift = treated_standardized_lift - median(control_standardized_lifts)
-```
-
-### Milestone 0.8B Manual Export Workflow
-
-Milestone 0.8B uses the generated 0.8A event-study request plans to collect
-manual Google Trends CSV exports and produce empirical phase, concurrence,
-control-adjusted, and provisional attribution outputs.
-
-The canonical workspace is:
-
-```powershell
-$TRENDS_ROOT = "C:\Work\Data\GeoDemand\trends"
-$B_ROOT = "$TRENDS_ROOT\0.8B"
-$PLANNING = "$B_ROOT\planning"
-$FROZEN = "$B_ROOT\frozen"
-$RAW_EXPORTS = "$B_ROOT\raw_exports"
-$SIDECARS = "$B_ROOT\sidecars"
-$REPORTS = "$B_ROOT\reports"
-```
-
-If `uv` is unavailable, activate the project virtual environment and run the
-installed console command directly:
-
-```powershell
-python -m pip install -e .
-geodemand --help
-```
-
-Generate or refresh deterministic matched controls:
-
-```powershell
-geodemand trends select-controls `
-  --pilot "$TRENDS_ROOT\manifests\trends_pilot_episodes.parquet" `
-  --rules config\trends_rules.yaml `
-  --output-root $TRENDS_ROOT
-```
-
-Generate the 0.8B opt-in event-study request plans:
-
-```powershell
-geodemand trends plan `
-  --pilot "$TRENDS_ROOT\manifests\trends_pilot_episodes.parquet" `
-  --geography "$TRENDS_ROOT\geography\geography_mapping.parquet" `
-  --terms config\trends_terms.yaml `
-  --rules config\trends_rules.yaml `
-  --include-behavioral-state `
-  --include-national `
-  --controls "$TRENDS_ROOT\controls\episode_control_states.parquet" `
-  --output-root $B_ROOT
-```
-
-The planning command writes:
-
-```text
-$B_ROOT\planning\trends_request_plan.csv
-$B_ROOT\planning\event_study_request_plan.csv
-$B_ROOT\planning\treated_state_comparison_plan.csv
-$B_ROOT\planning\national_comparison_plan.csv
-$B_ROOT\planning\control_state_request_plan.csv
-$B_ROOT\planning\manual_export_instructions.md
-```
-
-Freeze the generated planning package before manual exports:
-
-```powershell
-New-Item -ItemType Directory -Force $FROZEN
-
-Copy-Item "$PLANNING\*.csv" $FROZEN -Force
-Copy-Item "$PLANNING\*.parquet" $FROZEN -Force
-Copy-Item "$PLANNING\*.json" $FROZEN -Force
-Copy-Item "$PLANNING\manual_export_instructions.md" $FROZEN -Force
-
-Get-ChildItem $FROZEN -File |
-  Get-FileHash -Algorithm SHA256 |
-  Select-Object Path, Hash |
-  Export-Csv "$FROZEN\frozen_planning_hashes.csv" -NoTypeInformation
-```
-
-Create a manual export checklist from the base and event-study plans:
-
-```powershell
-python -c "import pandas as pd, pathlib; root=pathlib.Path(r'C:\Work\Data\GeoDemand\trends\0.8B'); p=root/'planning'; out=root/'frozen'/'manual_export_checklist.csv'; frames=[];
-for name, source in [('base','trends_request_plan.csv'),('event_study','event_study_request_plan.csv')]:
-    df=pd.read_csv(p/source)
-    df.insert(0,'plan_source',name)
-    frames.append(df)
-combined=pd.concat(frames, ignore_index=True).drop_duplicates()
-combined.to_csv(out,index=False)
-print(out, len(combined))"
-```
-
-Manual Google Trends CSV exports must be saved unchanged under:
-
-```powershell
-New-Item -ItemType Directory -Force $RAW_EXPORTS
-New-Item -ItemType Directory -Force $SIDECARS
-New-Item -ItemType Directory -Force $REPORTS
-```
-
-```text
-$RAW_EXPORTS
-$SIDECARS
-```
-
-Each raw export should have a matching sidecar recording the request ID, terms,
-geography, date window, download time, and export method. Raw exports must not be
-edited manually.
-
-After exports are collected and validated, run empirical metrics:
-
-```powershell
-geodemand trends phase-metrics `
-  --plan "$FROZEN\manual_export_checklist.csv" `
-  --exports $RAW_EXPORTS `
-  --output "$REPORTS\phase_metrics.csv"
-```
-
-```powershell
-geodemand trends concurrence `
-  --phase-metrics "$REPORTS\phase_metrics.csv" `
-  --output "$REPORTS\concurrence_metrics.csv"
-```
-
-```powershell
-geodemand trends control-adjusted-metrics `
-  --phase-metrics "$REPORTS\phase_metrics.csv" `
-  --output "$REPORTS\control_adjusted_metrics.csv"
-```
-
-```powershell
-geodemand trends attribute-peaks `
-  --phase-metrics "$REPORTS\phase_metrics.csv" `
-  --concurrence "$REPORTS\concurrence_metrics.csv" `
-  --control-adjusted "$REPORTS\control_adjusted_metrics.csv" `
-  --output "$REPORTS\peak_attribution.csv"
-```
-
-Milestone 0.8B is accepted only after the frozen planning package, manual export
-checklist, raw exports, sidecars, empirical metrics, and summary report are
-produced and documented. Empirical interpretation remains provisional and must
-respect Google Trends' request-relative 0-to-100 scaling.
+Citation metadata are in [CITATION.cff](CITATION.cff). Code is available under the
+[MIT License](LICENSE). External data retain their own terms and are not included.

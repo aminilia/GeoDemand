@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypeVar, cast
 from urllib.parse import quote
 
 import pyarrow as pa
@@ -31,6 +31,7 @@ MAX_TARGETS_PER_BATCH = 4
 SMALL_FOOTPRINT_KM2 = 25.0
 COMPACT_FOOTPRINT_PROXY_KM2 = 10.0
 MAX_INTEREST = 100.0
+SeriesKey = TypeVar("SeriesKey", bound=tuple[str, ...])
 MIN_CORRELATION_VALUES = 2
 MINI_PILOT_EPISODE_COUNT = 5
 STANDARDIZED_BATCH_COUNT = 5
@@ -813,6 +814,8 @@ def import_csv_export(
                 {
                     "request_id": sidecar.request_id,
                     "repeat_id": repeat_id,
+                    "export_attempt_id": sidecar.export_attempt_id or "",
+                    "schema_version": "1.0.0",
                     "episode_id": sidecar.episode_id,
                     "request_role": sidecar.request_role,
                     "treated_geography": sidecar.treated_geography or sidecar.geography,
@@ -915,10 +918,8 @@ def calculate_metrics(
     rules = load_yaml(rules_path)
     observations = _read_rows(observations_path)
     plans = {str(row["request_id"]): row for row in _read_rows(plan_path)}
-    grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     repeat_groups: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in observations:
-        grouped[(str(row["request_id"]), str(row["concept_id"]))].append(row)
         repeat_groups[
             (str(row["request_id"]), str(row["concept_id"]), str(row["repeat_id"]))
         ].append(row)
@@ -926,40 +927,54 @@ def calculate_metrics(
     repeat_lookup = {
         (str(row["request_id"]), str(row["concept_id"])): row for row in repeat_diagnostics
     }
-    series_lookup = _mean_series(grouped)
-    metric_rows: list[dict[str, Any]] = []
+    repeat_series = _mean_series(repeat_groups)
+    repeat_metric_rows: list[dict[str, Any]] = []
     suppression_rows: list[dict[str, Any]] = []
-    for key in sorted(grouped):
-        request_id, concept_id = key
+    for key in sorted(repeat_groups):
+        request_id, concept_id, repeat_id = key
         plan = plans.get(request_id)
         if plan is None:
             raise TrendsError(f"Imported request is absent from plan: {request_id}")
-        rows = grouped[key]
-        series = series_lookup[key]
-        metric, suppression = _metric_row(rows, series, plan, rules, repeat_lookup.get(key))
+        rows = repeat_groups[key]
+        series = repeat_series[key]
+        metric, suppression = _metric_row(
+            rows, series, plan, rules, repeat_lookup.get((request_id, concept_id))
+        )
+        metric["repeat_id"] = repeat_id
+        metric["export_attempt_id"] = str(rows[0].get("export_attempt_id") or "")
+        metric["terminology_version"] = str(rows[0].get("terminology_version") or "")
+        suppression["repeat_id"] = repeat_id
         anchor_id = rows[0].get("anchor_concept_id")
         if anchor_id and concept_id != anchor_id:
-            anchor = series_lookup.get((request_id, str(anchor_id)), {})
+            anchor = repeat_series.get((request_id, str(anchor_id), repeat_id), {})
             metric["anchor_ratio_peak"] = _anchor_ratio_peak(series, anchor, rules)
             if metric["anchor_ratio_peak"] is None:
                 metric["metric_quality_reasons"] = _join_reasons(
                     str(metric["metric_quality_reasons"]), "unstable_or_zero_anchor"
                 )
-        metric_rows.append(metric)
+        repeat_metric_rows.append(metric)
         suppression_rows.append(suppression)
-    normalization_rows = _normalization_diagnostics(metric_rows, series_lookup, plans, rules)
+    metric_rows = _aggregate_repeat_metrics(repeat_metric_rows)
+    grouped_for_normalization: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in observations:
+        grouped_for_normalization[(str(row["request_id"]), str(row["concept_id"]))].append(row)
+    normalization_series = _mean_series(grouped_for_normalization)
+    normalization_rows = _normalization_diagnostics(metric_rows, normalization_series, plans, rules)
     processed = output_root / "processed"
     diagnostics = output_root / "diagnostics"
     metrics_path = processed / "trends_episode_response_metrics.parquet"
+    repeat_metrics_path = processed / "trends_episode_response_metrics_by_repeat.parquet"
     suppression_path = diagnostics / "suppression_diagnostics.csv"
     normalization_path = diagnostics / "normalization_diagnostics.csv"
     repeat_path = diagnostics / "repeat_stability.csv"
     _write_parquet(metrics_path, metric_rows)
+    _write_parquet(repeat_metrics_path, repeat_metric_rows)
     _write_csv(suppression_path, suppression_rows)
     _write_csv(normalization_path, normalization_rows)
     _write_csv(repeat_path, repeat_diagnostics)
     return {
         "metrics": metrics_path,
+        "repeat_metrics": repeat_metrics_path,
         "suppression": suppression_path,
         "normalization": normalization_path,
         "repeat_stability": repeat_path,
@@ -2006,9 +2021,9 @@ def _parse_interest(value: str) -> tuple[float | None, bool, str]:
 
 
 def _mean_series(
-    grouped: Mapping[tuple[str, str], Sequence[Mapping[str, Any]]],
-) -> dict[tuple[str, str], dict[date, float]]:
-    output = {}
+    grouped: Mapping[SeriesKey, Sequence[Mapping[str, Any]]],
+) -> dict[SeriesKey, dict[date, float]]:
+    output: dict[SeriesKey, dict[date, float]] = {}
     for key, rows in grouped.items():
         by_date: dict[date, list[float]] = defaultdict(list)
         for row in rows:
@@ -2102,11 +2117,10 @@ def _metric_row(
         if peak_dates
         else None,
         "peak_date": min(peak_dates).isoformat() if peak_dates else None,
-        "response_duration_days": sum(
-            day >= _as_date(plan["event_start_date"])
-            and baseline_mean is not None
-            and value > baseline_mean
-            for day, value in series.items()
+        "response_duration_days": _longest_positive_run(
+            series,
+            _as_date(plan["event_start_date"]),
+            baseline_mean,
         ),
         "positive_excess_area": sum(max(0.0, value - baseline_mean) for value in [*event, *post])
         if baseline_mean is not None
@@ -2134,6 +2148,51 @@ def _metric_row(
         "insufficient_post_event_period": len(post) < int(normalization["minimum_post_days"]),
     }
     return result, suppression
+
+
+def _aggregate_repeat_metrics(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[(str(row["request_id"]), str(row["concept_id"]))].append(row)
+    output = []
+    variability_fields = ("absolute_peak_lift", "z_score_peak_lift", "robust_peak_lift")
+    for _, repeats in sorted(grouped.items()):
+        ordered = sorted(repeats, key=lambda row: str(row["repeat_id"]))
+        aggregate = dict(ordered[0])
+        aggregate["repeat_id"] = "aggregated_after_variability"
+        aggregate["export_attempt_id"] = ";".join(
+            sorted(str(row.get("export_attempt_id") or "") for row in ordered)
+        )
+        aggregate["repeat_count"] = len(ordered)
+        aggregate["repeat_ids"] = ";".join(str(row["repeat_id"]) for row in ordered)
+        for field in variability_fields:
+            values = [float(row[field]) for row in ordered if row.get(field) is not None]
+            aggregate[field] = statistics.fmean(values) if values else None
+            aggregate[f"{field}_repeat_stddev"] = (
+                statistics.pstdev(values) if len(values) > 1 else None
+            )
+        aggregate["repeat_stability_flag"] = all(
+            bool(row.get("repeat_stability_flag")) for row in ordered
+        )
+        output.append(aggregate)
+    return output
+
+
+def _longest_positive_run(
+    series: Mapping[date, float], start: date, baseline_mean: float | None
+) -> int:
+    if baseline_mean is None:
+        return 0
+    qualifying = sorted(
+        day for day, value in series.items() if day >= start and value > baseline_mean
+    )
+    best = current = 0
+    previous: date | None = None
+    for day in qualifying:
+        current = current + 1 if previous is not None and day == previous + timedelta(days=1) else 1
+        best = max(best, current)
+        previous = day
+    return best
 
 
 def _repeat_diagnostics(

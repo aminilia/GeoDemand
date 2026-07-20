@@ -62,7 +62,7 @@ from geodemand.observations import (
     assess_observations,
     compare_precipitation,
     pilot_sample,
-    write_quicklooks,
+    write_review_stubs,
 )
 from geodemand.spatial import SpatialEnrichmentError, enrich_spatial
 from geodemand.trends import (
@@ -467,9 +467,7 @@ def compare_episodes_command(
 
 @mrms_app.command("selfcheck")
 def mrms_selfcheck_command(
-    working_root: Annotated[
-        Path, typer.Option("--working-root", file_okay=False, dir_okay=True)
-    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    working_root: Annotated[Path, typer.Option("--working-root", file_okay=False, dir_okay=True)],
     sample_grib: Annotated[
         Path | None,
         typer.Option("--sample-grib", exists=True, file_okay=True, dir_okay=False),
@@ -501,7 +499,7 @@ def mrms_sample_command(
     output_root: Annotated[
         Path,
         typer.Option("--output-root", file_okay=False, dir_okay=True),
-    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    ],
     seed: Annotated[int, typer.Option("--seed")] = 20260715,
     max_episodes: Annotated[int, typer.Option("--max-episodes", min=1)] = 90,
 ) -> None:
@@ -521,7 +519,7 @@ def mrms_inventory_command(
     output_root: Annotated[
         Path,
         typer.Option("--output-root", file_okay=False, dir_okay=True),
-    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    ],
     max_episodes: Annotated[int | None, typer.Option("--max-episodes", min=1)] = None,
 ) -> None:
     try:
@@ -540,7 +538,7 @@ def mrms_fetch_command(
     working_root: Annotated[
         Path,
         typer.Option("--working-root", file_okay=False, dir_okay=True),
-    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    ],
     max_bytes: Annotated[int | None, typer.Option("--max-bytes", min=1)] = None,
     max_episodes: Annotated[int | None, typer.Option("--max-episodes", min=1)] = None,
     workers: Annotated[int, typer.Option("--workers", min=1)] = 2,
@@ -571,9 +569,13 @@ def mrms_extract_command(
     output_root: Annotated[
         Path,
         typer.Option("--output-root", file_okay=False, dir_okay=True),
-    ] = Path(r"C:\Work\Data\GeoDemand\mrms"),
+    ],
 ) -> None:
-    artifacts = extract_mrms(sample_path, file_manifest, output_root)
+    """Fail explicitly: real MRMS episode extraction is not implemented."""
+    try:
+        artifacts = extract_mrms(sample_path, file_manifest, output_root)
+    except MrmsError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     typer.echo({name: str(path) for name, path in artifacts.items()})
 
 
@@ -673,8 +675,11 @@ def imerg_extract_command(
         typer.Option("--output-root", file_okay=False, dir_okay=True),
     ],
 ) -> None:
-    """Extract episode and member precipitation metrics from cached IMERG files."""
-    artifacts = extract_imerg(sample_path, file_manifest, output_root)
+    """Fail explicitly: real IMERG episode extraction is not implemented."""
+    try:
+        artifacts = extract_imerg(sample_path, file_manifest, output_root)
+    except ImergError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     _echo_json({name: str(path) for name, path in artifacts.items()})
 
 
@@ -758,9 +763,13 @@ def usgs_extract_command(
         Path,
         typer.Option("--output-root", file_okay=False, dir_okay=True),
     ],
+    rules_path: Annotated[
+        Path,
+        typer.Option("--rules", exists=True, file_okay=True, dir_okay=False),
+    ],
 ) -> None:
     """Calculate within-gauge response metrics and episode summaries."""
-    artifacts = extract_usgs(observations_path, associations_path, output_root)
+    artifacts = extract_usgs(observations_path, associations_path, output_root, rules_path)
     _echo_json({name: str(path) for name, path in artifacts.items()})
 
 
@@ -827,14 +836,14 @@ def observations_assess_command(
     _echo_json({name: str(path) for name, path in artifacts.items()})
 
 
-@observations_app.command("quicklooks")
-def observations_quicklooks_command(
+@observations_app.command("review-stubs")
+def observations_review_stubs_command(
     assessment_path: Annotated[Path, typer.Option("--assessment", exists=True)],
     output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False, dir_okay=True)],
-    max_quicklooks: Annotated[int, typer.Option("--max-quicklooks", min=1)] = 7,
+    max_review_stubs: Annotated[int, typer.Option("--max-review-stubs", min=1)] = 7,
 ) -> None:
-    """Write deterministic quicklook selections for manual review."""
-    artifacts = write_quicklooks(assessment_path, output_dir, max_quicklooks=max_quicklooks)
+    """Write deterministic text stubs for manual review; these are not plots."""
+    artifacts = write_review_stubs(assessment_path, output_dir, max_review_stubs=max_review_stubs)
     _echo_json({name: str(path) for name, path in artifacts.items()})
 
 

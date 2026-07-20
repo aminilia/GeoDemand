@@ -117,11 +117,9 @@ should be described as confirmed flash-flood events.
 
 ## MRMS Feasibility Outputs
 
-Milestone 0.7A writes local MRMS manifests, inventory tables, download plans,
-compressed-file manifests, precipitation metrics, compact episode time series,
-physical-coherence assessments, and quicklook-ready outputs under the configured
-MRMS working root. These are derived research outputs and should not be
-committed.
+Milestone 0.7A writes local MRMS manifests, inventory tables, and download plans under
+the configured MRMS working root. Real GRIB decoding and episode extraction are pending;
+the production command fails explicitly and cannot emit synthetic evidence.
 
 MRMS metrics are provisional. Missing-data handling, quality-index behavior,
 coverage thresholds, and physical-coherence categories require real-file smoke
@@ -129,12 +127,13 @@ validation before use in final event labeling.
 
 ## Multi-Source Outputs
 
-Milestone 0.7B adds IMERG inventory, fetch, and precipitation metric outputs;
+Milestone 0.7B adds IMERG inventory and bounded fetch scaffolding;
 USGS gauge discovery, observation, and response metric outputs; MRMS/IMERG
 comparison outputs; and integrated multi-source assessment outputs. These
 derived products remain local research artifacts.
 
-IMERG and MRMS estimate precipitation on different grids and cadences. USGS
+IMERG and MRMS would estimate precipitation on different grids and cadences once real
+extraction is implemented. USGS
 gauges measure local hydrologic response. The integrated categories are
 transparent review categories, not confirmed truth labels.
 

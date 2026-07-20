@@ -230,6 +230,16 @@ def test_control_selection_regional_fallback_and_no_valid_state(tmp_path: Path) 
     _write(fallback_metadata, _metadata({"CA"}))
     fallback = select_controls(pilot, catalog, RULES, tmp_path / "fallback-out", fallback_metadata)
     assert [row["control_state"] for row in _rows(fallback["controls"])] == ["CA"]
+    assert _rows(fallback["controls"])[0]["matching_quality_status"] == (
+        "metadata_backed_match_candidate"
+    )
+
+    unmatched = select_controls(pilot, catalog, RULES, tmp_path / "unmatched-out")
+    unmatched_rows = _rows(unmatched["controls"])
+    assert unmatched_rows
+    assert all(
+        row["matching_quality_status"] == "unmatched_fallback_control" for row in unmatched_rows
+    )
 
     none_metadata = tmp_path / "none.parquet"
     _write(none_metadata, _metadata(set()))
@@ -288,7 +298,7 @@ def test_control_adjusted_lift_and_raw_subtraction_guard(tmp_path: Path) -> None
             False,
             1.0,
             False,
-            "likely_event_associated",
+            "event_consistent_signal",
         ),
         (
             "usable",
@@ -299,7 +309,7 @@ def test_control_adjusted_lift_and_raw_subtraction_guard(tmp_path: Path) -> None
             False,
             None,
             None,
-            "possibly_event_associated",
+            "possibly_event_consistent",
         ),
         (
             "usable",
@@ -321,7 +331,7 @@ def test_control_adjusted_lift_and_raw_subtraction_guard(tmp_path: Path) -> None
             False,
             None,
             None,
-            "weather_related_not_flood_specific",
+            "nonflood_weather_consistent",
         ),
         (
             "usable",
@@ -332,7 +342,7 @@ def test_control_adjusted_lift_and_raw_subtraction_guard(tmp_path: Path) -> None
             True,
             None,
             None,
-            "weather_related_not_flood_specific",
+            "nonflood_weather_consistent",
         ),
         (
             "usable",
@@ -372,6 +382,15 @@ def test_peak_attribution_categories(
     phase = {
         "metric_quality_status": quality,
         "peak_phase": peak_phase,
+        "dominant_event_response_phase": (
+            peak_phase
+            if peak_phase in {"anticipatory", "immediate", "early_recovery", "extended_recovery"}
+            else None
+        ),
+        "dominant_standardized_phase_lift": 1.0,
+        "dominant_robust_phase_lift": 1.0,
+        "repeat_count": 1,
+        "repeat_stability_status": "not_repeated",
         "proxy_type": proxy_type,
     }
     concurrence = {
@@ -379,7 +398,15 @@ def test_peak_attribution_categories(
         "simultaneous_weather_attention_flag": weather,
         "simultaneous_nonflood_weather_flag": nonflood,
     }
-    control_row = {"adjusted_event_lift": control} if control is not None else None
+    control_row = (
+        {
+            "adjusted_event_lift": control,
+            "control_count": 3,
+            "control_quality_status": "usable",
+        }
+        if control is not None
+        else None
+    )
     national_row = {"national_concurrent_spike_flag": national} if national is not None else None
     category, reasons = classify_peak_attribution(
         phase, concurrence, control_row, national_row, _rules()["attribution"]
@@ -470,6 +497,73 @@ def test_phase_output_order_and_hash_are_deterministic(tmp_path: Path) -> None:
     assert request_ids == sorted(request_ids)
 
 
+def test_repeats_remain_separate_and_report_instability(tmp_path: Path) -> None:
+    plan = tmp_path / "plan.parquet"
+    observations = tmp_path / "observations.parquet"
+    _write(plan, [_plan("r1")])
+    _write(
+        observations,
+        [
+            *_observations(
+                "r1",
+                {"walmart": date(2024, 6, 4)},
+                repeat_id="repeat-1",
+                export_attempt_id="attempt-1",
+            ),
+            *_observations(
+                "r1",
+                {"walmart": date(2024, 6, 11)},
+                repeat_id="repeat-2",
+                export_attempt_id="attempt-2",
+            ),
+        ],
+    )
+    paths = calculate_phase_metrics(observations, plan, TERMS, RULES, tmp_path / "out")
+    rows = _rows(paths["phase_metrics"])
+    assert len(rows) == 2
+    assert {row["repeat_id"] for row in rows} == {"repeat-1", "repeat-2"}
+    assert {row["export_attempt_id"] for row in rows} == {"attempt-1", "attempt-2"}
+    assert all(row["repeat_stability_status"] == "unstable" for row in rows)
+    diagnostics = _rows(paths["phase_repeat_stability"])[0]
+    assert diagnostics["dominant_phase_agreement"] is False
+
+
+def test_global_baseline_peak_does_not_erase_event_phase_response(tmp_path: Path) -> None:
+    plan = tmp_path / "plan.parquet"
+    observations = tmp_path / "observations.parquet"
+    _write(plan, [_plan("r1")])
+    rows = _observations("r1", {"walmart": date(2024, 5, 10)})
+    for row in rows:
+        day = date.fromisoformat(str(row["date"]))
+        if date(2024, 6, 10) <= day <= date(2024, 6, 12):
+            row["interest"] = 35.0
+    _write(observations, rows)
+    metric = _rows(
+        calculate_phase_metrics(observations, plan, TERMS, RULES, tmp_path / "out")["phase_metrics"]
+    )[0]
+    assert metric["global_peak_phase"] == "outside_event_phases"
+    assert metric["dominant_event_response_phase"] == "immediate"
+    assert metric["dominant_standardized_phase_lift"] > 0.5
+
+
+def test_response_duration_is_longest_consecutive_qualifying_run(tmp_path: Path) -> None:
+    plan = tmp_path / "plan.parquet"
+    observations = tmp_path / "observations.parquet"
+    _write(plan, [_plan("r1")])
+    rows = _observations("r1", {"walmart": date(2024, 6, 10)})
+    for row in rows:
+        day = date.fromisoformat(str(row["date"]))
+        if date(2024, 6, 10) <= day <= date(2024, 6, 12):
+            row["interest"] = 40.0
+        elif day == date(2024, 6, 13):
+            row["interest"] = 9.0
+    _write(observations, rows)
+    metric = _rows(
+        calculate_phase_metrics(observations, plan, TERMS, RULES, tmp_path / "out")["phase_metrics"]
+    )[0]
+    assert metric["longest_qualifying_response_run_days"] == 3
+
+
 def _plan(
     request_id: str,
     role: str = "treated_state_comparison",
@@ -497,7 +591,12 @@ def _plan(
     }
 
 
-def _observations(request_id: str, peaks: dict[str, date]) -> list[dict[str, object]]:
+def _observations(
+    request_id: str,
+    peaks: dict[str, date],
+    repeat_id: str = "initial",
+    export_attempt_id: str = "",
+) -> list[dict[str, object]]:
     output = []
     start = date(2024, 5, 6)
     for concept_id, peak in peaks.items():
@@ -506,6 +605,8 @@ def _observations(request_id: str, peaks: dict[str, date]) -> list[dict[str, obj
             output.append(
                 {
                     "request_id": request_id,
+                    "repeat_id": repeat_id,
+                    "export_attempt_id": export_attempt_id,
                     "concept_id": concept_id,
                     "date": day.isoformat(),
                     "interest": 80.0 if day == peak else 9.0 + offset % 3,
@@ -538,10 +639,14 @@ def _episode(episode_id: str, state: str, start: date, member_count: int = 1) ->
 def _metadata(available: set[str]) -> list[dict[str, object]]:
     return [
         {
-            "state": state,
+            "state_code": state,
+            "census_region": "South" if state in {"TX", "OK", "LA"} else "West",
             "population_tier": "medium",
             "climate_class": "humid",
-            "trends_available": state in available,
+            "coastal_state_flag": state in {"CA", "LA"},
+            "observed_trends_availability": state in available,
+            "metadata_source": "synthetic test metadata",
+            "metadata_version": "test-v1",
         }
         for state in sorted(VALID_STATES)
     ]

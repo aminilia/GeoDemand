@@ -91,9 +91,23 @@ def select_controls(
             if concurrent:
                 reasons.append("concurrent_provisional_flood_episode")
             state_meta = metadata.get(state, {})
-            if state_meta.get("trends_available") is False:
+            trends_available = state_meta.get(
+                "observed_trends_availability", state_meta.get("trends_available")
+            )
+            if trends_available is False:
                 reasons.append("trends_data_unavailable")
             score, criteria = _control_score(treated, state, metadata, control_rules)
+            metadata_complete = all(
+                state_meta.get(field) not in {None, "", "unknown"}
+                for field in ("census_region", "population_tier", "climate_class")
+            )
+            matching_status = (
+                "metadata_backed_match_candidate"
+                if metadata_complete and trends_available is True
+                else "metadata_backed_availability_unknown"
+                if metadata_complete
+                else "unmatched_fallback_control"
+            )
             diagnostic = {
                 "treated_episode": episode_id,
                 "treated_state": treated,
@@ -102,12 +116,31 @@ def select_controls(
                 "selection_criteria": ";".join(criteria),
                 "exclusion_reasons": ";".join(sorted(reasons)),
                 "population_tier": state_meta.get("population_tier", "unknown"),
-                "census_region": REGIONS.get(state, "unknown"),
+                "census_region": state_meta.get("census_region", REGIONS.get(state, "unknown")),
                 "climate_class": state_meta.get("climate_class", "unknown"),
                 "temporal_flood_free_check": not concurrent,
-                "trends_availability": state_meta.get("trends_available", "unknown"),
+                "flood_contamination_score": _state_episode_overlap_count(
+                    state, start, end, intervals_by_state, episode_id
+                ),
+                "trends_availability": trends_available
+                if trends_available is not None
+                else "unknown",
                 "selection_score": score,
+                "same_region_score": float(control_rules["same_region_score"])
+                if "same_census_region" in criteria
+                else 0.0,
+                "population_tier_score": float(control_rules["population_tier_score"])
+                if "same_population_tier" in criteria
+                else 0.0,
+                "climate_class_score": float(control_rules["climate_class_score"])
+                if "same_climate_class" in criteria
+                else 0.0,
+                "trends_availability_score": float(control_rules["trends_availability_score"])
+                if "trends_data_available" in criteria
+                else 0.0,
+                "matching_quality_status": matching_status,
                 "control_rank": None,
+                "selected": False,
             }
             diagnostics.append(diagnostic)
             if not reasons:
@@ -115,9 +148,12 @@ def select_controls(
         ranked = sorted(
             candidates, key=lambda row: (-float(row["selection_score"]), row["control_state"])
         )
-        for rank, row in enumerate(ranked[:maximum], 1):
+        for rank, row in enumerate(ranked, 1):
             row["control_rank"] = rank
-            selected.append(dict(row))
+            row["candidate_control_count"] = len(ranked)
+            if rank <= maximum:
+                row["selected"] = True
+                selected.append(dict(row))
     controls_dir = output_root / "controls"
     controls_path = controls_dir / "episode_control_states.parquet"
     diagnostics_path = controls_dir / "control_selection_diagnostics.csv"
@@ -153,20 +189,43 @@ def calculate_phase_metrics(
     plans = {str(row["request_id"]): row for row in _read_rows(plan_path)}
     terms = _load_yaml(terms_path)
     term_by_id = {str(row["concept_id"]): row for row in terms["concepts"]}
-    grouped = _request_series(_read_rows(observations_path))
+    observation_rows = _read_rows(observations_path)
+    grouped = _request_series(observation_rows)
+    lineage = {
+        (str(row["request_id"]), str(row.get("repeat_id") or "initial")): str(
+            row.get("export_attempt_id") or ""
+        )
+        for row in observation_rows
+    }
     rows = []
-    for (request_id, concept_id), series in sorted(grouped.items()):
+    for (request_id, repeat_id, concept_id), series in sorted(grouped.items()):
         plan = plans.get(request_id)
         if plan is None:
             raise TrendsError(f"Imported request is absent from plan: {request_id}")
         rows.append(
             _phase_metric_row(
-                request_id, concept_id, series, plan, term_by_id.get(concept_id, {}), rules
+                request_id,
+                repeat_id,
+                lineage.get((request_id, repeat_id), ""),
+                concept_id,
+                series,
+                plan,
+                term_by_id.get(concept_id, {}),
+                rules,
             )
         )
     path = output_root / "processed" / "trends_phase_response_metrics.parquet"
+    stability_path = output_root / "diagnostics" / "phase_repeat_stability.parquet"
+    aggregate_path = output_root / "processed" / "trends_phase_response_aggregated.parquet"
+    stability, aggregated = _phase_repeat_outputs(rows, rules)
     _write_parquet(path, rows)
-    return {"phase_metrics": path}
+    _write_parquet(stability_path, stability)
+    _write_parquet(aggregate_path, aggregated)
+    return {
+        "phase_metrics": path,
+        "phase_repeat_stability": stability_path,
+        "phase_metrics_aggregated": aggregate_path,
+    }
 
 
 def calculate_concurrence(
@@ -185,14 +244,14 @@ def calculate_concurrence(
     terms = _load_yaml(terms_path)
     term_by_id = {str(row["concept_id"]): row for row in terms["concepts"]}
     output = []
-    for (request_id, concept_id), demand_series in sorted(series.items()):
+    for (request_id, repeat_id, concept_id), demand_series in sorted(series.items()):
         term = term_by_id.get(concept_id, {})
         if term.get("semantic_family") not in {"behavioral_demand_proxy", "context"}:
             continue
         request_concepts = {
             other_id: other_series
-            for (other_request, other_id), other_series in series.items()
-            if other_request == request_id
+            for (other_request, other_repeat, other_id), other_series in series.items()
+            if other_request == request_id and other_repeat == repeat_id
         }
         awareness_id = _best_concurrent_series(request_concepts, FLOOD_AWARENESS)
         weather_id = _best_concurrent_series(request_concepts, WEATHER_CONTEXT - {concept_id})
@@ -212,6 +271,7 @@ def calculate_concurrence(
                 "provisional_episode_id": plans[request_id]["episode_id"],
                 "episode_id": plans[request_id]["episode_id"],
                 "request_id": request_id,
+                "repeat_id": repeat_id,
                 "request_role": plans[request_id].get("request_role", "treated_state"),
                 "geography": plans[request_id]["geography"],
                 "geography_level": plans[request_id]["geography_level"],
@@ -295,6 +355,7 @@ def calculate_control_adjusted_metrics(
             for control in control_rows
             if str(control["provisional_episode_id"]) == episode_id
             and str(control["concept_id"]) == str(row["concept_id"])
+            and str(control.get("repeat_id") or "initial") == str(row.get("repeat_id") or "initial")
             and str(control.get("comparison_batch_id")) == str(row.get("comparison_batch_id"))
             and (episode_id, str(control["geography"])) in allowed
         ]
@@ -316,6 +377,8 @@ def calculate_control_adjusted_metrics(
                     "provisional_episode_id": episode_id,
                     "episode_id": episode_id,
                     "request_id": row["request_id"],
+                    "repeat_id": row.get("repeat_id", "initial"),
+                    "export_attempt_id": row.get("export_attempt_id", ""),
                     "request_role": row.get("request_role", "treated_state"),
                     "concept_id": row["concept_id"],
                     "phase": phase,
@@ -361,7 +424,11 @@ def attribute_peaks(  # noqa: PLR0913
     attribution_rules = cast(Mapping[str, Any], rules["attribution"])
     phase_rows = _read_rows(phase_metrics_path)
     concurrence = {
-        (str(row["request_id"]), str(row["concept_id"])): row
+        (
+            str(row["request_id"]),
+            str(row.get("repeat_id") or "initial"),
+            str(row["concept_id"]),
+        ): row
         for row in _read_rows(concurrence_path)
     }
     controls = _control_lookup(control_adjusted_path)
@@ -370,7 +437,11 @@ def attribute_peaks(  # noqa: PLR0913
     retailer_diagnostics = []
     nonflood_diagnostics = []
     for phase in phase_rows:
-        key = (str(phase["request_id"]), str(phase["concept_id"]))
+        key = (
+            str(phase["request_id"]),
+            str(phase.get("repeat_id") or "initial"),
+            str(phase["concept_id"]),
+        )
         evidence = concurrence.get(key)
         if evidence is None:
             continue
@@ -378,7 +449,8 @@ def attribute_peaks(  # noqa: PLR0913
             (
                 str(phase["provisional_episode_id"]),
                 str(phase["concept_id"]),
-                str(phase["peak_phase"]),
+                str(phase["dominant_event_response_phase"]),
+                str(phase.get("repeat_id") or "initial"),
             )
         )
         national_row = national.get(
@@ -395,12 +467,20 @@ def attribute_peaks(  # noqa: PLR0913
             "provisional_episode_id": phase["provisional_episode_id"],
             "episode_id": phase["provisional_episode_id"],
             "request_id": phase["request_id"],
+            "repeat_id": phase.get("repeat_id", "initial"),
+            "export_attempt_id": phase.get("export_attempt_id", ""),
             "request_role": phase["request_role"],
             "geography": phase["geography"],
             "geography_level": phase["geography_level"],
             "batch_id": phase["batch_id"],
             "concept_id": phase["concept_id"],
             "terminology_version": phase["terminology_version"],
+            "global_peak_date": phase.get("global_peak_date"),
+            "global_peak_phase": phase.get("global_peak_phase"),
+            "global_peak_value": phase.get("global_peak_value"),
+            "dominant_event_response_phase": phase.get("dominant_event_response_phase"),
+            "dominant_standardized_phase_lift": phase.get("dominant_standardized_phase_lift"),
+            "dominant_robust_phase_lift": phase.get("dominant_robust_phase_lift"),
             "peak_phase": phase["peak_phase"],
             "peak_lead_lag_days": phase["peak_lead_lag_days"],
             "attribution_category": category,
@@ -417,12 +497,14 @@ def attribute_peaks(  # noqa: PLR0913
             if national_row
             else None,
             "metric_quality_status": phase["metric_quality_status"],
+            "repeat_stability_status": phase.get("repeat_stability_status"),
+            "noncausal_classification": True,
             "component_evidence_complete": bool(control and national_row),
         }
         output.append(row)
         if phase.get("proxy_type") == "retailer_brand":
             retailer_diagnostics.append(row)
-        if category == "weather_related_not_flood_specific":
+        if category == "nonflood_weather_consistent":
             nonflood_diagnostics.append(row)
     processed_path = output_root / "processed" / "trends_peak_attribution.parquet"
     retailer_path = output_root / "diagnostics" / "retailer_promotion_diagnostics.csv"
@@ -439,6 +521,8 @@ def attribute_peaks(  # noqa: PLR0913
 
 def _phase_metric_row(  # noqa: PLR0915
     request_id: str,
+    repeat_id: str,
+    export_attempt_id: str,
     concept_id: str,
     series: Mapping[date, float],
     plan: Mapping[str, Any],
@@ -455,10 +539,18 @@ def _phase_metric_row(  # noqa: PLR0915
     baseline_values = _period_values(series, _as_date(plan["baseline_start_date"]), baseline_end)
     baseline_mean = statistics.fmean(baseline_values) if baseline_values else None
     baseline_sd = statistics.pstdev(baseline_values) if len(baseline_values) > 1 else None
+    baseline_median = statistics.median(baseline_values) if baseline_values else None
+    baseline_mad = (
+        statistics.median(abs(value - baseline_median) for value in baseline_values)
+        if baseline_median is not None
+        else None
+    )
     result: dict[str, Any] = {
         "provisional_episode_id": plan["episode_id"],
         "episode_id": plan["episode_id"],
         "request_id": request_id,
+        "repeat_id": repeat_id,
+        "export_attempt_id": export_attempt_id,
         "request_role": plan.get("request_role", "treated_state"),
         "treated_geography": plan.get("treated_geography", plan["geography"]),
         "geography": plan["geography"],
@@ -471,9 +563,13 @@ def _phase_metric_row(  # noqa: PLR0915
         "proxy_type": term.get("proxy_type"),
         "baseline_mean": baseline_mean,
         "baseline_standard_deviation": baseline_sd,
+        "baseline_median": baseline_median,
+        "baseline_mad": baseline_mad,
         "baseline_valid_day_count": len(baseline_values),
     }
     phase_maxima: dict[str, float] = {}
+    standardized_lifts: dict[str, float] = {}
+    robust_lifts: dict[str, float] = {}
     for phase, (start, end) in windows.items():
         values = _period_values(series, start, end)
         mean = statistics.fmean(values) if values else None
@@ -484,9 +580,14 @@ def _phase_metric_row(  # noqa: PLR0915
         result[f"{phase}_peak_lift"] = (
             maximum - baseline_mean if maximum is not None and baseline_mean is not None else None
         )
-        result[f"{phase}_standardized_lift"] = _standardized_lift(
-            mean, baseline_mean, baseline_sd, normalization
-        )
+        standardized = _standardized_lift(mean, baseline_mean, baseline_sd, normalization)
+        robust = _robust_lift(mean, baseline_median, baseline_mad, normalization)
+        result[f"{phase}_standardized_lift"] = standardized
+        result[f"{phase}_robust_lift"] = robust
+        if standardized is not None:
+            standardized_lifts[phase] = standardized
+        if robust is not None:
+            robust_lifts[phase] = robust
         if maximum is not None:
             phase_maxima[phase] = maximum
     overall_peak_date = _peak_date(series)
@@ -496,6 +597,10 @@ def _phase_metric_row(  # noqa: PLR0915
             if start <= overall_peak_date <= end:
                 peak_phase = phase
                 break
+    global_peak_value = series.get(overall_peak_date) if overall_peak_date is not None else None
+    result["global_peak_phase"] = peak_phase
+    result["global_peak_date"] = _iso(overall_peak_date)
+    result["global_peak_value"] = global_peak_value
     result["peak_phase"] = peak_phase
     result["peak_date"] = _iso(overall_peak_date)
     result["peak_lead_lag_days"] = (
@@ -506,6 +611,29 @@ def _phase_metric_row(  # noqa: PLR0915
         baseline_mean,
         baseline_sd,
         normalization,
+    )
+    dominant_phase = (
+        max(standardized_lifts, key=lambda phase: (standardized_lifts[phase], phase))
+        if standardized_lifts
+        else None
+    )
+    result["dominant_event_response_phase"] = dominant_phase
+    result["dominant_standardized_phase_lift"] = (
+        standardized_lifts.get(dominant_phase) if dominant_phase else None
+    )
+    result["dominant_robust_phase_lift"] = (
+        robust_lifts.get(dominant_phase) if dominant_phase else None
+    )
+    minimum_duration_lift = float(
+        cast(Mapping[str, Any], rules["attribution"])["minimum_standardized_phase_lift"]
+    )
+    result["longest_qualifying_response_run_days"] = _longest_response_run(
+        series,
+        baseline_mean,
+        baseline_sd,
+        windows,
+        normalization,
+        minimum_duration_lift,
     )
     if not series:
         quality = "missing"
@@ -593,22 +721,48 @@ def classify_peak_attribution(
 ) -> tuple[str, list[str]]:
     if phase["metric_quality_status"] != "usable":
         return "insufficient_evidence", ["unusable_or_insufficient_series"]
-    peak_phase = str(phase["peak_phase"])
-    event_phase = peak_phase in {"anticipatory", "immediate", "early_recovery"}
+    dominant_phase = str(phase.get("dominant_event_response_phase") or "")
+    event_phase = dominant_phase in PHASES
+    standardized = _optional_float(phase.get("dominant_standardized_phase_lift"))
+    robust = _optional_float(phase.get("dominant_robust_phase_lift"))
+    effect_size_support = bool(
+        standardized is not None
+        and standardized >= float(rules["minimum_standardized_phase_lift"])
+        and (robust is None or robust >= float(rules["minimum_robust_phase_lift"]))
+    )
     flood = bool(concurrence.get("simultaneous_flood_awareness_flag"))
     weather = bool(concurrence.get("simultaneous_weather_attention_flag"))
     nonflood_weather = bool(concurrence.get("simultaneous_nonflood_weather_flag"))
     adjusted = _optional_float(control.get("adjusted_event_lift")) if control else None
-    control_support = adjusted is not None and adjusted > float(
-        rules["minimum_positive_adjusted_lift"]
+    control_support = bool(
+        adjusted is not None
+        and adjusted >= float(rules["minimum_positive_adjusted_lift"])
+        and int(control.get("control_count", 0) if control else 0)
+        >= int(rules["minimum_control_count"])
+        and control is not None
+        and control.get("control_quality_status") == "usable"
+    )
+    repeat_count = int(phase.get("repeat_count") or 1)
+    repeat_stable = not (
+        bool(rules["require_stable_repeats_when_repeated"])
+        and repeat_count > 1
+        and phase.get("repeat_stability_status") != "stable"
     )
     national_spike = bool(national and national.get("national_concurrent_spike_flag"))
     retailer = phase.get("proxy_type") == "retailer_brand"
-    if event_phase and flood and control_support and not national_spike:
-        return "likely_event_associated", [
-            "event_phase_peak",
+    if (
+        event_phase
+        and effect_size_support
+        and flood
+        and control_support
+        and repeat_stable
+        and not national_spike
+    ):
+        return "event_consistent_signal", [
+            "phase_specific_effect_size",
             "strong_flood_concurrence",
-            "positive_control_adjusted_lift",
+            "adequate_control_adjusted_lift",
+            "repeat_stability_acceptable",
             "no_national_concurrent_spike",
         ]
     if retailer and national_spike and not flood and not control_support:
@@ -619,34 +773,42 @@ def classify_peak_attribution(
             "weak_state_specific_lift",
         ]
     if (weather or nonflood_weather) and not flood:
-        return "weather_related_not_flood_specific", [
+        return "nonflood_weather_consistent", [
             "nonflood_weather_context_concurrence"
             if nonflood_weather
             else "weather_attention_concurrence",
             "no_flood_awareness_concurrence",
         ]
-    if event_phase and (flood or weather):
-        return "possibly_event_associated", [
-            "event_phase_peak",
+    if event_phase and effect_size_support and (flood or weather):
+        reasons = [
+            "phase_specific_effect_size",
             "partial_or_ambiguous_support",
         ]
+        if not repeat_stable:
+            reasons.append("unstable_repeats")
+        return "possibly_event_consistent", reasons
     return "unrelated_or_ambiguous", [
-        "peak_outside_supported_event_pattern"
-        if peak_phase == "outside_event_phases"
+        "no_supported_event_phase_effect"
+        if not event_phase or not effect_size_support
         else "missing_contextual_or_comparison_support"
     ]
 
 
 def _request_series(
     observations: Sequence[Mapping[str, Any]],
-) -> dict[tuple[str, str], dict[date, float]]:
-    values: dict[tuple[str, str], dict[date, list[float]]] = defaultdict(lambda: defaultdict(list))
+) -> dict[tuple[str, str, str], dict[date, float]]:
+    values: dict[tuple[str, str, str], dict[date, list[float]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for row in observations:
         if row.get("interest") is None or bool(row.get("is_partial", False)):
             continue
-        values[(str(row["request_id"]), str(row["concept_id"]))][_as_date(row["date"])].append(
-            float(row["interest"])
+        key = (
+            str(row["request_id"]),
+            str(row.get("repeat_id") or "initial"),
+            str(row["concept_id"]),
         )
+        values[key][_as_date(row["date"])].append(float(row["interest"]))
     return {
         key: {day: statistics.fmean(points) for day, points in sorted(days.items())}
         for key, days in values.items()
@@ -691,11 +853,13 @@ def _control_score(
 ) -> tuple[float, list[str]]:
     criteria = []
     score = 0.0
-    if REGIONS.get(treated) == REGIONS.get(candidate):
-        score += float(rules["same_region_score"])
-        criteria.append("same_census_region")
     treated_meta = metadata.get(treated, {})
     candidate_meta = metadata.get(candidate, {})
+    treated_region = treated_meta.get("census_region", REGIONS.get(treated))
+    candidate_region = candidate_meta.get("census_region", REGIONS.get(candidate))
+    if treated_region == candidate_region:
+        score += float(rules["same_region_score"])
+        criteria.append("same_census_region")
     if treated_meta.get("population_tier") not in {None, "unknown"} and treated_meta.get(
         "population_tier"
     ) == candidate_meta.get("population_tier"):
@@ -706,7 +870,10 @@ def _control_score(
     ) == candidate_meta.get("climate_class"):
         score += float(rules["climate_class_score"])
         criteria.append("same_climate_class")
-    if candidate_meta.get("trends_available") is True:
+    if (
+        candidate_meta.get("observed_trends_availability", candidate_meta.get("trends_available"))
+        is True
+    ):
         score += float(rules["trends_availability_score"])
         criteria.append("trends_data_available")
     if not criteria:
@@ -722,6 +889,19 @@ def _state_has_episode(
     treated_episode_id: str,
 ) -> bool:
     return any(
+        episode_id != treated_episode_id and episode_start <= end and episode_end >= start
+        for episode_start, episode_end, episode_id in intervals_by_state.get(state, [])
+    )
+
+
+def _state_episode_overlap_count(
+    state: str,
+    start: date,
+    end: date,
+    intervals_by_state: Mapping[str, Sequence[tuple[date, date, str]]],
+    treated_episode_id: str,
+) -> int:
+    return sum(
         episode_id != treated_episode_id and episode_start <= end and episode_end >= start
         for episode_start, episode_end, episode_id in intervals_by_state.get(state, [])
     )
@@ -745,7 +925,12 @@ def _catalog_intervals_by_state(
 def _state_metadata(path: Path | None) -> dict[str, dict[str, Any]]:
     if path is None:
         return {}
-    return {str(row["state"]): row for row in _read_rows(path)}
+    rows = _read_rows(path)
+    return {
+        str(row.get("state_code") or row.get("state")): row
+        for row in rows
+        if row.get("state_code") or row.get("state")
+    }
 
 
 def _states(row: Mapping[str, Any]) -> set[str]:
@@ -772,6 +957,116 @@ def _standardized_lift(
     return (value - baseline_mean) / baseline_sd
 
 
+def _robust_lift(
+    value: float | None,
+    baseline_median: float | None,
+    baseline_mad: float | None,
+    normalization: Mapping[str, Any],
+) -> float | None:
+    if value is None or baseline_median is None or baseline_mad is None:
+        return None
+    if baseline_mad <= float(normalization["near_zero_standard_deviation"]):
+        return None
+    return (value - baseline_median) / (1.4826 * baseline_mad)
+
+
+def _longest_response_run(
+    series: Mapping[date, float],
+    baseline_mean: float | None,
+    baseline_sd: float | None,
+    windows: Mapping[str, tuple[date, date]],
+    normalization: Mapping[str, Any],
+    minimum_lift: float,
+) -> int:
+    if baseline_mean is None or baseline_sd is None:
+        return 0
+    allowed_days = {
+        day
+        for start, end in windows.values()
+        for day in (start + timedelta(days=offset) for offset in range((end - start).days + 1))
+    }
+    qualifying = sorted(
+        day
+        for day, value in series.items()
+        if day in allowed_days
+        and (_standardized_lift(value, baseline_mean, baseline_sd, normalization) or 0.0)
+        >= minimum_lift
+    )
+    best = current = 0
+    previous: date | None = None
+    for day in qualifying:
+        current = current + 1 if previous is not None and day == previous + timedelta(days=1) else 1
+        best = max(best, current)
+        previous = day
+    return best
+
+
+def _phase_repeat_outputs(
+    rows: list[dict[str, Any]], rules: Mapping[str, Any]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[(str(row["request_id"]), str(row["concept_id"]))].append(row)
+    threshold = float(cast(Mapping[str, Any], rules["attribution"])["maximum_repeat_lift_stddev"])
+    diagnostics: list[dict[str, Any]] = []
+    aggregated: list[dict[str, Any]] = []
+    for (request_id, concept_id), repeats in sorted(grouped.items()):
+        phase_variability: dict[str, float | None] = {}
+        for phase in PHASES:
+            values = [
+                float(row[f"{phase}_standardized_lift"])
+                for row in repeats
+                if row.get(f"{phase}_standardized_lift") is not None
+            ]
+            phase_variability[phase] = statistics.pstdev(values) if len(values) > 1 else None
+        dominant_phases = [str(row.get("dominant_event_response_phase")) for row in repeats]
+        maximum_stddev = max(
+            (value for value in phase_variability.values() if value is not None),
+            default=None,
+        )
+        stable = bool(
+            len(repeats) > 1
+            and len(set(dominant_phases)) == 1
+            and maximum_stddev is not None
+            and maximum_stddev <= threshold
+        )
+        status = "stable" if stable else "unstable" if len(repeats) > 1 else "not_repeated"
+        for row in repeats:
+            row["repeat_count"] = len(repeats)
+            row["repeat_stability_status"] = status
+            row["maximum_repeat_phase_lift_stddev"] = maximum_stddev
+        diagnostics.append(
+            {
+                "request_id": request_id,
+                "concept_id": concept_id,
+                "repeat_count": len(repeats),
+                "repeat_ids": ";".join(sorted(str(row["repeat_id"]) for row in repeats)),
+                "export_attempt_ids": ";".join(
+                    sorted(str(row.get("export_attempt_id") or "") for row in repeats)
+                ),
+                "dominant_phase_agreement": len(set(dominant_phases)) == 1,
+                "maximum_phase_lift_stddev": maximum_stddev,
+                "repeat_stability_status": status,
+                **{
+                    f"{phase}_standardized_lift_stddev": phase_variability[phase]
+                    for phase in PHASES
+                },
+            }
+        )
+        aggregate = dict(sorted(repeats, key=lambda row: str(row["repeat_id"]))[0])
+        aggregate["repeat_id"] = "aggregated_after_variability"
+        aggregate["export_attempt_id"] = ";".join(
+            sorted(str(row.get("export_attempt_id") or "") for row in repeats)
+        )
+        for phase in PHASES:
+            for suffix in ("mean", "maximum", "peak_lift", "standardized_lift", "robust_lift"):
+                field = f"{phase}_{suffix}"
+                values = [float(row[field]) for row in repeats if row.get(field) is not None]
+                aggregate[field] = statistics.fmean(values) if values else None
+        aggregated.append(aggregate)
+    return diagnostics, aggregated
+
+
 def subtract_standardized_lifts(
     left: float | None, right: float | None, comparison_scale: str
 ) -> float | None:
@@ -784,11 +1079,16 @@ def subtract_standardized_lifts(
     return left - right
 
 
-def _control_lookup(path: Path | None) -> dict[tuple[str, str, str], dict[str, Any]]:
+def _control_lookup(path: Path | None) -> dict[tuple[str, str, str, str], dict[str, Any]]:
     if path is None or not path.exists():
         return {}
     return {
-        (str(row["provisional_episode_id"]), str(row["concept_id"]), str(row["phase"])): row
+        (
+            str(row["provisional_episode_id"]),
+            str(row["concept_id"]),
+            str(row["phase"]),
+            str(row.get("repeat_id") or "initial"),
+        ): row
         for row in _read_rows(path)
     }
 

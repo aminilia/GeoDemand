@@ -3,6 +3,7 @@ message: "If you use GeoDemand-FF, please cite this software."
 title: "GeoDemand-FF"
 version: 0.1.0
 authors:
-  - name: "GeoDemand-FF contributors"
+  - family-names: "Ilia"
+    given-names: "Amin"
 license: MIT
-abstract: "Reproducible GeoAI research pipeline scaffolding for studying regional search-demand surges following urban flash floods."
+abstract: "A reproducible geospatial event-study pipeline for constructing candidate U.S. flood episodes and measuring state-level search-interest responses around them."

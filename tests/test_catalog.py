@@ -206,6 +206,33 @@ def test_catalog_cli_inspect_and_missing_required_inputs(
         discover_catalog_inputs(cohort, tmp_path / "missing", comparison)
 
 
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ({"data_origin": "synthetic_fixture"}, "rejected data_origin"),
+        ({"schema_version": "unsupported"}, "unsupported schema_version"),
+        ({"source_manifest_hash": ""}, "empty provenance fields"),
+    ],
+)
+def test_catalog_rejects_untrusted_physical_evidence(
+    catalog_inputs: tuple[Path, Path, Path, Path, Path],
+    tmp_path: Path,
+    mutation: dict[str, str],
+    message: str,
+) -> None:
+    cohort, episodes, comparison, mrms, usgs = catalog_inputs
+    metrics_path = mrms / "episode_precipitation_metrics.parquet"
+    rows = _rows(metrics_path)
+    rows[0].update(mutation)
+    _write(metrics_path, rows)
+    with pytest.raises(CatalogError, match=message):
+        build_provisional_catalog(
+            discover_catalog_inputs(cohort, episodes, comparison, mrms, usgs),
+            tmp_path / "rejected-catalog",
+            RULES,
+        )
+
+
 @pytest.fixture()
 def catalog_inputs(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
     cohort = tmp_path / "cohort"
@@ -276,8 +303,14 @@ def catalog_inputs(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
                 "provisional_category": "possibly_overmerged" if episode_id == "c3" else "coherent",
             }
         )
-    _write(mrms / "episode_precipitation_metrics.parquet", metrics)
-    _write(mrms / "physical_coherence_assessment.parquet", coherence)
+    _write(
+        mrms / "episode_precipitation_metrics.parquet",
+        [{**row, **_observed_provenance("NOAA MRMS", "QPE")} for row in metrics],
+    )
+    _write(
+        mrms / "physical_coherence_assessment.parquet",
+        [{**row, **_observed_provenance("NOAA MRMS", "coherence")} for row in coherence],
+    )
     _write(
         usgs / "usgs_episode_response_summary.parquet",
         [
@@ -291,24 +324,51 @@ def catalog_inputs(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
                 "support_strength": "moderate",
                 "strongest_response_parameter": "discharge",
                 "no_gauge_reason": "",
+                **_observed_provenance("USGS Water Data", "00060"),
             },
             {
                 "episode_id": "c4",
                 "candidate_gauge_count": 0,
                 "selected_gauge_count": 0,
                 "no_gauge_reason": "none nearby",
+                **_observed_provenance("USGS Water Data", "00060"),
             },
         ],
     )
     _write(
         usgs / "usgs_episode_gauge_associations.parquet",
-        [{"episode_id": "c1", "association_quality": "inside_episode_geometry"}],
+        [
+            {
+                "episode_id": "c1",
+                "association_quality": "inside_episode_geometry",
+                **_observed_provenance("USGS Water Data", "site metadata"),
+            }
+        ],
     )
     _write(
         usgs / "usgs_gauge_response_metrics.parquet",
-        [{"episode_id": "c1", "absolute_rise": 3.5}],
+        [
+            {
+                "episode_id": "c1",
+                "absolute_rise": 3.5,
+                **_observed_provenance("USGS Water Data", "00060"),
+            }
+        ],
     )
     return cohort, episode_root, comparison, mrms, usgs
+
+
+def _observed_provenance(dataset: str, product: str) -> dict[str, str]:
+    return {
+        "schema_version": "physical-evidence-v1",
+        "data_origin": "observed",
+        "source_dataset": dataset,
+        "source_product": product,
+        "source_manifest_hash": "0" * 64,
+        "decoder_version": "test-observed-adapter-v1",
+        "code_commit": "test-commit",
+        "rule_version": "test-rules-v1",
+    }
 
 
 def _policy(

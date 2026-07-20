@@ -15,8 +15,10 @@ from typing import Any, Protocol, cast
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import yaml
 
 from geodemand import __version__
+from geodemand.schemas import PHYSICAL_EVIDENCE_SCHEMA_VERSION
 
 DISCHARGE = "00060"
 GAGE_HEIGHT = "00065"
@@ -176,6 +178,13 @@ def discover_usgs(
     max_gauges: int = MAX_GAUGES_PER_EPISODE,
 ) -> dict[str, Path]:
     sample_rows = _read_rows(sample_path)
+    provenance = _provenance(
+        source_dataset="USGS Water Data",
+        source_product="monitoring location metadata",
+        source_manifest_hash=_sha256(sample_path),
+        decoder_version="dataretrieval-site-adapter-v1",
+        rule_version="usgs-discovery-v1",
+    )
     if max_episodes is not None:
         sample_rows = sample_rows[:max_episodes]
     candidate_rows: list[dict[str, Any]] = []
@@ -190,12 +199,12 @@ def discover_usgs(
             radius = FALLBACK_RADIUS_KM
         ranked = _rank_gauges(gauges, radius)[:max_gauges]
         if not ranked:
-            association_rows.append(_no_gauge_row(row))
+            association_rows.append({**_no_gauge_row(row), **provenance})
             continue
         for gauge in ranked:
             candidate_rows.append(_candidate_row(row, gauge))
             association = _association_row(row, gauge)
-            association_rows.append(association)
+            association_rows.append({**association, **provenance})
             for parameter in _gauge_parameters(gauge):
                 request_rows.append(
                     {
@@ -243,6 +252,13 @@ def fetch_usgs(
     max_episodes: int | None = None,
 ) -> dict[str, Path]:
     rows = _read_csv(request_plan)
+    provenance = _provenance(
+        source_dataset="USGS Water Data",
+        source_product="continuous values",
+        source_manifest_hash=_sha256(request_plan),
+        decoder_version="dataretrieval-continuous-values-v1",
+        rule_version="usgs-fetch-v1",
+    )
     if max_episodes is not None:
         allowed = sorted({row["episode_id"] for row in rows})[:max_episodes]
         rows = [row for row in rows if row["episode_id"] in allowed]
@@ -287,7 +303,7 @@ def fetch_usgs(
                 continue
             _write_request_cache(cache_path, result)
         for item in result:
-            observations.append({**row, **dict(item)})
+            observations.append({**row, **dict(item), **provenance})
         manifest_rows.append(
             {
                 **row,
@@ -336,8 +352,12 @@ def estimate_usgs_fetch(request_plan: Path, max_episodes: int | None = None) -> 
 
 
 def extract_usgs(
-    observations_path: Path, associations_path: Path, output_root: Path
+    observations_path: Path,
+    associations_path: Path,
+    output_root: Path,
+    rules_path: Path,
 ) -> dict[str, Path]:
+    rules = _load_response_rules(rules_path)
     observations = _read_rows(observations_path)
     associations = _read_rows(associations_path)
     assoc_by_key = {(row["episode_id"], row["monitoring_location_id"]): row for row in associations}
@@ -348,10 +368,18 @@ def extract_usgs(
             [],
         ).append(row)
     metrics = [
-        _metric_row(key, values, assoc_by_key.get((key[0], key[1]), {}))
+        _metric_row(key, values, assoc_by_key.get((key[0], key[1]), {}), rules)
         for key, values in sorted(grouped.items())
     ]
-    summary = _episode_summary(metrics, associations)
+    provenance = _provenance(
+        source_dataset="USGS Water Data",
+        source_product="continuous values",
+        source_manifest_hash=_sha256(observations_path),
+        decoder_version="dataretrieval-continuous-values-v1",
+        rule_version=str(rules["rule_version"]),
+    )
+    metrics = [{**row, **provenance} for row in metrics]
+    summary = [{**row, **provenance} for row in _episode_summary(metrics, associations)]
     metrics_dir = output_root / "metrics"
     metrics_dir.mkdir(parents=True, exist_ok=True)
     metrics_path = metrics_dir / "usgs_gauge_response_metrics.parquet"
@@ -497,6 +525,7 @@ def _metric_row(
     key: tuple[str, str, str],
     rows: list[dict[str, Any]],
     association: Mapping[str, Any],
+    rules: Mapping[str, Any],
 ) -> dict[str, Any]:
     ordered = sorted(rows, key=lambda row: str(row.get("time_utc", "")))
     observations = [
@@ -510,12 +539,37 @@ def _metric_row(
         raise UsgsError(f"USGS observations are missing request bounds for {key}")
     event_start = request_start + timedelta(hours=24)
     event_end = request_end - timedelta(hours=48)
-    stats = _windowed_response_metrics(observations, event_start, event_end)
+    stats = _windowed_response_metrics(observations, event_start, event_end, key[2], rules)
     qualified = sum(1 for row in ordered if row.get("qualifier"))
     provisional = sum(
         1 for row in ordered if str(row.get("approval_status", "")).lower() == "provisional"
     )
-    expected_count = _expected_observation_count(observations)
+    cadence = _cadence_assessment(observations, request_start, request_end, rules)
+    coverage_rules = cast(Mapping[str, Any], rules["coverage"])
+    pre_count = sum(1 for time, _ in observations if time is not None and time < event_start)
+    event_count = sum(
+        1 for time, _ in observations if time is not None and event_start <= time <= event_end
+    )
+    coverage_fraction = cadence["coverage_fraction"]
+    adequate_coverage = bool(
+        cadence["cadence_status"] == "regular"
+        and coverage_fraction is not None
+        and float(coverage_fraction) >= float(coverage_rules["minimum_fraction"])
+        and pre_count >= int(coverage_rules["minimum_pre_event_observations"])
+        and event_count >= int(coverage_rules["minimum_event_observations"])
+    )
+    allowed_associations = set(
+        cast(Mapping[str, Any], rules["association"])["allowed_quality_categories"]
+    )
+    association_allowed = association.get("association_quality") in allowed_associations
+    quality = _quality_assessment(ordered, rules)
+    response_detected = bool(
+        stats["threshold_response_detected"]
+        and adequate_coverage
+        and association_allowed
+        and quality["quality_acceptable"]
+    )
+    response_score = _response_score(stats, key[2], rules) if response_detected else 0.0
     return {
         "episode_id": key[0],
         "monitoring_location_id": key[1],
@@ -526,17 +580,45 @@ def _metric_row(
         "distance_to_episode_km": association.get("distance_to_episode_km"),
         "observation_start_utc": ordered[0].get("time_utc", "") if ordered else "",
         "observation_end_utc": ordered[-1].get("time_utc", "") if ordered else "",
-        "expected_observation_count": expected_count,
+        "expected_observation_count": cadence["expected_observation_count"],
         "available_observation_count": len(observations),
-        "coverage_fraction": min(len(observations) / expected_count, 1.0)
-        if expected_count
-        else 0.0,
+        "coverage_fraction": coverage_fraction,
+        "cadence_seconds": cadence["cadence_seconds"],
+        "cadence_status": cadence["cadence_status"],
+        "pre_event_observation_count": pre_count,
+        "event_observation_count": event_count,
+        "adequate_temporal_coverage": adequate_coverage,
         "lag_from_mrms_peak_hours": None,
         "lag_from_imerg_peak_hours": None,
         "qualified_observation_fraction": qualified / len(ordered) if ordered else None,
         "provisional_observation_fraction": provisional / len(ordered) if ordered else None,
-        "response_signal_strength": stats.get("absolute_rise"),
+        "qualifiers": ";".join(
+            sorted({str(row.get("qualifier")) for row in ordered if row.get("qualifier")})
+        ),
+        "approval_statuses": ";".join(
+            sorted(
+                {str(row.get("approval_status")) for row in ordered if row.get("approval_status")}
+            )
+        ),
+        "backend": ordered[0].get("backend", "") if ordered else "",
+        "association_allowed": association_allowed,
+        "quality_acceptable": quality["quality_acceptable"],
+        "quality_reasons": ";".join(quality["quality_reasons"]),
         **stats,
+        "response_signal_strength": stats.get("absolute_rise"),
+        "response_score": response_score,
+        "response_detected": response_detected,
+        "response_assessment_reason": (
+            "response_threshold_met"
+            if response_detected
+            else "inadequate_temporal_coverage"
+            if not adequate_coverage
+            else "weak_geographic_association"
+            if not association_allowed
+            else "quality_rules_failed"
+            if not quality["quality_acceptable"]
+            else str(stats["response_assessment_reason"])
+        ),
     }
 
 
@@ -544,6 +626,8 @@ def _windowed_response_metrics(
     observations: list[tuple[datetime | None, float]],
     event_start: datetime,
     event_end: datetime,
+    parameter_code: str,
+    rules: Mapping[str, Any],
 ) -> dict[str, Any]:
     valid = [(time, value) for time, value in observations if time is not None]
     pre = [(time, value) for time, value in valid if time < event_start]
@@ -560,25 +644,30 @@ def _windowed_response_metrics(
             "maximum_positive_rate_of_change": None,
             "time_of_maximum_utc": "",
             "time_of_maximum_rise_utc": "",
-            "response_detected": False,
+            "threshold_response_detected": False,
             "response_assessment_reason": "missing_event_window_observations",
         }
     baseline = _median_values([value for _, value in pre])
     event_time, event_max = max(event, key=lambda item: item[1])
     absolute_rise = None if baseline is None else event_max - baseline
-    relative_rise = (
-        None if baseline is None or abs(baseline) < ZERO_BASELINE_EPSILON else event_max / baseline
-    )
+    epsilon = float(cast(Mapping[str, Any], rules["response"])["zero_baseline_epsilon"])
+    relative_rise = None if baseline is None or abs(baseline) < epsilon else event_max / baseline
     rates = []
     for (left_time, left_value), (right_time, right_value) in zip(valid, valid[1:], strict=False):
         elapsed_hours = (right_time - left_time).total_seconds() / 3600
         if elapsed_hours > 0:
             rates.append(((right_value - left_value) / elapsed_hours, right_time))
     maximum_rate, maximum_rate_time = max(rates, default=(None, None), key=lambda item: item[0])
+    parameter_name = PARAMETER_NAMES.get(parameter_code, parameter_code)
+    parameter_rules = cast(
+        Mapping[str, Any], cast(Mapping[str, Any], rules["response"])[parameter_name]
+    )
+    minimum_absolute = float(parameter_rules["minimum_absolute_rise"])
+    minimum_relative = float(parameter_rules["minimum_relative_ratio"])
     detected = bool(
         absolute_rise is not None
-        and absolute_rise > 0
-        and (relative_rise is None or relative_rise >= RESPONSE_RATIO_THRESHOLD)
+        and absolute_rise >= minimum_absolute
+        and (relative_rise is None or relative_rise >= minimum_relative)
     )
     return {
         "pre_event_median": baseline,
@@ -590,24 +679,100 @@ def _windowed_response_metrics(
         "maximum_positive_rate_of_change": maximum_rate,
         "time_of_maximum_utc": event_time.isoformat(),
         "time_of_maximum_rise_utc": maximum_rate_time.isoformat() if maximum_rate_time else "",
-        "response_detected": detected,
+        "threshold_response_detected": detected,
         "response_assessment_reason": "rise_detected" if detected else "no_clear_rise",
     }
 
 
-def _expected_observation_count(observations: list[tuple[datetime | None, float]]) -> int | None:
-    times = [time for time, _ in observations if time is not None]
-    if len(times) < MIN_CADENCE_OBSERVATIONS:
-        return len(times) or None
+def _cadence_assessment(
+    observations: list[tuple[datetime | None, float]],
+    request_start: datetime,
+    request_end: datetime,
+    rules: Mapping[str, Any],
+) -> dict[str, Any]:
+    times = sorted(time for time, _ in observations if time is not None)
+    coverage_rules = cast(Mapping[str, Any], rules["coverage"])
+    minimum = int(coverage_rules["minimum_cadence_observations"])
+    if len(times) < minimum:
+        return {
+            "expected_observation_count": None,
+            "coverage_fraction": None,
+            "cadence_seconds": None,
+            "cadence_status": "insufficient_for_cadence",
+        }
     intervals = sorted(
         (right - left).total_seconds()
         for left, right in zip(times, times[1:], strict=False)
         if right > left
     )
     if not intervals:
-        return len(times)
+        return {
+            "expected_observation_count": None,
+            "coverage_fraction": None,
+            "cadence_seconds": None,
+            "cadence_status": "duplicate_or_unordered_times",
+        }
     cadence = intervals[len(intervals) // 2]
-    return round((times[-1] - times[0]).total_seconds() / cadence) + 1
+    maximum_deviation = float(coverage_rules["maximum_interval_deviation_fraction"])
+    irregular = any(abs(interval - cadence) / cadence > maximum_deviation for interval in intervals)
+    if irregular:
+        return {
+            "expected_observation_count": None,
+            "coverage_fraction": None,
+            "cadence_seconds": cadence,
+            "cadence_status": "irregular",
+        }
+    expected = int((request_end - request_start).total_seconds() // cadence) + 1
+    return {
+        "expected_observation_count": expected,
+        "coverage_fraction": min(len(times) / expected, 1.0),
+        "cadence_seconds": cadence,
+        "cadence_status": "regular",
+    }
+
+
+def _quality_assessment(
+    observations: Sequence[Mapping[str, Any]], rules: Mapping[str, Any]
+) -> dict[str, Any]:
+    quality_rules = cast(Mapping[str, Any], rules["quality"])
+    excluded = {str(value).casefold() for value in quality_rules["excluded_qualifiers"]}
+    statuses = {str(value).casefold() for value in quality_rules["allowed_approval_statuses"]}
+    reasons: list[str] = []
+    if any(str(row.get("qualifier", "")).casefold() in excluded for row in observations):
+        reasons.append("excluded_qualifier")
+    if any(str(row.get("approval_status", "")).casefold() not in statuses for row in observations):
+        reasons.append("unsupported_approval_status")
+    provisional = sum(
+        str(row.get("approval_status", "")).casefold() == "provisional" for row in observations
+    )
+    provisional_fraction = provisional / len(observations) if observations else 0.0
+    if provisional and not bool(quality_rules["allow_provisional_observations"]):
+        reasons.append("provisional_disallowed")
+    if provisional_fraction > float(quality_rules["maximum_provisional_fraction"]):
+        reasons.append("excess_provisional_fraction")
+    return {"quality_acceptable": not reasons, "quality_reasons": sorted(reasons)}
+
+
+def _response_score(
+    stats: Mapping[str, Any], parameter_code: str, rules: Mapping[str, Any]
+) -> float:
+    parameter_name = PARAMETER_NAMES.get(parameter_code, parameter_code)
+    parameter_rules = cast(
+        Mapping[str, Any], cast(Mapping[str, Any], rules["response"])[parameter_name]
+    )
+    absolute = stats.get("absolute_rise")
+    relative = stats.get("relative_rise")
+    absolute_component = (
+        0.0
+        if absolute is None
+        else float(absolute) / float(parameter_rules["minimum_absolute_rise"])
+    )
+    relative_component = (
+        1.0
+        if relative is None
+        else float(relative) / float(parameter_rules["minimum_relative_ratio"])
+    )
+    return round(absolute_component + relative_component, 12)
 
 
 def _median_values(values: Sequence[float]) -> float | None:
@@ -631,6 +796,21 @@ def _episode_summary(
         episode_assoc = [row for row in associations if row["episode_id"] == episode_id]
         no_gauge = all(row["association_quality"] == "no_suitable_gauge" for row in episode_assoc)
         detected = [row for row in episode_metrics if row["response_detected"]]
+        adequate = [row for row in episode_metrics if row["adequate_temporal_coverage"]]
+        strongest = max(
+            detected,
+            default=None,
+            key=lambda row: (
+                float(row.get("response_score") or 0.0),
+                str(row["monitoring_location_id"]),
+                str(row["parameter_code"]),
+            ),
+        )
+        numeric_rises = [
+            float(row["absolute_rise"])
+            for row in episode_metrics
+            if row.get("absolute_rise") is not None
+        ]
         rows.append(
             {
                 "episode_id": episode_id,
@@ -641,20 +821,24 @@ def _episode_summary(
                     {row["monitoring_location_id"] for row in episode_metrics}
                 ),
                 "gauges_with_adequate_coverage": len(
-                    {row["monitoring_location_id"] for row in episode_metrics}
+                    {row["monitoring_location_id"] for row in adequate}
                 ),
                 "gauges_with_detected_response": len(
                     {row["monitoring_location_id"] for row in detected}
                 ),
-                "strongest_response_gauge": detected[0]["monitoring_location_id"]
-                if detected
-                else "",
-                "strongest_response_parameter": detected[0]["parameter_code"] if detected else "",
+                "strongest_response_gauge": (
+                    strongest["monitoring_location_id"] if strongest else ""
+                ),
+                "strongest_response_parameter": strongest["parameter_code"] if strongest else "",
+                "strongest_response_score": strongest["response_score"] if strongest else None,
                 "shortest_precipitation_to_response_lag": None,
                 "median_precipitation_to_response_lag": None,
+                "nearby_gauge_response_detected": "unknown" if no_gauge else bool(detected),
                 "hydrologic_response_supported": "unknown" if no_gauge else bool(detected),
-                "support_strength": max(
-                    (float(row["absolute_rise"]) for row in episode_metrics), default=0.0
+                "interpretation_scope": "nearby_monitoring_location_not_connectivity_proof",
+                "support_strength": max(numeric_rises, default=None),
+                "best_usgs_association_quality": (
+                    strongest.get("association_quality", "") if strongest else ""
                 ),
                 "no_gauge_reason": "no_suitable_gauge" if no_gauge else "",
                 "manual_review_flag": no_gauge,
@@ -668,6 +852,38 @@ def _gauge_parameters(gauge: Mapping[str, Any]) -> list[str]:
     if isinstance(value, str):
         return [item for item in value.split(";") if item]
     return [str(item) for item in value]
+
+
+def _load_response_rules(path: Path) -> dict[str, Any]:
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    required = {"rule_version", "coverage", "association", "response", "quality"}
+    if not isinstance(payload, dict) or not required.issubset(payload):
+        missing = sorted(required - set(payload if isinstance(payload, dict) else {}))
+        raise UsgsError("USGS response rules are missing sections: " + ", ".join(missing))
+    response = cast(Mapping[str, Any], payload["response"])
+    for parameter in ("discharge", "gage_height"):
+        if parameter not in response:
+            raise UsgsError(f"USGS response rules are missing {parameter} thresholds.")
+    return cast(dict[str, Any], payload)
+
+
+def _provenance(
+    source_dataset: str,
+    source_product: str,
+    source_manifest_hash: str,
+    decoder_version: str,
+    rule_version: str,
+) -> dict[str, str]:
+    return {
+        "schema_version": PHYSICAL_EVIDENCE_SCHEMA_VERSION,
+        "data_origin": "observed",
+        "source_dataset": source_dataset,
+        "source_product": source_product,
+        "source_manifest_hash": source_manifest_hash,
+        "decoder_version": decoder_version,
+        "code_commit": os.getenv("GEODEMAND_CODE_COMMIT", "unknown-unpackaged"),
+        "rule_version": rule_version,
+    }
 
 
 def _frame_records(frame: Any) -> list[dict[str, Any]]:
@@ -811,3 +1027,11 @@ def _write_csv(path: Path, rows: Sequence[Mapping[str, Any]], fieldnames: list[s
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()

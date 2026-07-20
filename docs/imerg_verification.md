@@ -1,5 +1,9 @@
 # NASA IMERG Verification
 
+> Status: inventory and bounded fetch scaffolding are implemented. Production episode
+> extraction intentionally fails with `real_extraction_not_implemented`; synthetic metric
+> generators exist only in tests.
+
 Milestone 0.7B adds an offline-testable NASA GPM IMERG Final scaffold for
 candidate episode precipitation verification.
 
