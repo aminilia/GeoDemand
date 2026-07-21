@@ -64,7 +64,16 @@ uses `request_id`, `repeat_id`, and `concept_id` as the analytical row grain. Re
 plans are read through the shared CSV/Parquet request-plan reader, while episode-response
 metrics join by `request_id` and `concept_id`, and repeat/phase metrics join by the full
 grain. Duplicate normalized keys are rejected before writing outputs; unmatched joins are
-reported in deterministic summary artifacts.
+reported in both directions in deterministic summary artifacts. Empty normalized keys,
+unplanned concepts, ambiguous mixtures of request-level fallback plans and repeat-specific
+plans, and conflicts in joined lineage or event windows are rejected. The integrated table
+also retains treated geography, concept semantics, proxy type, export attempt, standardized
+peak lift, peak timing, and phase valid-day counts needed by downstream work. Milestone
+1.0A remains an integration and validation boundary; it does not perform statistical
+signal validation. Plan-side orphan checks operate per concept and repeat. An unambiguous
+request-level fallback plan applies its concept set to every repeat present in phase or
+repeat metrics for that request. Both the upstream phase table and integrated dataset use
+formal Arrow schemas, so empty and populated artifacts have identical columns and types.
 
 ## Determinism
 

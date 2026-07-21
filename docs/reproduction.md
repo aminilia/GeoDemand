@@ -41,6 +41,7 @@ geodemand trends map-geographies --pilot PATH --output-root PATH
 geodemand trends plan --pilot PATH --geography PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH --include-national
 geodemand trends import-csv --csv PATH --sidecar PATH --output-root PATH
 geodemand trends validate-imports --observations PATH --plan PATH
+geodemand trends metrics --observations PATH --plan PATH --rules config/trends_rules.yaml --output-root PATH
 geodemand trends phase-metrics --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
 geodemand trends concurrence --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
 geodemand trends control-adjusted-metrics --phase-metrics PATH --controls PATH --output-root PATH
@@ -48,9 +49,15 @@ geodemand trends attribute-peaks --phase-metrics PATH --concurrence PATH --rules
 geodemand analysis build-dataset --request-plan PATH --episode-metrics PATH --repeat-metrics PATH --phase-metrics PATH --output-root PATH
 ```
 
-The analysis build writes only under `--output-root`. Its integrated Parquet table has
-one row per `request_id`, `repeat_id`, and `concept_id`, plus deterministic join summary,
-unmatched-key, and provenance artifacts.
+The analysis build follows both `trends metrics` and `trends phase-metrics` and writes
+only under `--output-root`. Its integrated Parquet table has one row per `request_id`,
+`repeat_id`, and `concept_id`. Input schemas, planned concepts, and lineage values are
+validated before output; missing phase-base joins and reverse orphan inputs are recorded
+in deterministic join-summary and unmatched-key artifacts. Planned concepts are checked
+individually for each applicable repeat, including repeats governed by a request-level
+fallback plan. Empty upstream phase and integrated outputs preserve the same explicit
+Arrow schemas as populated runs. The table is prepared for a later statistical-validation
+milestone but performs no inferential analysis itself.
 
 ## Synthetic Demonstration
 

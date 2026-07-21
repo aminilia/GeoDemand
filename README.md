@@ -82,6 +82,7 @@ geodemand trends map-geographies --pilot PATH --output-root PATH
 geodemand trends plan --pilot PATH --geography PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH --include-national
 geodemand trends import-csv --csv PATH --sidecar PATH --output-root PATH
 geodemand trends validate-imports --observations PATH --plan PATH
+geodemand trends metrics --observations PATH --plan PATH --rules config/trends_rules.yaml --output-root PATH
 geodemand trends phase-metrics --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
 geodemand trends concurrence --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
 geodemand trends attribute-peaks --phase-metrics PATH --concurrence PATH --rules config/trends_rules.yaml --output-root PATH
@@ -93,11 +94,18 @@ repeat-aware concurrence consensus, national diagnostics, and matched-control
 comparisons. Trends values are request-relative indices; the project avoids raw
 0-to-100 cross-geography subtraction.
 
-The analysis dataset uses the explicit analytical row grain
-`request_id + repeat_id + concept_id`. It accepts CSV or Parquet request plans,
-rejects duplicate normalized join keys, preserves long request IDs, and writes
+Run `trends metrics` and `trends phase-metrics` before `analysis build-dataset`; their
+episode, repeat, and phase tables are separate inputs to the integration command. The
+analysis dataset uses the explicit analytical row grain `request_id + repeat_id +
+concept_id`. It accepts CSV, Parquet, or `.pq` request plans, rejects empty or duplicate
+normalized keys, validates planned concepts and joined lineage, preserves long request
+IDs, and writes
 `analysis_dataset.parquet`, `join_summary.json`, `unmatched_keys.csv`, and
-`provenance.json` under the selected output root.
+`provenance.json` under the selected output root. It is an integration artifact, not a
+statistical-validation result. Missing plan coverage is reported once per absent
+`request_id + repeat_id + concept_id`; request-level fallback plans apply every planned
+concept to every repeat observed for that request. Phase and integrated Parquet artifacts
+retain explicit typed schemas even when they contain zero rows.
 
 ## Synthetic Demo
 

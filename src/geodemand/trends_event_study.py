@@ -49,6 +49,67 @@ EVENT_STUDY_PLAN_FIELDS = {
     "terminology_version",
 }
 
+PHASE_STRING_FIELDS = (
+    "provisional_episode_id",
+    "episode_id",
+    "request_id",
+    "repeat_id",
+    "export_attempt_id",
+    "request_role",
+    "treated_geography",
+    "geography",
+    "geography_level",
+    "batch_id",
+    "comparison_batch_id",
+    "concept_id",
+    "terminology_version",
+    "event_start_date",
+    "event_end_date",
+    "baseline_start_date",
+    "baseline_end_date",
+    "post_start_date",
+    "post_end_date",
+    "semantic_family",
+    "proxy_type",
+    "global_peak_phase",
+    "global_peak_date",
+    "peak_phase",
+    "peak_date",
+    "dominant_event_response_phase",
+    "metric_quality_status",
+    "repeat_stability_status",
+)
+PHASE_COUNT_FIELDS = (
+    "baseline_valid_day_count",
+    *(f"{phase}_valid_day_count" for phase in PHASES),
+    "peak_lead_lag_days",
+    "longest_qualifying_response_run_days",
+    "repeat_count",
+)
+PHASE_FLOAT_FIELDS = (
+    "baseline_mean",
+    "baseline_standard_deviation",
+    "baseline_median",
+    "baseline_mad",
+    *(
+        f"{phase}_{suffix}"
+        for phase in PHASES
+        for suffix in ("mean", "maximum", "peak_lift", "standardized_lift", "robust_lift")
+    ),
+    "global_peak_value",
+    "standardized_peak_lift",
+    "dominant_standardized_phase_lift",
+    "dominant_robust_phase_lift",
+    "maximum_repeat_phase_lift_stddev",
+)
+PHASE_METRICS_SCHEMA = pa.schema(
+    [
+        *(pa.field(field, pa.string()) for field in PHASE_STRING_FIELDS),
+        *(pa.field(field, pa.int64()) for field in PHASE_COUNT_FIELDS),
+        *(pa.field(field, pa.float64()) for field in PHASE_FLOAT_FIELDS),
+    ]
+)
+
 
 def response_phase_windows(
     event_start: date, event_end: date, rules: Mapping[str, Any]
@@ -247,7 +308,7 @@ def calculate_phase_metrics(
     stability_path = output_root / "diagnostics" / "phase_repeat_stability.parquet"
     aggregate_path = output_root / "processed" / "trends_phase_response_aggregated.parquet"
     stability, aggregated = _phase_repeat_outputs(rows, rules)
-    _write_parquet(path, rows)
+    _write_parquet(path, rows, schema=PHASE_METRICS_SCHEMA)
     _write_parquet(stability_path, stability)
     _write_parquet(aggregate_path, aggregated)
     return {
@@ -650,6 +711,12 @@ def _phase_metric_row(  # noqa: PLR0915
         "comparison_batch_id": plan.get("comparison_batch_id", plan.get("batch_id")),
         "concept_id": concept_id,
         "terminology_version": plan["terminology_version"],
+        "event_start_date": _as_date(plan["event_start_date"]).isoformat(),
+        "event_end_date": _as_date(plan["event_end_date"]).isoformat(),
+        "baseline_start_date": _as_date(plan["baseline_start_date"]).isoformat(),
+        "baseline_end_date": _as_date(plan["baseline_end_date"]).isoformat(),
+        "post_start_date": _as_date(plan["post_start_date"]).isoformat(),
+        "post_end_date": _as_date(plan["post_end_date"]).isoformat(),
         "semantic_family": term.get("semantic_family"),
         "proxy_type": term.get("proxy_type"),
         "baseline_mean": baseline_mean,
@@ -1565,9 +1632,14 @@ def _read_rows(path: Path) -> list[dict[str, Any]]:
     return cast(list[dict[str, Any]], pq.read_table(path).to_pylist())
 
 
-def _write_parquet(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+def _write_parquet(
+    path: Path,
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    schema: pa.Schema | None = None,
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    table = pa.Table.from_pylist(_deterministic_rows(rows))
+    table = pa.Table.from_pylist(_deterministic_rows(rows), schema=schema)
     pq.write_table(table, path, compression="zstd")
 
 

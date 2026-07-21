@@ -105,6 +105,24 @@ VALID_STATES = {
     "WY",
 }
 PLAN_REQUIRED_FIELDS = {"request_id", "expected_output_filename", "geography", "batch_id"}
+PLAN_WINDOW_FIELDS = {
+    "event_start_date",
+    "event_end_date",
+    "baseline_start_date",
+    "baseline_end_date",
+    "post_start_date",
+    "post_end_date",
+}
+METRICS_PLAN_FIELDS = {
+    *PLAN_REQUIRED_FIELDS,
+    *PLAN_WINDOW_FIELDS,
+    "episode_id",
+    "concept_ids",
+    "terminology_version",
+}
+EVALUATE_TERMS_PLAN_FIELDS = {"request_id", "episode_id", "concept_ids", "event_start_date"}
+ASSESS_PLAN_FIELDS = {"request_id", "episode_id", "concept_ids"}
+QUICKLOOK_PLAN_FIELDS = {"request_id", "episode_id", "geography", "concept_ids"}
 PLAN_REPEAT_FIELDS = ("planned_repeat_id", "repeat_id")
 REGIONS = {
     **dict.fromkeys(("CT", "ME", "MA", "NH", "RI", "VT", "NJ", "NY", "PA"), "northeast"),
@@ -924,7 +942,10 @@ def calculate_metrics(
 ) -> dict[str, Path]:
     rules = load_yaml(rules_path)
     observations = _read_rows(observations_path)
-    plans = {str(row["request_id"]): row for row in read_request_plan_rows(plan_path)}
+    plans = {
+        str(row["request_id"]): row
+        for row in read_request_plan_rows(plan_path, required_fields=METRICS_PLAN_FIELDS)
+    }
     repeat_groups: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in observations:
         repeat_groups[
@@ -1047,7 +1068,7 @@ def evaluate_terms(  # noqa: PLR0915
     output_root: Path,
 ) -> dict[str, Path]:
     metrics = _read_rows(metrics_path)
-    plans = read_request_plan_rows(plan_path)
+    plans = read_request_plan_rows(plan_path, required_fields=EVALUATE_TERMS_PLAN_FIELDS)
     terms_config = load_terms_config(terms_path)
     terms = cast(list[dict[str, Any]], terms_config["concepts"])
     rules = load_yaml(rules_path)
@@ -1312,7 +1333,7 @@ def assess_episodes(
 ) -> dict[str, Path]:
     geography = {str(row["provisional_episode_id"]): row for row in _read_rows(geography_path)}
     plans_by_episode: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for row in read_request_plan_rows(plan_path):
+    for row in read_request_plan_rows(plan_path, required_fields=ASSESS_PLAN_FIELDS):
         plans_by_episode[str(row["episode_id"])].append(row)
     metrics_by_episode: dict[str, list[dict[str, Any]]] = defaultdict(list)
     if metrics_path and metrics_path.exists():
@@ -1391,7 +1412,10 @@ def write_quicklooks(
 ) -> list[Path]:
     observations = _read_rows(observations_path)
     metrics = _read_rows(metrics_path)
-    plans = {str(row["request_id"]): row for row in read_request_plan_rows(plan_path)}
+    plans = {
+        str(row["request_id"]): row
+        for row in read_request_plan_rows(plan_path, required_fields=QUICKLOOK_PLAN_FIELDS)
+    }
     groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in observations:
         groups[(str(row["request_id"]), str(row["concept_id"]))].append(row)
@@ -2092,10 +2116,19 @@ def _metric_row(
     absolute_lift = peak - baseline_mean if peak is not None and baseline_mean is not None else None
     result = {
         "provisional_episode_id": rows[0]["episode_id"],
+        "episode_id": plan["episode_id"],
         "concept_id": rows[0]["concept_id"],
         "semantic_family": rows[0]["semantic_family"],
+        "proxy_type": rows[0].get("proxy_type"),
         "geography": rows[0]["geography"],
+        "treated_geography": plan.get("treated_geography", plan["geography"]),
+        "geography_level": plan.get("geography_level"),
+        "batch_id": plan["batch_id"],
+        "comparison_batch_id": plan.get("comparison_batch_id", plan["batch_id"]),
+        "request_role": plan.get("request_role", "treated_state"),
+        "terminology_version": plan["terminology_version"],
         "request_id": rows[0]["request_id"],
+        **{field: plan[field] for field in PLAN_WINDOW_FIELDS},
         "baseline_valid_day_count": len(baseline),
         "event_valid_day_count": len(event),
         "post_valid_day_count": len(post),
@@ -2462,7 +2495,10 @@ def read_request_plan_rows(
         raise TrendsError(f"Request plan is missing: {path}")
     suffix = path.suffix.casefold()
     if suffix in {".parquet", ".pq"}:
-        table = pq.read_table(path)
+        try:
+            table = pq.read_table(path)
+        except (OSError, pa.ArrowException) as exc:
+            raise TrendsError(f"request_plan_read_error: path={path} detail={exc}") from exc
         rows = cast(list[dict[str, Any]], table.to_pylist())
         available_fields = list(table.column_names)
     elif suffix == ".csv":
@@ -2480,23 +2516,37 @@ def read_request_plan_rows(
 
 
 def _read_request_plan_csv(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
-    with path.open(encoding="utf-8-sig", newline="") as handle:
-        reader = csv.reader(handle)
-        try:
-            raw_header = next(reader)
-        except StopIteration:
-            return [], []
-        header = [_normalize_request_plan_header(cell) for cell in raw_header]
-        duplicates = sorted(name for name, count in Counter(header).items() if name and count > 1)
-        if duplicates:
-            raise TrendsError(
-                "request_plan_duplicate_headers: "
-                f"duplicates={duplicates} available={header} path={path}"
-            )
-        rows: list[dict[str, Any]] = []
-        for raw_row in reader:
-            padded = [*raw_row, *([""] * max(0, len(header) - len(raw_row)))]
-            rows.append(dict(zip(header, padded[: len(header)], strict=True)))
+    try:
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            reader = csv.reader(handle)
+            try:
+                raw_header = next(reader)
+            except StopIteration:
+                return [], []
+            header = [_normalize_request_plan_header(cell) for cell in raw_header]
+            duplicates = sorted(name for name, count in Counter(header).items() if count > 1)
+            if duplicates:
+                raise TrendsError(
+                    "request_plan_duplicate_headers: "
+                    f"duplicates={duplicates} available={header} path={path}"
+                )
+            blank_positions = [index for index, name in enumerate(header, start=1) if not name]
+            if blank_positions:
+                raise TrendsError(
+                    "request_plan_blank_header: "
+                    f"positions={blank_positions} available={header} path={path}"
+                )
+            rows: list[dict[str, Any]] = []
+            for row_number, raw_row in enumerate(reader, start=2):
+                if len(raw_row) > len(header):
+                    raise TrendsError(
+                        "request_plan_row_width_error: "
+                        f"row={row_number} expected={len(header)} actual={len(raw_row)} path={path}"
+                    )
+                padded = [*raw_row, *([""] * max(0, len(header) - len(raw_row)))]
+                rows.append(dict(zip(header, padded[: len(header)], strict=True)))
+    except (OSError, UnicodeError, csv.Error) as exc:
+        raise TrendsError(f"request_plan_read_error: path={path} detail={exc}") from exc
     return rows, header
 
 
@@ -2523,13 +2573,15 @@ def _validate_plan_fields(
         )
     if not rows:
         raise TrendsError(f"Request plan is empty: {path}")
-    missing_request_ids = [
-        index for index, row in enumerate(rows, start=1) if str(row.get("request_id") or "") == ""
+    empty_required = [
+        (index, field)
+        for index, row in enumerate(rows, start=1)
+        for field in sorted(required_fields)
+        if not str(row.get(field) or "").strip()
     ]
-    if missing_request_ids:
+    if empty_required:
         raise TrendsError(
-            "Request plan contains empty request_id rows: "
-            + ", ".join(str(index) for index in missing_request_ids[:10])
+            f"request_plan_empty_required_values: rows={empty_required[:20]} path={path}"
         )
 
 
