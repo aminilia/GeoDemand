@@ -13,7 +13,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import yaml
 
-from geodemand.trends import REGIONS, VALID_STATES, TrendsError
+from geodemand.trends import REGIONS, VALID_STATES, TrendsError, read_request_plan_rows
 
 PHASES = ("anticipatory", "immediate", "early_recovery", "extended_recovery")
 FLOOD_AWARENESS = {"flood", "flooding", "flash_flood", "context_heavy_rain"}
@@ -34,6 +34,20 @@ NONFLOOD_CONTEXT = {
 CONTROL_CONCORDANCE_FRACTION = 0.75
 STANDARDIZED_COMPARISON_SCALE = "within_series_baseline_standardized_lift"
 TWO_REPEAT_COUNT = 2
+EVENT_STUDY_PLAN_FIELDS = {
+    "request_id",
+    "episode_id",
+    "geography",
+    "geography_level",
+    "batch_id",
+    "event_start_date",
+    "event_end_date",
+    "baseline_start_date",
+    "baseline_end_date",
+    "post_start_date",
+    "post_end_date",
+    "terminology_version",
+}
 
 
 def response_phase_windows(
@@ -198,7 +212,10 @@ def calculate_phase_metrics(
     output_root: Path,
 ) -> dict[str, Path]:
     rules = _load_yaml(rules_path)
-    plans = {str(row["request_id"]): row for row in _read_rows(plan_path)}
+    plans = {
+        str(row["request_id"]): row
+        for row in read_request_plan_rows(plan_path, required_fields=EVENT_STUDY_PLAN_FIELDS)
+    }
     terms = _load_yaml(terms_path)
     term_by_id = {str(row["concept_id"]): row for row in terms["concepts"]}
     observation_rows = _read_rows(observations_path)
@@ -250,7 +267,10 @@ def calculate_concurrence(
 ) -> dict[str, Path]:
     rules = _load_yaml(rules_path)
     event_rules = cast(Mapping[str, Any], rules["event_study"])
-    plans = {str(row["request_id"]): row for row in _read_rows(plan_path)}
+    plans = {
+        str(row["request_id"]): row
+        for row in read_request_plan_rows(plan_path, required_fields=EVENT_STUDY_PLAN_FIELDS)
+    }
     observations = _read_rows(observations_path)
     series = _request_series(observations)
     terms = _load_yaml(terms_path)

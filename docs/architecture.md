@@ -17,8 +17,9 @@ flowchart TD
     G --> H["Google Trends request planning"]
     H --> I["Immutable CSV ingestion"]
     I --> J["Repeat-aware phase metrics"]
-    J --> K["National and matched-control comparisons"]
-    K --> L["Non-causal event-consistency assessment"]
+    J --> K["Integrated analytical dataset"]
+    K --> L["National and matched-control comparisons"]
+    L --> M["Non-causal event-consistency assessment"]
 ```
 
 ## Design Decisions
@@ -57,6 +58,13 @@ metrics are calculated within a request series; the workflow does not subtract r
 Repeat-aware concurrence aggregation is deterministic and separates scientific result
 metrics from volatile execution metadata. National and matched-control comparisons are
 used as observational diagnostics, not causal labels.
+
+The Milestone 1.0A analysis dataset is an integration artifact, not a modeling stage. It
+uses `request_id`, `repeat_id`, and `concept_id` as the analytical row grain. Request
+plans are read through the shared CSV/Parquet request-plan reader, while episode-response
+metrics join by `request_id` and `concept_id`, and repeat/phase metrics join by the full
+grain. Duplicate normalized keys are rejected before writing outputs; unmatched joins are
+reported in deterministic summary artifacts.
 
 ## Determinism
 

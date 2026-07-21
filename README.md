@@ -21,8 +21,9 @@ flowchart TD
     G --> H["Google Trends request planning"]
     H --> I["Immutable CSV ingestion"]
     I --> J["Repeat-aware phase metrics"]
-    J --> K["National and matched-control comparisons"]
-    K --> L["Non-causal event-consistency assessment"]
+    J --> K["Integrated analytical dataset"]
+    K --> L["National and matched-control comparisons"]
+    L --> M["Non-causal event-consistency assessment"]
 ```
 
 ## Install
@@ -84,12 +85,19 @@ geodemand trends validate-imports --observations PATH --plan PATH
 geodemand trends phase-metrics --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
 geodemand trends concurrence --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
 geodemand trends attribute-peaks --phase-metrics PATH --concurrence PATH --rules config/trends_rules.yaml --output-root PATH
+geodemand analysis build-dataset --request-plan PATH --episode-metrics PATH --repeat-metrics PATH --phase-metrics PATH --output-root PATH
 ```
 
 The Trends workflow preserves immutable raw CSVs, request sidecars, repeat lineage,
 repeat-aware concurrence consensus, national diagnostics, and matched-control
 comparisons. Trends values are request-relative indices; the project avoids raw
 0-to-100 cross-geography subtraction.
+
+The analysis dataset uses the explicit analytical row grain
+`request_id + repeat_id + concept_id`. It accepts CSV or Parquet request plans,
+rejects duplicate normalized join keys, preserves long request IDs, and writes
+`analysis_dataset.parquet`, `join_summary.json`, `unmatched_keys.csv`, and
+`provenance.json` under the selected output root.
 
 ## Synthetic Demo
 

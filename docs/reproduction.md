@@ -45,7 +45,12 @@ geodemand trends phase-metrics --observations PATH --plan PATH --terms config/tr
 geodemand trends concurrence --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
 geodemand trends control-adjusted-metrics --phase-metrics PATH --controls PATH --output-root PATH
 geodemand trends attribute-peaks --phase-metrics PATH --concurrence PATH --rules config/trends_rules.yaml --output-root PATH
+geodemand analysis build-dataset --request-plan PATH --episode-metrics PATH --repeat-metrics PATH --phase-metrics PATH --output-root PATH
 ```
+
+The analysis build writes only under `--output-root`. Its integrated Parquet table has
+one row per `request_id`, `repeat_id`, and `concept_id`, plus deterministic join summary,
+unmatched-key, and provenance artifacts.
 
 ## Synthetic Demonstration
 

@@ -9,6 +9,7 @@ from typing import Annotated, Any
 import pyarrow.parquet as pq
 import typer
 
+from geodemand.analysis import AnalysisError, build_analysis_dataset
 from geodemand.boundaries import BoundaryError, inspect_boundaries, prepare_boundaries
 from geodemand.catalog import (
     CatalogError,
@@ -83,12 +84,14 @@ cohort_app = typer.Typer(help="Candidate event cohort commands.")
 episodes_app = typer.Typer(help="Candidate episode clustering commands.")
 catalog_app = typer.Typer(help="Provisional reported-event catalog commands.")
 trends_app = typer.Typer(help="Google Trends feasibility and manual-export commands.")
+analysis_app = typer.Typer(help="Integrated analytical dataset commands.")
 app.add_typer(data_app, name="data")
 app.add_typer(boundaries_app, name="boundaries")
 app.add_typer(cohort_app, name="cohort")
 app.add_typer(episodes_app, name="episodes")
 app.add_typer(catalog_app, name="catalog")
 app.add_typer(trends_app, name="trends")
+app.add_typer(analysis_app, name="analysis")
 
 
 @app.callback()
@@ -888,6 +891,34 @@ def trends_summarize_command(
 ) -> None:
     """Combine deterministic Trends feasibility summaries and acceptance status."""
     _run_trends(lambda: summarize_trends(output_root))
+
+
+@analysis_app.command("build-dataset")
+def analysis_build_dataset_command(
+    request_plan_path: Annotated[Path, typer.Option("--request-plan", exists=True, dir_okay=False)],
+    episode_metrics_path: Annotated[
+        Path, typer.Option("--episode-metrics", exists=True, dir_okay=False)
+    ],
+    repeat_metrics_path: Annotated[
+        Path, typer.Option("--repeat-metrics", exists=True, dir_okay=False)
+    ],
+    phase_metrics_path: Annotated[
+        Path, typer.Option("--phase-metrics", exists=True, dir_okay=False)
+    ],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Build the deterministic integrated Trends analytical dataset."""
+    try:
+        artifacts = build_analysis_dataset(
+            request_plan_path=request_plan_path,
+            episode_metrics_path=episode_metrics_path,
+            repeat_metrics_path=repeat_metrics_path,
+            phase_metrics_path=phase_metrics_path,
+            output_root=output_root,
+        )
+    except (AnalysisError, TrendsError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _echo_json({name: str(path) for name, path in artifacts.items()})
 
 
 def _run_trends(operation: Callable[[], Any]) -> None:

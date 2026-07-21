@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 import hashlib
 import importlib.metadata
 import importlib.util
@@ -22,7 +21,7 @@ from urllib.parse import parse_qs, urlparse
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from geodemand.trends import TrendsError, validate_trends_csv
+from geodemand.trends import TrendsError, read_request_plan_rows, validate_trends_csv
 
 BrowserName = Literal["chromium", "chrome", "edge"]
 ExportDecision = Literal["download", "skip", "retry", "insufficient_data", "stop"]
@@ -914,12 +913,7 @@ def _mini_pilot_path(plan_path: Path) -> Path:
 
 
 def _read_plan(path: Path) -> list[dict[str, Any]]:
-    if not path.exists():
-        raise TrendsError(f"Request plan is missing: {path}")
-    if path.suffix.lower() == ".csv":
-        with path.open(encoding="utf-8-sig", newline="") as handle:
-            return list(csv.DictReader(handle))
-    return cast(list[dict[str, Any]], pq.read_table(path).to_pylist())
+    return read_request_plan_rows(path, required_fields=REQUIRED_PLAN_COLUMNS)
 
 
 def _read_manifest(path: Path) -> list[dict[str, Any]]:

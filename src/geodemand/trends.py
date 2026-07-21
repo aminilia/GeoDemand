@@ -104,6 +104,8 @@ VALID_STATES = {
     "WI",
     "WY",
 }
+PLAN_REQUIRED_FIELDS = {"request_id", "expected_output_filename", "geography", "batch_id"}
+PLAN_REPEAT_FIELDS = ("planned_repeat_id", "repeat_id")
 REGIONS = {
     **dict.fromkeys(("CT", "ME", "MA", "NH", "RI", "VT", "NJ", "NY", "PA"), "northeast"),
     **dict.fromkeys(
@@ -888,11 +890,16 @@ def validate_imports(observations_path: Path, plan_path: Path | None = None) -> 
     identities = [
         (row["request_id"], row["repeat_id"], row["concept_id"], str(row["date"])) for row in rows
     ]
-    planned = (
-        {str(row["request_id"]) for row in _read_rows(plan_path)}
+    plan_rows = (
+        read_request_plan_rows(
+            plan_path,
+            required_fields=PLAN_REQUIRED_FIELDS,
+            require_repeat_lineage=True,
+        )
         if plan_path is not None
-        else set()
+        else []
     )
+    planned = {str(row["request_id"]) for row in plan_rows}
     imported = {str(row["request_id"]) for row in rows}
     unknown = sorted(imported - planned) if planned else []
     payload = {
@@ -917,7 +924,7 @@ def calculate_metrics(
 ) -> dict[str, Path]:
     rules = load_yaml(rules_path)
     observations = _read_rows(observations_path)
-    plans = {str(row["request_id"]): row for row in _read_rows(plan_path)}
+    plans = {str(row["request_id"]): row for row in read_request_plan_rows(plan_path)}
     repeat_groups: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in observations:
         repeat_groups[
@@ -1040,7 +1047,7 @@ def evaluate_terms(  # noqa: PLR0915
     output_root: Path,
 ) -> dict[str, Path]:
     metrics = _read_rows(metrics_path)
-    plans = _read_rows(plan_path)
+    plans = read_request_plan_rows(plan_path)
     terms_config = load_terms_config(terms_path)
     terms = cast(list[dict[str, Any]], terms_config["concepts"])
     rules = load_yaml(rules_path)
@@ -1305,7 +1312,7 @@ def assess_episodes(
 ) -> dict[str, Path]:
     geography = {str(row["provisional_episode_id"]): row for row in _read_rows(geography_path)}
     plans_by_episode: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for row in _read_rows(plan_path):
+    for row in read_request_plan_rows(plan_path):
         plans_by_episode[str(row["episode_id"])].append(row)
     metrics_by_episode: dict[str, list[dict[str, Any]]] = defaultdict(list)
     if metrics_path and metrics_path.exists():
@@ -1384,7 +1391,7 @@ def write_quicklooks(
 ) -> list[Path]:
     observations = _read_rows(observations_path)
     metrics = _read_rows(metrics_path)
-    plans = {str(row["request_id"]): row for row in _read_rows(plan_path)}
+    plans = {str(row["request_id"]): row for row in read_request_plan_rows(plan_path)}
     groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in observations:
         groups[(str(row["request_id"]), str(row["concept_id"]))].append(row)
@@ -2443,6 +2450,87 @@ def _as_date(value: Any) -> date:
 
 def _read_rows(path: Path) -> list[dict[str, Any]]:
     return cast(list[dict[str, Any]], pq.read_table(path).to_pylist())
+
+
+def read_request_plan_rows(
+    path: Path,
+    *,
+    required_fields: set[str] | None = None,
+    require_repeat_lineage: bool = False,
+) -> list[dict[str, Any]]:
+    if not path.exists():
+        raise TrendsError(f"Request plan is missing: {path}")
+    suffix = path.suffix.casefold()
+    if suffix in {".parquet", ".pq"}:
+        table = pq.read_table(path)
+        rows = cast(list[dict[str, Any]], table.to_pylist())
+        available_fields = list(table.column_names)
+    elif suffix == ".csv":
+        rows, available_fields = _read_request_plan_csv(path)
+    else:
+        raise TrendsError(f"unsupported_tabular_format: {path.suffix}")
+    _validate_plan_fields(
+        rows,
+        path,
+        available_fields=available_fields,
+        required_fields=required_fields or {"request_id"},
+        require_repeat_lineage=require_repeat_lineage,
+    )
+    return rows
+
+
+def _read_request_plan_csv(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
+        try:
+            raw_header = next(reader)
+        except StopIteration:
+            return [], []
+        header = [_normalize_request_plan_header(cell) for cell in raw_header]
+        duplicates = sorted(name for name, count in Counter(header).items() if name and count > 1)
+        if duplicates:
+            raise TrendsError(
+                "request_plan_duplicate_headers: "
+                f"duplicates={duplicates} available={header} path={path}"
+            )
+        rows: list[dict[str, Any]] = []
+        for raw_row in reader:
+            padded = [*raw_row, *([""] * max(0, len(header) - len(raw_row)))]
+            rows.append(dict(zip(header, padded[: len(header)], strict=True)))
+    return rows, header
+
+
+def _normalize_request_plan_header(value: str) -> str:
+    return value.removeprefix("\ufeff").strip()
+
+
+def _validate_plan_fields(
+    rows: Sequence[Mapping[str, Any]],
+    path: Path,
+    *,
+    available_fields: Sequence[str],
+    required_fields: set[str],
+    require_repeat_lineage: bool,
+) -> None:
+    fields = set(available_fields)
+    missing = sorted(required_fields - fields)
+    if require_repeat_lineage and not any(field in fields for field in PLAN_REPEAT_FIELDS):
+        missing.append("planned_repeat_id or repeat_id")
+    if missing:
+        raise TrendsError(
+            "request_plan_missing_fields: "
+            f"missing={missing} available={list(available_fields)} path={path}"
+        )
+    if not rows:
+        raise TrendsError(f"Request plan is empty: {path}")
+    missing_request_ids = [
+        index for index, row in enumerate(rows, start=1) if str(row.get("request_id") or "") == ""
+    ]
+    if missing_request_ids:
+        raise TrendsError(
+            "Request plan contains empty request_id rows: "
+            + ", ".join(str(index) for index in missing_request_ids[:10])
+        )
 
 
 def _row_count(path: Path) -> int:
