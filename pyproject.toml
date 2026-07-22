@@ -30,6 +30,7 @@ dependencies = [
   "PyYAML>=6.0",
   "shapely>=2.0",
   "typer>=0.12",
+  "polars>=1.43.0",
 ]
 
 [project.optional-dependencies]
