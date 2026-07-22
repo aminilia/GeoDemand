@@ -215,6 +215,10 @@ class TrendsSidecar(BaseModel):
     notes: str = ""
     terminology_version: str = "unknown_legacy"
     export_attempt_id: str | None = None
+    execution_batch_id: str | None = None
+    matched_pair_id: str | None = None
+    selection_version: str | None = None
+    execution_selection_rank: int | None = None
     export_timestamp_utc: datetime | None = None
     request_plan_sha256: str | None = None
     csv_sha256: str | None = None
@@ -307,8 +311,12 @@ def load_terms_config(path: Path) -> dict[str, Any]:  # noqa: PLR0912
         raise TrendsError("Terminology concept IDs must be unique.")
     known = set(concept_ids)
     batches = cast(list[dict[str, Any]], payload.get("standardized_batches", []))
-    if len(batches) != STANDARDIZED_BATCH_COUNT:
-        raise TrendsError("Exactly five standardized terminology batches are required.")
+    core_batches = [batch for batch in batches if not bool(batch.get("pilot_only", False))]
+    if len(core_batches) != STANDARDIZED_BATCH_COUNT:
+        raise TrendsError("Exactly five core standardized terminology batches are required.")
+    batch_ids = [str(batch.get("batch_id") or "") for batch in batches]
+    if not all(batch_ids) or len(batch_ids) != len(set(batch_ids)):
+        raise TrendsError("Terminology batch IDs must be non-empty and unique.")
     for batch in batches:
         members = [str(item) for item in cast(Sequence[Any], batch.get("concepts", []))]
         if len(members) != CONCEPTS_PER_BATCH or len(members) != len(set(members)):
@@ -376,7 +384,13 @@ def official_api_selfcheck(config_path: Path | None = None) -> dict[str, Any]:
     }
 
 
-def pilot_sample(catalog_dir: Path, output_root: Path, rules_path: Path) -> dict[str, Path]:
+def pilot_sample(
+    catalog_dir: Path,
+    output_root: Path,
+    rules_path: Path,
+    episode_limit: int = 40,
+    selection_version: str = "1.0C-v1",
+) -> dict[str, Path]:
     rules = load_yaml(rules_path)
     episodes_path = catalog_dir / "episodes.parquet"
     if not episodes_path.exists():
@@ -424,6 +438,24 @@ def pilot_sample(catalog_dir: Path, output_root: Path, rules_path: Path) -> dict
                 "geography_mapping_status": "mapped" if state in VALID_STATES else "manual_review",
                 "manual_review_flag": bool(row["manual_review_flag"]),
             }
+        )
+    selection_paths: dict[str, Path] = {}
+    if episode_limit != 40:  # noqa: PLR2004
+        from geodemand.acquisition_planning import (  # noqa: PLC0415
+            select_execution_episodes,
+        )
+
+        pilot_rows, selection_paths = select_execution_episodes(
+            pilot_rows,
+            output_root,
+            episode_limit,
+            selection_version,
+            [str(item) for item in cast(Sequence[Any], rules.get("required_states", []))],
+            int(rules.get("minimum_required_state_episodes", 1)),
+        )
+    elif episode_limit not in {10, 20, 40}:
+        raise TrendsError(
+            f"invalid_episode_limit: expected one of [10, 20, 40], got {episode_limit}"
         )
     pilot_path = output / "trends_pilot_episodes.parquet"
     _write_parquet(pilot_path, pilot_rows)
@@ -480,6 +512,7 @@ def pilot_sample(catalog_dir: Path, output_root: Path, rules_path: Path) -> dict
         "summary": summary_path,
         "manifest": manifest_path,
         "overall_manifest": overall_manifest,
+        **selection_paths,
     }
 
 
@@ -547,12 +580,21 @@ def plan_requests(  # noqa: PLR0912, PLR0915
     include_behavioral_state: bool = False,
     include_national: bool = False,
     controls_path: Path | None = None,
+    batch_ids: Sequence[str] = (),
+    planned_repeats: int = 1,
+    execution_batch_id: str | None = None,
+    execution_only: bool = False,
+    controls_per_episode: int = 1,
 ) -> dict[str, Path]:
     rules = load_yaml(rules_path)
     terms = load_terms_config(terms_path)
     concepts = [row for row in cast(list[dict[str, Any]], terms["concepts"]) if row["active"]]
     concept_by_id = {str(row["concept_id"]): row for row in concepts}
-    batches = cast(list[dict[str, Any]], terms["standardized_batches"])
+    batches = [
+        row
+        for row in cast(list[dict[str, Any]], terms["standardized_batches"])
+        if not bool(row.get("pilot_only", False))
+    ]
     terminology_version = str(terms["dictionary_version"])
     request_rules = cast(Mapping[str, Any], rules["request"])
     context_id = str(request_rules["comparison_context_concept_id"])
@@ -562,6 +604,33 @@ def plan_requests(  # noqa: PLR0912, PLR0915
     geography = {str(row["provisional_episode_id"]): row for row in _read_rows(geography_path)}
     plans: list[dict[str, Any]] = []
     pilot_rows = _read_rows(pilot_path)
+    if execution_only:
+        from geodemand.acquisition_planning import build_execution_plan  # noqa: PLC0415
+
+        return build_execution_plan(
+            pilot_rows,
+            list(geography.values()),
+            controls_path,
+            terms_path,
+            rules_path,
+            output_root,
+            backend,
+            batch_ids,
+            planned_repeats,
+            execution_batch_id or "",
+            controls_per_episode,
+        )
+    execution_options_used = (
+        bool(batch_ids)
+        or planned_repeats != 1
+        or execution_batch_id is not None
+        or controls_per_episode != 1
+    )
+    if execution_options_used:
+        raise TrendsError(
+            "execution_options_require_execution_only: --batch-id, --planned-repeats, "
+            "--execution-batch-id, and --controls-per-episode require --execution-only"
+        )
     for episode in sorted(pilot_rows, key=lambda row: str(row["provisional_episode_id"])):
         episode_id = str(episode["provisional_episode_id"])
         mapping = geography.get(episode_id)
@@ -1981,6 +2050,10 @@ def _write_sidecar_templates(
                 "anchor_concept_id": plan["anchor_concept"],
                 "repeat_id": plan["planned_repeat_id"],
                 "terminology_version": plan["terminology_version"],
+                "execution_batch_id": plan.get("execution_batch_id"),
+                "matched_pair_id": plan.get("matched_pair_id"),
+                "selection_version": plan.get("selection_version"),
+                "execution_selection_rank": plan.get("execution_selection_rank"),
                 "notes": "Complete export_date and repeat_id before import.",
             },
         )

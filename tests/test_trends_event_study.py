@@ -11,7 +11,13 @@ import pyarrow.parquet as pq
 import pytest
 import yaml
 
-from geodemand.trends import VALID_STATES, TrendsError, map_geographies, plan_requests
+from geodemand.trends import (
+    VALID_STATES,
+    TrendsError,
+    map_geographies,
+    plan_requests,
+    validate_imports,
+)
 from geodemand.trends_event_study import (
     STANDARDIZED_COMPARISON_SCALE,
     _logical_concurrence_rows,
@@ -61,6 +67,34 @@ def test_phase_metrics_preserve_each_peak_phase(
     }:
         assert row[f"{expected_phase}_maximum"] == 80.0
         assert row[f"{expected_phase}_peak_lift"] is not None
+
+
+def test_phase_concurrence_and_validate_imports_accept_powershell_bom_plan(
+    tmp_path: Path,
+) -> None:
+    request_id = "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351"
+    plan = tmp_path / "0.9A_batch1_request_plan.csv"
+    observations = tmp_path / "observations.parquet"
+    plan_row = _plan(request_id, concepts="context_weather;flood;walmart")
+    plan_row["planned_repeat_id"] = "repeat_1"
+    plan_row["expected_output_filename"] = f"{request_id}-repeat-1.csv"
+    _write_plan_csv(plan, [plan_row], bom=True)
+    _write(observations, _observations(request_id, {"walmart": date(2024, 6, 11)}))
+
+    phase = calculate_phase_metrics(observations, plan, TERMS, RULES, tmp_path / "phase")
+    concurrence = calculate_concurrence(
+        observations,
+        plan,
+        TERMS,
+        RULES,
+        tmp_path / "concurrence",
+        phase["phase_metrics"],
+    )
+    validation = validate_imports(observations, plan)
+
+    assert _rows(phase["phase_metrics"])[0]["request_id"] == request_id
+    assert _rows(concurrence["concurrence"])[0]["request_id"] == request_id
+    assert validation["valid"] is True
 
 
 def test_response_phase_boundaries() -> None:
@@ -1088,6 +1122,13 @@ def _write(path: Path, rows: list[dict[str, object]]) -> None:
 
 def _rows(path: Path) -> list[dict[str, object]]:
     return pq.read_table(path).to_pylist()
+
+
+def _write_plan_csv(path: Path, rows: list[dict[str, object]], *, bom: bool) -> None:
+    with path.open("w", encoding="utf-8-sig" if bom else "utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def _csv_rows(path: Path) -> list[dict[str, str]]:
