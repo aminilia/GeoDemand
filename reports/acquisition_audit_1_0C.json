@@ -1,0 +1,230 @@
+{
+  "audit_version": "1.0C-1-acquisition-audit-v1",
+  "current_contracts": {
+    "browser_retry": "same request_id and repeat_id; new export_attempt_id; append attempt manifest record; optional validated replacement of the repeat file",
+    "control_pairing": "deterministic controls exist, but optional planning uses up to three controls on five mini-pilot episodes and has no explicit matched_pair_id",
+    "full_plan": "40 episodes x 5 standardized batches x one initial repeat = 200 rows",
+    "import_accumulation": "one CSV/sidecar command at a time; logically appends unseen observation identities while physically rewriting the canonical Parquet",
+    "import_identity": [
+      "request_id",
+      "repeat_id",
+      "concept_id",
+      "date"
+    ],
+    "mini_pilot": "five episodes x five batches at repeat_1 plus Florida Batch 1 repeat_2 = 26 rows and 25 logical request IDs",
+    "plan_row": "one planned export execution for one logical episode/geography/window/panel definition and one planned repeat",
+    "request_id_generation": "SHA-256 of canonical episode, geography, request window, category, search property, backend, ordered concepts, batch_id, and terminology version",
+    "repeat_identity": "planned_repeat_id in plan; repeat_id in browser manifest, sidecar, and imported observations",
+    "sidecar_lineage": [
+      "request_id",
+      "repeat_id",
+      "export_attempt_id when browser-generated",
+      "episode_id",
+      "request_role",
+      "treated_geography",
+      "geography",
+      "geography_level",
+      "batch_id",
+      "comparison_batch_id",
+      "requested concepts and labels",
+      "start_date",
+      "end_date",
+      "terminology_version",
+      "CSV SHA-256"
+    ]
+  },
+  "intended_designs": {
+    "full": {
+      "episode_count": 20,
+      "export_row_count": 80,
+      "logical_request_count": 40,
+      "planned_repeats_per_logical_request": 2,
+      "request_roles_per_episode": 2
+    },
+    "pilot": {
+      "episode_count": 10,
+      "export_row_count": 40,
+      "logical_request_count": 20,
+      "planned_repeats_per_logical_request": 2,
+      "request_roles_per_episode": 2
+    }
+  },
+  "recommended_cli_extensions": [
+    {
+      "command": "trends plan",
+      "options": [
+        "--episode-limit",
+        "--batch-id",
+        "--planned-repeats",
+        "--execution-batch-id",
+        "--execution-only",
+        "--controls-per-episode"
+      ]
+    },
+    {
+      "command": "trends import-csv",
+      "options": [
+        "--import-manifest"
+      ]
+    },
+    {
+      "command": "trends validate-imports",
+      "options": [
+        "--raw-root",
+        "--require-complete"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "current_status": "missing",
+      "new_command_required": false,
+      "proposed_change": "Extend trends plan with a deterministic --episode-limit selector applied to the supplied 40-episode pilot, with an explicit nesting rule for 10 and 20.",
+      "requirement": "deterministic selection of 10 episodes from the 40-episode pilot",
+      "schema_impact": "Add selection_scope, execution_selection_rank, and selection rule/version to the execution plan or summary.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends.py:pilot_sample",
+        "src/geodemand/trends.py:_select_mini_episodes",
+        "config/trends_rules.yaml:pilot_per_year"
+      ],
+      "test_impact": "Add deterministic 10-of-40, 20-of-40, nested-subset, diversity, and invalid-limit tests."
+    },
+    {
+      "current_status": "partially supported",
+      "new_command_required": false,
+      "proposed_change": "Use rank-1 selected control per episode, generate the treated and control rows from the same episode and panel, and validate one-to-one balance.",
+      "requirement": "balanced treated/control pairing",
+      "schema_impact": "Add deterministic matched_pair_id shared by treated/control logical requests and their repeats.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends_event_study.py:select_controls",
+        "src/geodemand/trends.py:_control_plan_rows",
+        "src/geodemand/trends.py:_comparison_plan_rows"
+      ],
+      "test_impact": "Add missing-control, extra-control, role-balance, shared-pair-ID, panel-alignment, and deterministic rank-1 tests."
+    },
+    {
+      "current_status": "missing",
+      "new_command_required": false,
+      "proposed_change": "Add trends plan --execution-only and write one exact acquisition_execution_plan artifact with pre-write cardinality validation.",
+      "requirement": "explicit execution-only plan",
+      "schema_impact": "Add execution_batch_id, matched_pair_id, execution_selection_rank, and an execution-plan schema/version.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends.py:plan_requests"
+      ],
+      "test_impact": "Add exact artifact-set, exact row-count, stable schema, and no exploratory-row leakage tests."
+    },
+    {
+      "current_status": "conflicting with current behavior",
+      "new_command_required": false,
+      "proposed_change": "Add --planned-repeats 2 and deterministically expand every logical request after computing its repeat-invariant request_id.",
+      "requirement": "exactly two planned repeats per logical request",
+      "schema_impact": "Use planned_repeat_id values repeat_1 and repeat_2 on every execution row; no new identity field is required.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends.py:plan_requests",
+        "src/geodemand/trends.py:_repeat_filenames"
+      ],
+      "test_impact": "Add zero/one/two/many repeat option tests and exact per-request repeat-count validation."
+    },
+    {
+      "current_status": "already supported",
+      "new_command_required": false,
+      "proposed_change": "Preserve the current hash contract and add an invariant test across repeat expansion.",
+      "requirement": "stable request_id across repeats",
+      "schema_impact": "None.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends.py:_plan_row",
+        "tests/test_trends.py:test_pilot_mapping_and_plan_are_deterministic"
+      ],
+      "test_impact": "Generalize the existing Florida-only assertion to all execution-plan logical requests."
+    },
+    {
+      "current_status": "partially supported",
+      "new_command_required": false,
+      "proposed_change": "Generate unique planned_repeat_id and filenames for every expanded row and reject duplicate request/repeat keys.",
+      "requirement": "unique repeat_id per planned export",
+      "schema_impact": "None beyond making planned_repeat_id mandatory in the execution-plan schema.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends.py:_repeat_filenames",
+        "src/geodemand/trends.py:PLAN_REPEAT_FIELDS",
+        "src/geodemand/trends_browser.py:_request_key"
+      ],
+      "test_impact": "Add duplicate planned-repeat, filename-collision, and CSV/Parquet equivalence tests."
+    },
+    {
+      "current_status": "already supported",
+      "new_command_required": false,
+      "proposed_change": "Document and retain the current attempt contract; do not convert retries into repeats.",
+      "requirement": "export attempt identity separate from repeat identity",
+      "schema_impact": "None.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends_browser.py:_new_attempt",
+        "src/geodemand/trends_browser.py:export_retry",
+        "src/geodemand/trends_browser.py:_latest_attempts"
+      ],
+      "test_impact": "Retain retry-history tests and add an explicit assertion that request_id and repeat_id remain unchanged."
+    },
+    {
+      "current_status": "partially supported",
+      "new_command_required": false,
+      "proposed_change": "Restrict the execution plan to batch_1_flood_awareness and validate its exact ordered panel.",
+      "requirement": "fixed concept panel",
+      "schema_impact": "None; concept_ids and batch_id already exist.",
+      "supporting_source_files_functions": [
+        "config/trends_terms.yaml:standardized_batches",
+        "src/geodemand/trends.py:load_terms_config",
+        "src/geodemand/trends.py:_plan_row"
+      ],
+      "test_impact": "Add fixed five-concept order and disallowed-extra-batch tests."
+    },
+    {
+      "current_status": "partially supported",
+      "new_command_required": false,
+      "proposed_change": "Extend validate-imports with strict full plan/repeat, raw-file, panel, role-pair, and execution-batch completeness checks.",
+      "requirement": "acquisition completeness validation",
+      "schema_impact": "Add a deterministic completeness-report schema; observations schema need not change.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends_browser.py:export_validate",
+        "src/geodemand/trends.py:validate_imports"
+      ],
+      "test_impact": "Add missing/unexpected repeat, raw file, sidecar, concept, role, pair, and batch tests."
+    },
+    {
+      "current_status": "missing",
+      "new_command_required": false,
+      "proposed_change": "Group source CSV hashes during strict validation and emit non-fatal duplicate-hash review records.",
+      "requirement": "duplicate-file hash reporting without automatic rejection",
+      "schema_impact": "Add duplicate_raw_hashes.csv or an equivalent deterministic report section.",
+      "supporting_source_files_functions": [
+        "src/geodemand/trends_browser.py:_completed_fields",
+        "src/geodemand/trends_browser.py:_write_browser_sidecar",
+        "src/geodemand/trends.py:import_csv_export"
+      ],
+      "test_impact": "Add same-hash/different-plan reporting, deterministic ordering, and non-fatal validity tests."
+    },
+    {
+      "current_status": "missing",
+      "new_command_required": false,
+      "proposed_change": "Add import-csv --import-manifest and a cumulative deterministic import ledger while preserving single-file mode.",
+      "requirement": "batch import or deterministic import manifest",
+      "schema_impact": "Add import-manifest and import-ledger schemas; observations schema is unchanged.",
+      "supporting_source_files_functions": [
+        "src/geodemand/cli.py:trends_import_csv_command",
+        "src/geodemand/trends.py:import_csv_export"
+      ],
+      "test_impact": "Add 40/80-entry manifest, idempotence, partial failure, ordering, duplicate source, and hash tests."
+    },
+    {
+      "current_status": "partially supported",
+      "new_command_required": false,
+      "proposed_change": "Require strict acquisition completeness before downstream metrics and use the exact repeat-specific execution plan as the integration plan.",
+      "requirement": "zero unmatched integrated rows",
+      "schema_impact": "No integrated-schema change; execution plan adds complete repeat-specific lineage.",
+      "supporting_source_files_functions": [
+        "src/geodemand/analysis.py:build_analysis_dataset",
+        "src/geodemand/analysis.py:_join_summary",
+        "src/geodemand/trends.py:validate_imports"
+      ],
+      "test_impact": "Add acquisition-to-integration test asserting zero unmatched and orphan records for the exact execution plan."
+    }
+  ]
+}

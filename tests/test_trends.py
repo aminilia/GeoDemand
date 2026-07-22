@@ -287,7 +287,17 @@ def test_standardized_batches_and_weather_context_contract(tmp_path: Path) -> No
             "fema_assistance",
         ],
     ]
-    assert [row["concepts"] for row in terms["standardized_batches"]] == expected
+    batches = terms["standardized_batches"]
+    assert [row["concepts"] for row in batches if not row.get("pilot_only", False)] == expected
+    product = next(row for row in batches if row["batch_id"] == "batch_6_specific_products")
+    assert product["pilot_only"] is True
+    assert product["concepts"] == [
+        "context_weather",
+        "sandbags",
+        "sump_pump",
+        "wet_vacuum",
+        "dehumidifier",
+    ]
     assert len(terms["broad_specific_pairs"]) == 14
     weather = next(row for row in terms["concepts"] if row["concept_id"] == "context_weather")
     assert weather["terminology_tier"] == "context"

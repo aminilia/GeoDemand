@@ -1,0 +1,60 @@
+{
+  "fallbacks": [],
+  "nested_subset_status": true,
+  "requested_episode_limit": 10,
+  "required_state_actual_counts": {
+    "FL": 1
+  },
+  "required_state_continuity_status": "passed",
+  "required_state_minimum_counts": {
+    "FL": 1
+  },
+  "required_states": [
+    "FL"
+  ],
+  "selected_by_region": {
+    "midwest": 2,
+    "northeast": 2,
+    "south": 3,
+    "west": 3
+  },
+  "selected_by_state": {
+    "CT": 1,
+    "FL": 1,
+    "KS": 1,
+    "ME": 1,
+    "MS": 1,
+    "NV": 1,
+    "OH": 1,
+    "TN": 1,
+    "WA": 1,
+    "WY": 1
+  },
+  "selected_by_year": {
+    "2022": 3,
+    "2023": 3,
+    "2024": 2,
+    "2025": 2
+  },
+  "selected_episode_ids": [
+    "7c98d6b702ff2407abb66776b817d9dd2396f8d7ca4b73e7d7b3e2106c7c1cf0",
+    "c811f5a7a428ef05a76332a251ad22012716ccef8880582ed303c4765656835a",
+    "b7015e387125152d33512d1ece343300800b2169c5199fbc18d9f07f0ca50f9f",
+    "49e363811b3d6f63952b8e60219990550548ee42e5854af3c980fcab9f31450e",
+    "45034bbd3cd451acc5c3a12046348588ad026a7ad1646862b12331db3db68394",
+    "a0cd69165cb73cd416136b722be3038e738d6bd0bd68e5d14421c4514701a2b3",
+    "7b036a07d1c28215e94073743eb9b98afce66f35162eb330c594bf1de210da98",
+    "4045f2aae680e93fe10971a7778b6dde1ba739e1f8d16045f0b22de7c31e9633",
+    "2b8c3b13ba6ba6894d71787047199464879cd0f152296a20978fba0705db15b0",
+    "125f0b1f4cc03ece6aad49f857aac7efc1bb36bdc9be4b5340ef0151eeeb2062"
+  ],
+  "selection_algorithm": "required-mini-first balanced greedy by year, state, region, source rank, episode_id",
+  "selection_reason_counts": {
+    "legacy_mini_pilot": 5,
+    "underrepresented_year": 5
+  },
+  "selection_version": "1.0C-v2",
+  "source_episode_count": 40,
+  "ten_episode_count": 10,
+  "twenty_episode_count": 20
+}

@@ -3,6 +3,20 @@
 GeoDemand-FF separates source code, local research data, generated artifacts, and raw
 Google Trends exports. The repository should remain source-only.
 
+## Milestone 1.0C-2 planning-only reproduction
+
+Generate a cohort with `trends pilot-sample --episode-limit 10 --selection-version
+1.0C-v1`, then run `trends map-geographies`. Generate the authoritative pilot plan with
+`trends plan`, the existing control artifact, three repeatable `--batch-id` options,
+`--planned-repeats 2`, `--execution-batch-id 1.0C-pilot-v1`,
+`--controls-per-episode 1`, and `--execution-only`. For the 20-episode full-core plan,
+select 20 episodes and request only `batch_1_flood_awareness` and
+`batch_5_specific_recovery`.
+
+Repeat these commands in separate empty roots to verify byte-identical selection, plan, and
+summary files. They do not open a browser, fetch Trends data, import CSVs, or run
+statistical validation.
+
 ## Environment
 
 ```bash

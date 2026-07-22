@@ -663,13 +663,19 @@ def trends_pilot_sample_command(
     catalog_dir: Annotated[Path, typer.Option("--catalog-dir", exists=True, file_okay=False)],
     output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
     rules_path: Annotated[Path, typer.Option("--rules", exists=True, dir_okay=False)],
+    episode_limit: Annotated[int, typer.Option("--episode-limit")] = 40,
+    selection_version: Annotated[str, typer.Option("--selection-version")] = "1.0C-v1",
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
 ) -> None:
-    """Select the deterministic 40-episode state-level feasibility pilot."""
+    """Select the deterministic 40-episode master or nested 10/20 execution cohort."""
     if dry_run:
         _run_trends(lambda: inspect_trends(catalog_dir, output_root))
         return
-    _run_trends(lambda: trends_pilot_sample(catalog_dir, output_root, rules_path))
+    _run_trends(
+        lambda: trends_pilot_sample(
+            catalog_dir, output_root, rules_path, episode_limit, selection_version
+        )
+    )
 
 
 @trends_app.command("map-geographies")
@@ -694,6 +700,11 @@ def trends_plan_command(
     controls_path: Annotated[
         Path | None, typer.Option("--controls", exists=True, dir_okay=False)
     ] = None,
+    batch_ids: Annotated[list[str] | None, typer.Option("--batch-id")] = None,
+    planned_repeats: Annotated[int, typer.Option("--planned-repeats")] = 1,
+    execution_batch_id: Annotated[str | None, typer.Option("--execution-batch-id")] = None,
+    execution_only: Annotated[bool, typer.Option("--execution-only")] = False,
+    controls_per_episode: Annotated[int, typer.Option("--controls-per-episode")] = 1,
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
 ) -> None:
     """Generate bounded request batches and manual Explore links without fetching data."""
@@ -711,6 +722,11 @@ def trends_plan_command(
             include_behavioral_state,
             include_national,
             controls_path,
+            batch_ids or (),
+            planned_repeats,
+            execution_batch_id,
+            execution_only,
+            controls_per_episode,
         )
     )
 

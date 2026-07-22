@@ -16,6 +16,10 @@ standardized_batches:
   - batch_id: batch_5_specific_recovery
     display_label: Specific recovery
     concepts: [context_weather, flood_cleanup, water_removal, flood_insurance, fema_assistance]
+  - batch_id: batch_6_specific_products
+    display_label: Specific flood-response products
+    pilot_only: true
+    concepts: [context_weather, sandbags, sump_pump, wet_vacuum, dehumidifier]
 
 national_comparison_batches:
   - batch_id: national_1_retailer_context

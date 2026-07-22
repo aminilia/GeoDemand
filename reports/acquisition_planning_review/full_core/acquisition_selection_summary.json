@@ -1,0 +1,80 @@
+{
+  "fallbacks": [],
+  "nested_subset_status": true,
+  "requested_episode_limit": 20,
+  "required_state_actual_counts": {
+    "FL": 2
+  },
+  "required_state_continuity_status": "passed",
+  "required_state_minimum_counts": {
+    "FL": 2
+  },
+  "required_states": [
+    "FL"
+  ],
+  "selected_by_region": {
+    "midwest": 5,
+    "northeast": 5,
+    "south": 5,
+    "west": 5
+  },
+  "selected_by_state": {
+    "AZ": 1,
+    "CT": 1,
+    "FL": 2,
+    "IL": 1,
+    "KS": 1,
+    "MA": 1,
+    "MD": 1,
+    "ME": 1,
+    "MN": 1,
+    "MO": 1,
+    "MS": 1,
+    "NV": 1,
+    "OH": 1,
+    "PA": 1,
+    "TN": 1,
+    "UT": 1,
+    "VT": 1,
+    "WA": 1,
+    "WY": 1
+  },
+  "selected_by_year": {
+    "2022": 5,
+    "2023": 5,
+    "2024": 5,
+    "2025": 5
+  },
+  "selected_episode_ids": [
+    "7c98d6b702ff2407abb66776b817d9dd2396f8d7ca4b73e7d7b3e2106c7c1cf0",
+    "c811f5a7a428ef05a76332a251ad22012716ccef8880582ed303c4765656835a",
+    "b7015e387125152d33512d1ece343300800b2169c5199fbc18d9f07f0ca50f9f",
+    "8239bc1a6b7b05d374eb0529e5762461d626589c72c3c7d88c8cdcd596292825",
+    "113e0eaa9d93c9badfe7aed378cd2096330a5a8b03d8b104298e70d0650b5e34",
+    "49e363811b3d6f63952b8e60219990550548ee42e5854af3c980fcab9f31450e",
+    "45034bbd3cd451acc5c3a12046348588ad026a7ad1646862b12331db3db68394",
+    "8482e3d1aaf5c39dd40a8d874828e76a150bcd896754a5bee9892ef8e731538b",
+    "952ef4a1feeb15684ed85733928953cb3184d5f3386a50c107f24288ef013efa",
+    "a0cd69165cb73cd416136b722be3038e738d6bd0bd68e5d14421c4514701a2b3",
+    "7b036a07d1c28215e94073743eb9b98afce66f35162eb330c594bf1de210da98",
+    "4045f2aae680e93fe10971a7778b6dde1ba739e1f8d16045f0b22de7c31e9633",
+    "8b248538cdf3c05d2ee7f4cc12d256081c2cf39aa2f3126fc97425f8d49512b8",
+    "9907594679817acaa51e7f28d9e64d3fcaeb00c75765a89201339dbd7bba3fe2",
+    "27c1d1e445a99d212a6602d1eee0b620e32a0825ee6bec7d5d529355c40e7c45",
+    "2b8c3b13ba6ba6894d71787047199464879cd0f152296a20978fba0705db15b0",
+    "125f0b1f4cc03ece6aad49f857aac7efc1bb36bdc9be4b5340ef0151eeeb2062",
+    "171578410e9227aab608314ab5919ae5ba052632077aaca97638028d18d406cd",
+    "477dcc3b9797b76b91518395ab936452d08ae3e6f8b628be7cb0adccaaacb2f6",
+    "8451ff17530717a8cbaa87cb954bb55f9a0cde1152b6bcb774aae62d0dba050d"
+  ],
+  "selection_algorithm": "required-mini-first balanced greedy by year, state, region, source rank, episode_id",
+  "selection_reason_counts": {
+    "legacy_mini_pilot": 5,
+    "required_state_continuity": 1,
+    "underrepresented_year": 14
+  },
+  "selection_version": "1.0C-v2",
+  "source_episode_count": 40,
+  "ten_episode_count": 10,
+  "twenty_episode_count": 20
+}

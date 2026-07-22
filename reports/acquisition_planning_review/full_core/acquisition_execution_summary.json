@@ -1,0 +1,25 @@
+{
+  "control_request_count": 40,
+  "controls_per_episode": 1,
+  "duplicate_grain_count": 0,
+  "episode_count": 20,
+  "execution_batch_id": "1.0C-full-core-v2",
+  "lineage_conflict_count": 0,
+  "logical_request_count": 80,
+  "matched_pair_count": 20,
+  "panel_count": 2,
+  "panel_ids": [
+    "batch_1_flood_awareness",
+    "batch_5_specific_recovery"
+  ],
+  "plan_row_count": 160,
+  "planned_repeat_count": 2,
+  "planned_repeat_ids": [
+    "repeat_1",
+    "repeat_2"
+  ],
+  "planned_repeat_row_count": 160,
+  "request_hash_invariant_status": "passed",
+  "selection_version": "1.0C-v2",
+  "treated_request_count": 40
+}

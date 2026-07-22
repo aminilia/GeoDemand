@@ -8,6 +8,20 @@ The project is intentionally scoped to reported flood footprints and Google Tren
 event-study analysis. It does not claim confirmed events, causal attribution, or
 predictive demand forecasting.
 
+## Milestone 1.0C-2 acquisition planning
+
+Milestone 1.0C-2 adds deterministic acquisition planning without performing acquisition.
+`trends pilot-sample --episode-limit 10|20` creates nested execution cohorts. The
+10-episode pilot uses flood-awareness, specific-recovery, and pilot-only specific-products
+panels; the 20-episode full-core plan uses only the first two. Both use one existing rank-1
+control and two intentional repeats per logical request. Retailer-brand panels remain
+exploratory and are excluded.
+
+The 10-episode plan contains 60 logical requests and 120 request/repeat rows. The
+20-episode core plan contains 80 logical requests and 160 rows. `request_id` identifies a
+logical request, `planned_repeat_id` an intentional repeat, and `export_attempt_id` a future
+browser attempt. No browser acquisition or statistical inference is part of 1.0C-2.
+
 ## Active Pipeline
 
 ```mermaid

@@ -1,0 +1,41 @@
+selection_version,selection_set,selection_step,execution_selection_rank,episode_id,event_year,event_start_date,event_end_date,treated_geography,treated_state,selection_reason,selection_reason_detail,selection_fallback_reason,included_in_10_episode_set,included_in_20_episode_set,source_pilot_rank
+1.0C-v2,10_episode,1,1,7c98d6b702ff2407abb66776b817d9dd2396f8d7ca4b73e7d7b3e2106c7c1cf0,2022,2022-11-23,2022-11-23,US-WA,WA,legacy_mini_pilot,included by the established five-episode mini-pilot contract,,True,True,1
+1.0C-v2,10_episode,2,2,c811f5a7a428ef05a76332a251ad22012716ccef8880582ed303c4765656835a,2022,2022-05-17,2022-05-18,US-KS,KS,legacy_mini_pilot,included by the established five-episode mini-pilot contract,,True,True,2
+1.0C-v2,10_episode,9,3,b7015e387125152d33512d1ece343300800b2169c5199fbc18d9f07f0ca50f9f,2022,2022-07-12,2022-07-13,US-TN,TN,underrepresented_year,year=2022 count_before=2,,True,True,3
+1.0C-v2,master_40,,,d2e7e26177debaace403f0c153a098c310901d1e9c9e052e3c61548bd2115841,2022,2022-12-04,2022-12-04,US-CT,CT,not_selected,not in requested cohort,,False,False,4
+1.0C-v2,20_episode,17,4,8239bc1a6b7b05d374eb0529e5762461d626589c72c3c7d88c8cdcd596292825,2022,2022-10-13,2022-10-14,US-MA,MA,underrepresented_year,year=2022 count_before=4,,False,True,5
+1.0C-v2,20_episode,9,5,113e0eaa9d93c9badfe7aed378cd2096330a5a8b03d8b104298e70d0650b5e34,2022,2022-06-07,2022-06-07,US-MN,MN,underrepresented_year,year=2022 count_before=2,,False,True,6
+1.0C-v2,master_40,,,c69d71aa9c81a895cebf02ecbb11134d1dbeda3b4a61d7ffacf22f06cffed480,2022,2022-01-11,2022-01-11,US-KY,KY,not_selected,not in requested cohort,,False,False,7
+1.0C-v2,master_40,,,03ddc991f0a2d03734f68f76246e93765372b0ca78bc247be655ef11e46aae9c,2022,2022-03-28,2022-03-28,US-CA,CA,not_selected,not in requested cohort,,False,False,8
+1.0C-v2,master_40,,,afb24f88c982285a52d57e8c38388784d9011efc4ddf76ebb0c64b362f082255,2022,2022-08-12,2022-08-15,US-TX,TX,not_selected,not in requested cohort,,False,False,9
+1.0C-v2,master_40,,,534b03d2256bc04be1834c4b46b02040bf9a6b14b924fca1590d3b716e0c1ca7,2022,2022-04-26,2022-04-26,US-ND,ND,not_selected,not in requested cohort,,False,False,10
+1.0C-v2,10_episode,10,4,49e363811b3d6f63952b8e60219990550548ee42e5854af3c980fcab9f31450e,2023,2023-03-15,2023-03-17,US-NV,NV,underrepresented_year,year=2023 count_before=2,,True,True,11
+1.0C-v2,10_episode,6,5,45034bbd3cd451acc5c3a12046348588ad026a7ad1646862b12331db3db68394,2023,2023-12-18,2023-12-20,US-ME,ME,underrepresented_year,year=2023 count_before=1,,True,True,12
+1.0C-v2,20_episode,18,8,8482e3d1aaf5c39dd40a8d874828e76a150bcd896754a5bee9892ef8e731538b,2023,2023-09-12,2023-09-13,US-MD,MD,underrepresented_year,year=2023 count_before=4,,False,True,13
+1.0C-v2,20_episode,14,9,952ef4a1feeb15684ed85733928953cb3184d5f3386a50c107f24288ef013efa,2023,2023-07-02,2023-07-02,US-IL,IL,underrepresented_year,year=2023 count_before=3,,False,True,14
+1.0C-v2,master_40,,,fd193ff1e2bb8ebbfdc79e2cfaeac085ee88c2b725476b5ceb1337e3650f35db,2023,2023-08-23,2023-08-25,US-UT,UT,not_selected,not in requested cohort,,False,False,15
+1.0C-v2,10_episode,3,6,a0cd69165cb73cd416136b722be3038e738d6bd0bd68e5d14421c4514701a2b3,2023,2023-04-10,2023-04-10,US-FL,FL,legacy_mini_pilot,included by the established five-episode mini-pilot contract,,True,True,16
+1.0C-v2,master_40,,,b151dfb19a93dee368a390222094131a83895827300d9684bd34df15f88d1e83,2023,2023-02-27,2023-02-27,US-MI,MI,not_selected,not in requested cohort,,False,False,17
+1.0C-v2,master_40,,,d7b528c8c5fac6a588ff21c372bb6a8046e360ffaf3dd519939527b9149d9e7f,2023,2023-10-08,2023-10-08,US-NY,NY,not_selected,not in requested cohort,,False,False,18
+1.0C-v2,master_40,,,f3cd8859615f2353c657483d7fc47e4930a438ba2eff56bf2c5a5449dec31f0b,2023,2023-01-09,2023-01-10,US-MS,MS,not_selected,not in requested cohort,,False,False,19
+1.0C-v2,master_40,,,c4bf0310f47f3bddbb2b60ff754403ad3e43b0da17c939c7af45074afe8db526,2023,2023-07-01,2023-07-01,US-VT,VT,not_selected,not in requested cohort,,False,False,20
+1.0C-v2,10_episode,4,7,7b036a07d1c28215e94073743eb9b98afce66f35162eb330c594bf1de210da98,2024,2024-11-21,2024-11-22,US-WY,WY,legacy_mini_pilot,included by the established five-episode mini-pilot contract,,True,True,21
+1.0C-v2,master_40,,,93cf7c3db6e389c3f33e4bf7e646eb1e5c6c54d7f71581bf6f126a5bbdf56bd3,2024,2024-08-30,2024-08-30,US-LA,LA,not_selected,not in requested cohort,,False,False,22
+1.0C-v2,10_episode,7,8,4045f2aae680e93fe10971a7778b6dde1ba739e1f8d16045f0b22de7c31e9633,2024,2024-01-03,2024-01-05,US-CT,CT,underrepresented_year,year=2024 count_before=1,,True,True,23
+1.0C-v2,20_episode,11,13,8b248538cdf3c05d2ee7f4cc12d256081c2cf39aa2f3126fc97425f8d49512b8,2024,2024-05-02,2024-05-02,US-MO,MO,underrepresented_year,year=2024 count_before=2,,False,True,24
+1.0C-v2,master_40,,,8bb64ad7dfc7454172e4db5bf22d7a8029bcfdbfd6a331fe5e6d241cc37659e3,2024,2024-07-01,2024-07-01,US-TX,TX,not_selected,not in requested cohort,,False,False,25
+1.0C-v2,20_episode,15,14,9907594679817acaa51e7f28d9e64d3fcaeb00c75765a89201339dbd7bba3fe2,2024,2024-01-22,2024-01-22,US-AZ,AZ,underrepresented_year,year=2024 count_before=3,,False,True,26
+1.0C-v2,master_40,,,b51a6f03fb2d77bc8613b5ffc1d405002407df13c8bf3ee2b3ea2e47f252509f,2024,2024-04-02,2024-04-02,US-IL,IL,not_selected,not in requested cohort,,False,False,27
+1.0C-v2,master_40,,,b2438df4a0a2830c2c4a51bc9ae496816d437a3648db10b892773a7c128404cf,2024,2024-09-15,2024-09-17,US-NY,NY,not_selected,not in requested cohort,,False,False,28
+1.0C-v2,20_episode,19,15,27c1d1e445a99d212a6602d1eee0b620e32a0825ee6bec7d5d529355c40e7c45,2024,2024-06-23,2024-06-23,US-UT,UT,underrepresented_year,year=2024 count_before=4,,False,True,29
+1.0C-v2,master_40,,,68e5dd541e20f053d9ed6dc4d232c739a9c2022ec31e5d6f0b159376522f63ca,2024,2024-09-26,2024-09-26,US-GA,GA,not_selected,not in requested cohort,,False,False,30
+1.0C-v2,10_episode,5,9,2b8c3b13ba6ba6894d71787047199464879cd0f152296a20978fba0705db15b0,2025,2025-04-05,2025-04-07,US-MS,MS,legacy_mini_pilot,included by the established five-episode mini-pilot contract,,True,True,31
+1.0C-v2,10_episode,8,10,125f0b1f4cc03ece6aad49f857aac7efc1bb36bdc9be4b5340ef0151eeeb2062,2025,2025-06-28,2025-06-28,US-OH,OH,underrepresented_year,year=2025 count_before=1,,True,True,32
+1.0C-v2,master_40,,,f23c7a269df9813f511cc6669ab5f4b88963f2b343dbc6b8186ff4b94ae34575,2025,2025-12-18,2025-12-20,US-OR,OR,not_selected,not in requested cohort,,False,False,33
+1.0C-v2,20_episode,12,18,171578410e9227aab608314ab5919ae5ba052632077aaca97638028d18d406cd,2025,2025-09-07,2025-09-07,US-PA,PA,underrepresented_year,year=2025 count_before=2,,False,True,34
+1.0C-v2,20_episode,6,19,477dcc3b9797b76b91518395ab936452d08ae3e6f8b628be7cb0adccaaacb2f6,2025,2025-08-23,2025-08-26,US-FL,FL,required_state_continuity,selected to reach required FL continuity count 2,,False,True,35
+1.0C-v2,20_episode,16,20,8451ff17530717a8cbaa87cb954bb55f9a0cde1152b6bcb774aae62d0dba050d,2025,2025-05-17,2025-05-18,US-VT,VT,underrepresented_year,year=2025 count_before=3,,False,True,36
+1.0C-v2,master_40,,,d0254e7a82fff8396f63dc152b7ca07fa7358fa8b5ae0bd413246087efbd8c05,2025,2025-12-22,2025-12-22,US-CA,CA,not_selected,not in requested cohort,,False,False,37
+1.0C-v2,master_40,,,b28e501f877d4eedbeddcba42c8cb5742bc1ab14da7c9d002faf04f762aadefc,2025,2025-09-08,2025-09-09,US-KS,KS,not_selected,not in requested cohort,,False,False,38
+1.0C-v2,master_40,,,70237fea5006081af773f70786b89b08d1b7773a01428d48d2ee3a12d7b136ae,2025,2025-06-30,2025-06-30,US-NM,NM,not_selected,not in requested cohort,,False,False,39
+1.0C-v2,master_40,,,58bcb16e3da7e778fa6926bde526deaf3f6d34d101b4830d1ea56858b9f9f5a0,2025,2025-03-06,2025-03-06,US-NY,NY,not_selected,not in requested cohort,,False,False,40

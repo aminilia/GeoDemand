@@ -4,6 +4,20 @@ GeoDemand-FF is a reproducible geospatial event-study pipeline for constructing
 candidate U.S. flood episodes from reported flood footprints and evaluating
 state-level search-interest responses before and after those episodes.
 
+## Milestone 1.0C acquisition planning
+
+The deterministic 40-episode master pilot is the source for a balanced 20-episode cohort
+and a strictly nested 10-episode cohort. Selection starts with the established five-episode
+mini-pilot, then greedily fills the least represented year, region, and state, using source
+pilot rank and episode ID as stable tie-breakers. Deterministic CSV, Parquet, and JSON
+artifacts record ranks, membership, reasons, and lineage.
+
+Execution plans pair each treated state with exactly its existing rank-1 `control_state`.
+An episode-level `matched_pair_id` is shared across roles, panels, and repeats.
+`execution_batch_id`, `selection_version`, and selection rank are lineage only and do not
+enter the logical request hash. The product panel is pilot-only; retailer-brand batches
+remain outside primary execution plans.
+
 ## Active Pipeline
 
 ```mermaid

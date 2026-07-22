@@ -25,7 +25,8 @@ uv pip install -e ".[trends-browser]"
 uv run python -m playwright install chromium
 
 $ROOT = "C:\Work\Data\GeoDemand\trends"
-$PLAN = "$ROOT\planning\trends_request_plan.csv"
+# Supply either an ordinary plan or an execution-only acquisition plan.
+$PLAN = "$ROOT\planning\acquisition_execution_plan.csv"
 
 uv run geodemand trends browser-selfcheck `
   --plan $PLAN `
