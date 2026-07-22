@@ -143,18 +143,23 @@ relative indices, only Florida was exported twice, standardized/robust responses
 sparse, and matched comparison observations are absent. Complete lineage improves the
 data contract but does not increase statistical independence.
 
-## 14. Recommended scope for the first `validate-signal` implementation
+## 14. Implemented descriptive scope
 
-The first implementation may cover contract validation, duplicate-grain failure,
-deterministic descriptive summaries, explicit exclusion accounting, and paired Florida
-repeat diagnostics with clear nesting labels. Bootstrap, permutation tests, ICC, and
-population claims should remain disabled until their independent-cluster and design
-requirements are met.
+`analysis describe-signal` now implements contract validation, duplicate-grain failure,
+22 explicitly selected primary descriptive metrics, request/concept aggregation, grouped
+summaries, explicit exclusion accounting, paired Florida diagnostics, and deterministic
+non-inferential concept-rank agreement. Principal summaries use the repeat mean for each
+`request_id + concept_id`, preventing requests with more exports from receiving extra
+weight; raw repeat and unit counts remain explicit. Both paired and rank diagnostics require
+exactly two repeats, while larger repeat sets are reported as multi-repeat exclusions. Its
+Arrow schemas and metric configuration are
+versioned in `analysis_descriptive.py`. Bootstrap, permutation tests, ICC, p-values,
+population confidence intervals, and population claims remain disabled.
 
 ## 15. Implementation recommendation
 
-**Conditional go for a narrow descriptive/repeat-validation command; no-go for formal
-population inference on current Batch 1.** At least 20 independent request clusters per
+**Go for the implemented narrow descriptive/repeat command; no-go for formal population
+inference on current Batch 1.** At least 20 independent request clusters per
 estimand, explicit matched treated/comparison requests, and pre-specified negative controls
 are required before inferential functionality. Request-plan and metric lineage are already
 complete and are not an outstanding upstream addition.

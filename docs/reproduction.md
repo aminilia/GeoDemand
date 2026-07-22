@@ -47,6 +47,7 @@ geodemand trends concurrence --observations PATH --plan PATH --terms config/tren
 geodemand trends control-adjusted-metrics --phase-metrics PATH --controls PATH --output-root PATH
 geodemand trends attribute-peaks --phase-metrics PATH --concurrence PATH --rules config/trends_rules.yaml --output-root PATH
 geodemand analysis build-dataset --request-plan PATH --episode-metrics PATH --repeat-metrics PATH --phase-metrics PATH --output-root PATH
+geodemand analysis describe-signal --dataset PATH --output-root PATH
 ```
 
 The analysis build follows both `trends metrics` and `trends phase-metrics` and writes
@@ -58,6 +59,18 @@ individually for each applicable repeat, including repeats governed by a request
 fallback plan. Empty upstream phase and integrated outputs preserve the same explicit
 Arrow schemas as populated runs. The table is prepared for a later statistical-validation
 milestone but performs no inferential analysis itself.
+
+Run `analysis describe-signal` after `analysis build-dataset`. The input must be `.parquet`
+or `.pq` with the analytical grain `request_id + repeat_id + concept_id` and the required
+episode, geography, semantic-family, and request-role lineage. The command writes ten files:
+seven typed Parquet tables, `descriptive_exclusions.csv`, `descriptive_summary.json`, and
+`provenance.json`. Repeating a run with the same input and software produces byte-identical
+outputs. Principal summaries first average finite repeats within `request_id + concept_id`,
+then give each request/concept unit equal weight. Their schemas separately report raw
+repeat rows, valid repeat values, request/concept units, and independent requests. Paired
+and rank diagnostics require exactly two exports; groups with more than two are reported as
+multi-repeat exclusions. The summaries are descriptive, and no
+bootstrap, permutation, ICC, p-value, confidence-interval, or model output is produced.
 
 ## Synthetic Demonstration
 

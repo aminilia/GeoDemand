@@ -87,6 +87,7 @@ geodemand trends phase-metrics --observations PATH --plan PATH --terms config/tr
 geodemand trends concurrence --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
 geodemand trends attribute-peaks --phase-metrics PATH --concurrence PATH --rules config/trends_rules.yaml --output-root PATH
 geodemand analysis build-dataset --request-plan PATH --episode-metrics PATH --repeat-metrics PATH --phase-metrics PATH --output-root PATH
+geodemand analysis describe-signal --dataset PATH --output-root PATH
 ```
 
 The Trends workflow preserves immutable raw CSVs, request sidecars, repeat lineage,
@@ -106,6 +107,20 @@ statistical-validation result. Missing plan coverage is reported once per absent
 `request_id + repeat_id + concept_id`; request-level fallback plans apply every planned
 concept to every repeat observed for that request. Phase and integrated Parquet artifacts
 retain explicit typed schemas even when they contain zero rows.
+
+`analysis describe-signal` reads the integrated Parquet dataset and writes deterministic
+descriptive metric, request/concept, geography/concept, episode/concept, semantic-family,
+paired-repeat, rank-agreement, exclusion, summary, and provenance artifacts only under its
+selected output root. Its 22 primary metrics and 36 repeat-diagnostic metrics are explicitly
+versioned in `analysis_descriptive.py`. Repeat rows are aggregated within request and
+concept before dataset, geography/concept, episode/concept, and semantic-family summaries
+are calculated. Each request/concept repeat mean receives one unit of weight regardless of
+its number of exports. Raw repeat rows, valid repeat values, request/concept units, and
+independent requests remain explicit counts; repeat rows are not treated as independent
+population samples. Current Batch 1 has five
+independent requests, and only the Florida request has two exports, so its five concept
+pairs support exploratory diagnostics only. The command calculates no p-values, confidence
+intervals, bootstrap or permutation results, ICC, or predictive models.
 
 ## Synthetic Demo
 

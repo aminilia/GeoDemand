@@ -317,11 +317,20 @@
         "repeat_metrics_join_status": 0
       }
     },
+    "lineage_complete": true,
+    "matched_controls_available": false,
     "unmatched_by_source_and_direction": [],
     "unmatched_record_count": 0
   },
   "recommendations": {
-    "current_batch_inference_status": "no_go_formal_inference_exploratory_only",
+    "cluster_count_threshold_met": false,
+    "current_batch_inference_status": "no_go_formal_population_inference_5_independent_requests_below_20",
+    "design_requirements": {
+      "independent_episode_count": 5,
+      "independent_geography_count": 5,
+      "lineage_complete": true,
+      "matched_controls_available": false
+    },
     "deterministic_seed": 20260721,
     "eligible_reliability_groups": [
       {
@@ -522,6 +531,7 @@
       "bootstrap": 10000,
       "permutation": 10000
     },
+    "metrics_meeting_independent_request_threshold_count": 0,
     "minimum_sample_thresholds": {
       "bootstrap_independent_requests_per_estimand": 20,
       "icc_independent_request_concept_groups": 20,
@@ -530,7 +540,7 @@
       "repeat_agreement_repeats_per_request_concept": 2,
       "warn_sparse_independent_units_below": 30
     },
-    "overall_implementation_recommendation": "conditional_go_descriptive_repeat_only_no_go_formal_inference",
+    "overall_implementation_recommendation": "conditional_go_descriptive_only_formal_inference_requires_complete_design",
     "recommended_statistical_tests": [
       {
         "general_repeat_reliability": "not_established",
@@ -541,7 +551,7 @@
           "within_group_standard_deviation",
           "rank_consistency_across_concepts"
         ],
-        "status": "available_for_one_repeated_request_exploratory_only"
+        "status": "available_for_1_repeated_requests_exploratory_only_5_nested_request_concept_groups"
       },
       {
         "name": "cluster_bootstrap_request_level_estimand",
@@ -552,6 +562,7 @@
         "status": "not_available_current_batch"
       }
     ],
+    "repeat_diagnostic_status": "available_for_1_repeated_requests_exploratory_only_5_nested_request_concept_groups",
     "required_upstream_additions": [
       "at least 20 independent request clusters per estimand (currently 5)",
       "explicit matched treated/comparison request pairs",

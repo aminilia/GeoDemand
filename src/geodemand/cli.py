@@ -10,6 +10,7 @@ import pyarrow.parquet as pq
 import typer
 
 from geodemand.analysis import AnalysisError, build_analysis_dataset
+from geodemand.analysis_descriptive import DescriptiveAnalysisError, describe_signal
 from geodemand.boundaries import BoundaryError, inspect_boundaries, prepare_boundaries
 from geodemand.catalog import (
     CatalogError,
@@ -917,6 +918,21 @@ def analysis_build_dataset_command(
             output_root=output_root,
         )
     except (AnalysisError, TrendsError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@analysis_app.command("describe-signal")
+def analysis_describe_signal_command(
+    dataset_path: Annotated[
+        Path, typer.Option("--dataset", exists=True, file_okay=True, dir_okay=False)
+    ],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Generate deterministic descriptive and paired-repeat signal diagnostics."""
+    try:
+        artifacts = describe_signal(dataset_path=dataset_path, output_root=output_root)
+    except DescriptiveAnalysisError as exc:
         raise typer.BadParameter(str(exc)) from exc
     _echo_json({name: str(path) for name, path in artifacts.items()})
 

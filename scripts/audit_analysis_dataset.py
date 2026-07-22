@@ -87,9 +87,15 @@ def audit_dataset(dataset_path: Path, output_dir: Path, terms_path: Path) -> dic
     group_coverage = _group_coverage(rows)
     repeat_coverage = _repeat_coverage(rows)
     eligible_repeat_groups = [
-        row for row in repeat_coverage if int(row["repeat_count"]) >= MINIMUM_REPEATS
+        row for row in repeat_coverage if int(row["repeat_count"]) == MINIMUM_REPEATS
     ]
-    repeated_requests = sorted({str(row["request_id"]) for row in eligible_repeat_groups})
+    repeated_requests = sorted(
+        {
+            str(row["request_id"])
+            for row in repeat_coverage
+            if int(row["repeat_count"]) >= MINIMUM_REPEATS
+        }
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     paths = {
         "dataset_column_audit": output_dir / "dataset_column_audit.csv",
@@ -120,6 +126,20 @@ def audit_dataset(dataset_path: Path, output_dir: Path, terms_path: Path) -> dic
     requests = sorted({str(row["request_id"]) for row in rows})
     repeats = sorted({str(row["repeat_id"]) for row in rows})
     terminology = _terminology_summary(terms_payload, concepts)
+    lineage_complete = (
+        len(unmatched) == 0 and join_summary.get("all_required_joins_matched") is True
+    )
+    matched_controls_available = _matched_controls_available(rows)
+    recommendations = _audit_recommendations(
+        independent_request_count=len(requests),
+        independent_episode_count=len(episodes),
+        independent_geography_count=len(geographies),
+        repeated_request_count=len(repeated_requests),
+        eligible_repeat_group_count=len(eligible_repeat_groups),
+        lineage_complete=lineage_complete,
+        matched_controls_available=matched_controls_available,
+        metric_viability=metric_viability,
+    )
     summary = {
         "audit_version": "1.0B-design-audit-v2",
         "dataset": {
@@ -155,15 +175,14 @@ def audit_dataset(dataset_path: Path, output_dir: Path, terms_path: Path) -> dic
         "lineage": {
             "inputs": provenance.get("inputs", {}),
             "join_summary": join_summary,
+            "lineage_complete": lineage_complete,
+            "matched_controls_available": matched_controls_available,
             "unmatched_record_count": len(unmatched),
             "unmatched_by_source_and_direction": _unmatched_counts(unmatched),
         },
         "terminology": terminology,
         "recommendations": {
-            "overall_implementation_recommendation": (
-                "conditional_go_descriptive_repeat_only_no_go_formal_inference"
-            ),
-            "current_batch_inference_status": "no_go_formal_inference_exploratory_only",
+            **recommendations,
             "viable_metrics": {
                 "descriptive": descriptive,
                 "repeat_agreement_exploratory": repeat_metrics,
@@ -198,7 +217,7 @@ def audit_dataset(dataset_path: Path, output_dir: Path, terms_path: Path) -> dic
             "recommended_statistical_tests": [
                 {
                     "name": "paired_repeat_agreement_descriptive",
-                    "status": "available_for_one_repeated_request_exploratory_only",
+                    "status": recommendations["repeat_diagnostic_status"],
                     "general_repeat_reliability": "not_established",
                     "statistics": [
                         "absolute_difference",
@@ -235,6 +254,7 @@ def audit_dataset(dataset_path: Path, output_dir: Path, terms_path: Path) -> dic
                 join_summary=join_summary,
                 unmatched_record_count=len(unmatched),
                 independent_request_count=len(requests),
+                matched_controls_available=matched_controls_available,
             ),
         },
         "exclusions": {
@@ -295,6 +315,11 @@ def _metric_viability(table: pa.Table, rows: Sequence[Mapping[str, Any]]) -> lis
             repeat_groups[(str(row["request_id"]), str(row["concept_id"]))].add(
                 str(row["repeat_id"])
             )
+        all_repeat_groups: dict[tuple[str, str], set[str]] = defaultdict(set)
+        for row in rows:
+            all_repeat_groups[(str(row["request_id"]), str(row["concept_id"]))].add(
+                str(row["repeat_id"])
+            )
         independent_requests = {str(row["request_id"]) for row in represented}
         independent_episodes = {str(row["episode_id"]) for row in represented}
         independent_geographies = {str(row["geography"]) for row in represented}
@@ -309,11 +334,16 @@ def _metric_viability(table: pa.Table, rows: Sequence[Mapping[str, Any]]) -> lis
         if metric_type in {"count_like", "flag_derived"}:
             reasons.append(f"{metric_type}_not_primary_response")
         repeat_eligible = sum(
-            len(repeat_ids) >= MINIMUM_REPEATS for repeat_ids in repeat_groups.values()
+            len(all_repeat_groups[key]) == MINIMUM_REPEATS
+            and len(repeat_groups.get(key, set())) == MINIMUM_REPEATS
+            for key in all_repeat_groups
+        )
+        multi_repeat_groups = sum(
+            len(repeat_ids) > MINIMUM_REPEATS for repeat_ids in all_repeat_groups.values()
         )
         repeated_requests = {
             request_id
-            for (request_id, _concept_id), repeat_ids in repeat_groups.items()
+            for (request_id, _concept_id), repeat_ids in all_repeat_groups.items()
             if len(repeat_ids) >= MINIMUM_REPEATS
         }
         inference_reason = _population_inference_reason(len(independent_requests))
@@ -342,6 +372,7 @@ def _metric_viability(table: pa.Table, rows: Sequence[Mapping[str, Any]]) -> lis
                 "concept_count": len({str(row["concept_id"]) for row in represented}),
                 "repeated_request_count": len(repeated_requests),
                 "repeat_eligible_request_concept_group_count": repeat_eligible,
+                "multi_repeat_request_concept_group_count": multi_repeat_groups,
                 "minimum": _stat(numeric_values, "min"),
                 "maximum": _stat(numeric_values, "max"),
                 "mean": _stat(numeric_values, "mean"),
@@ -357,7 +388,13 @@ def _metric_viability(table: pa.Table, rows: Sequence[Mapping[str, Any]]) -> lis
                 "negative_count": sum(value < 0 for value in numeric_values),
                 "descriptive": "yes" if numeric_values else "no",
                 "repeat_reliability": (
-                    "exploratory_pairwise_only" if exploratory_repeat else "ineligible"
+                    "exploratory_pairwise_only"
+                    if exploratory_repeat
+                    else (
+                        "multi_repeat_not_pairwise_eligible"
+                        if multi_repeat_groups
+                        else "ineligible"
+                    )
                 ),
                 "population_inference": (
                     "cluster_count_threshold_met" if not inference_reason else "ineligible"
@@ -384,6 +421,7 @@ def _required_upstream_additions(
     join_summary: Mapping[str, Any],
     unmatched_record_count: int,
     independent_request_count: int,
+    matched_controls_available: bool = False,
 ) -> list[str]:
     additions: list[str] = []
     if independent_request_count < MINIMUM_INDEPENDENT_REQUESTS:
@@ -391,15 +429,82 @@ def _required_upstream_additions(
             f"at least {MINIMUM_INDEPENDENT_REQUESTS} independent request clusters per "
             f"estimand (currently {independent_request_count})"
         )
-    additions.extend(
-        [
-            "explicit matched treated/comparison request pairs",
-            "pre-specified negative-control concepts or event windows",
-        ]
-    )
+    if not matched_controls_available:
+        additions.append("explicit matched treated/comparison request pairs")
+    additions.append("pre-specified negative-control concepts or event windows")
     if unmatched_record_count or join_summary.get("all_required_joins_matched") is not True:
         additions.append("completed request-plan and metric joins for analyzed rows")
     return additions
+
+
+def _matched_controls_available(rows: Sequence[Mapping[str, Any]]) -> bool:
+    groups: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for row in rows:
+        groups[(str(row.get("episode_id", "")), str(row.get("concept_id", "")))].add(
+            str(row.get("request_role", "")).casefold()
+        )
+    return any(
+        any("treated" in role for role in roles)
+        and any("comparison" in role or "control" in role for role in roles)
+        for roles in groups.values()
+    )
+
+
+def _audit_recommendations(
+    *,
+    independent_request_count: int,
+    independent_episode_count: int,
+    independent_geography_count: int,
+    repeated_request_count: int,
+    eligible_repeat_group_count: int,
+    lineage_complete: bool,
+    matched_controls_available: bool,
+    metric_viability: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    supported_metrics = sum(
+        int(row["independent_request_count"]) >= MINIMUM_INDEPENDENT_REQUESTS
+        for row in metric_viability
+    )
+    cluster_threshold_met = independent_request_count >= MINIMUM_INDEPENDENT_REQUESTS
+    formal_ready = (
+        cluster_threshold_met
+        and supported_metrics > 0
+        and lineage_complete
+        and matched_controls_available
+        and independent_episode_count >= MINIMUM_INDEPENDENT_REQUESTS
+        and independent_geography_count > 1
+    )
+    if formal_ready:
+        inference_status = "conditional_go_design_balance_and_estimands_still_required"
+    elif cluster_threshold_met:
+        inference_status = "conditional_no_go_other_design_requirements_unmet"
+    else:
+        inference_status = (
+            f"no_go_formal_population_inference_{independent_request_count}_independent_"
+            f"requests_below_{MINIMUM_INDEPENDENT_REQUESTS}"
+        )
+    if repeated_request_count == 0:
+        repeat_status = "not_available_no_repeated_requests"
+    else:
+        repeat_status = (
+            f"available_for_{repeated_request_count}_repeated_requests_exploratory_only_"
+            f"{eligible_repeat_group_count}_nested_request_concept_groups"
+        )
+    return {
+        "overall_implementation_recommendation": (
+            "conditional_go_descriptive_only_formal_inference_requires_complete_design"
+        ),
+        "current_batch_inference_status": inference_status,
+        "cluster_count_threshold_met": cluster_threshold_met,
+        "metrics_meeting_independent_request_threshold_count": supported_metrics,
+        "repeat_diagnostic_status": repeat_status,
+        "design_requirements": {
+            "lineage_complete": lineage_complete,
+            "matched_controls_available": matched_controls_available,
+            "independent_episode_count": independent_episode_count,
+            "independent_geography_count": independent_geography_count,
+        },
+    }
 
 
 def _group_coverage(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -415,7 +520,12 @@ def _group_coverage(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             eligible_groups = {
                 key
                 for key, repeat_ids in selected_repeat_groups.items()
-                if len(repeat_ids) >= MINIMUM_REPEATS
+                if len(repeat_ids) == MINIMUM_REPEATS
+            }
+            multi_repeat_groups = {
+                key
+                for key, repeat_ids in selected_repeat_groups.items()
+                if len(repeat_ids) > MINIMUM_REPEATS
             }
             output.append(
                 {
@@ -434,6 +544,7 @@ def _group_coverage(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                         {request_id for request_id, _concept_id in eligible_groups}
                     ),
                     "repeat_eligible_request_concept_group_count": len(eligible_groups),
+                    "multi_repeat_request_concept_group_count": len(multi_repeat_groups),
                 }
             )
     return output
@@ -456,12 +567,25 @@ def _repeat_coverage(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 "yes" if len({str(row["repeat_id"]) for row in group}) >= MINIMUM_REPEATS else "no"
             ),
             "nesting_interpretation": (
-                "concept_nested_within_repeated_request"
-                if len({str(row["repeat_id"]) for row in group}) >= MINIMUM_REPEATS
-                else "single_export_request_concept"
+                "concept_nested_within_pairwise_repeated_request"
+                if len({str(row["repeat_id"]) for row in group}) == MINIMUM_REPEATS
+                else (
+                    "concept_nested_within_multi_repeat_request"
+                    if len({str(row["repeat_id"]) for row in group}) > MINIMUM_REPEATS
+                    else "single_export_request_concept"
+                )
+            ),
+            "repeat_design_status": (
+                "pairwise_eligible"
+                if len({str(row["repeat_id"]) for row in group}) == MINIMUM_REPEATS
+                else (
+                    "multi_repeat_not_pairwise_eligible"
+                    if len({str(row["repeat_id"]) for row in group}) > MINIMUM_REPEATS
+                    else "insufficient_repeats"
+                )
             ),
             "eligible_for_pairwise_repeat_agreement": (
-                "yes" if len({str(row["repeat_id"]) for row in group}) >= MINIMUM_REPEATS else "no"
+                "yes" if len({str(row["repeat_id"]) for row in group}) == MINIMUM_REPEATS else "no"
             ),
         }
         for (request_id, concept_id), group in sorted(grouped.items())

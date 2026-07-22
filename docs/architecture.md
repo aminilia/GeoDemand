@@ -75,6 +75,19 @@ request-level fallback plan applies its concept set to every repeat present in p
 repeat metrics for that request. Both the upstream phase table and integrated dataset use
 formal Arrow schemas, so empty and populated artifacts have identical columns and types.
 
+Milestone 1.0B adds a separate descriptive boundary through `analysis describe-signal`.
+The command consumes the integrated 1.0A table without modifying it. Dataset-level output
+uses explicitly selected response metrics after aggregating repeat values to one mean per
+`request_id + concept_id`. Geography/concept, episode/concept, and semantic-family
+summaries use those same equally weighted request/concept units. Raw-row, valid-repeat,
+request/concept-unit, and independent-request counts remain explicit. Paired diagnostics
+require exactly two repeats and exactly two finite values; requests with more repeats are
+classified as multi-repeat rather than silently reduced to a pair. Rank agreement also
+requires exactly two exports and identifies `request_id` as the repeated unit. Every
+Parquet artifact has an
+explicit Arrow schema, and excluded metrics, values, groups, and relative differences are
+reported. This boundary is exploratory and contains no inferential procedures.
+
 ## Determinism
 
 JSON outputs use stable key ordering and formatting. Scientific summaries exclude volatile
