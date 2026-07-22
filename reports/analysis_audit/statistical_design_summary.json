@@ -1,0 +1,718 @@
+{
+  "audit_version": "1.0B-design-audit-v2",
+  "coverage": {
+    "concept_ids": [
+      "context_heavy_rain",
+      "context_weather",
+      "flash_flood",
+      "flood",
+      "flooding"
+    ],
+    "eligible_reliability_group_count": 5,
+    "episode_ids": [
+      "2b8c3b13ba6ba6894d71787047199464879cd0f152296a20978fba0705db15b0",
+      "7b036a07d1c28215e94073743eb9b98afce66f35162eb330c594bf1de210da98",
+      "7c98d6b702ff2407abb66776b817d9dd2396f8d7ca4b73e7d7b3e2106c7c1cf0",
+      "a0cd69165cb73cd416136b722be3038e738d6bd0bd68e5d14421c4514701a2b3",
+      "c811f5a7a428ef05a76332a251ad22012716ccef8880582ed303c4765656835a"
+    ],
+    "geographies": [
+      "US-FL",
+      "US-KS",
+      "US-MS",
+      "US-WA",
+      "US-WY"
+    ],
+    "independent_episode_count": 5,
+    "independent_geography_count": 5,
+    "independent_request_count": 5,
+    "repeat_coverage_interpretation": "5 concept groups nested within 1 repeated request(s)",
+    "repeat_eligible_request_concept_group_count": 5,
+    "repeat_ids": [
+      "repeat_1",
+      "repeat_2"
+    ],
+    "repeated_request_count": 1,
+    "repeated_request_ids": [
+      "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351"
+    ],
+    "request_ids": [
+      "3124a7b93627d95b9bea9d020e66484c22842ffe18d350128dff1e818b8e55b4",
+      "3f56c0edeefc278665060df9109a1f9205dbbd0b8a3b70a9df2e31781ea6abaa",
+      "4fa3e3a43c4e51fcb0aa3fa5df49b66986cfd384077fbfa4604b656bfb01a091",
+      "50f911f9065e4bffc0fb160b9dd45c31834661cc0d5f8044df5137692e85c8df",
+      "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351"
+    ],
+    "terminology_versions": [
+      "0.8A-v3"
+    ]
+  },
+  "dataset": {
+    "analytical_grain": [
+      "request_id",
+      "repeat_id",
+      "concept_id"
+    ],
+    "column_count": 84,
+    "duplicate_grain_count": 0,
+    "identifier_uniqueness": {
+      "concept_id": 5,
+      "episode_id": 5,
+      "geography": 5,
+      "repeat_id": 2,
+      "request_id": 5
+    },
+    "path": "C:\\Work\\Data\\GeoDemand\\trends\\1.0A_final_analysis_corrected\\integrated\\analysis_dataset.parquet",
+    "row_count": 30,
+    "sha256": "cc6f5b003faef6a3a9eb566e397ae6ae8ecec1ee77cda0dc4ca983d9457c579d"
+  },
+  "exclusions": {
+    "absolute_peak_lift": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "anticipatory_maximum": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "anticipatory_mean": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "anticipatory_peak_lift": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "anticipatory_robust_lift": {
+      "missing": 24,
+      "non_finite": 0
+    },
+    "anticipatory_standardized_lift": {
+      "missing": 18,
+      "non_finite": 0
+    },
+    "anticipatory_valid_day_count": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "baseline_mad": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "baseline_mean": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "baseline_median": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "baseline_standard_deviation": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "baseline_valid_day_count": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "dominant_robust_phase_lift": {
+      "missing": 24,
+      "non_finite": 0
+    },
+    "dominant_standardized_phase_lift": {
+      "missing": 18,
+      "non_finite": 0
+    },
+    "early_recovery_maximum": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "early_recovery_mean": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "early_recovery_peak_lift": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "early_recovery_robust_lift": {
+      "missing": 24,
+      "non_finite": 0
+    },
+    "early_recovery_standardized_lift": {
+      "missing": 18,
+      "non_finite": 0
+    },
+    "early_recovery_valid_day_count": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "event_maximum": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "event_valid_day_count": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "extended_recovery_maximum": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "extended_recovery_mean": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "extended_recovery_peak_lift": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "extended_recovery_robust_lift": {
+      "missing": 24,
+      "non_finite": 0
+    },
+    "extended_recovery_standardized_lift": {
+      "missing": 18,
+      "non_finite": 0
+    },
+    "extended_recovery_valid_day_count": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "global_peak_value": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "immediate_maximum": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "immediate_mean": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "immediate_peak_lift": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "immediate_robust_lift": {
+      "missing": 24,
+      "non_finite": 0
+    },
+    "immediate_standardized_lift": {
+      "missing": 18,
+      "non_finite": 0
+    },
+    "immediate_valid_day_count": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "maximum_repeat_phase_lift_stddev": {
+      "missing": 28,
+      "non_finite": 0
+    },
+    "peak_lead_lag_days": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "post_maximum": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "post_valid_day_count": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "ratio_peak_lift": {
+      "missing": 15,
+      "non_finite": 0
+    },
+    "repeat_count": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "repeat_stability_flag": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "robust_peak_lift": {
+      "missing": 24,
+      "non_finite": 0
+    },
+    "standardized_peak_lift": {
+      "missing": 18,
+      "non_finite": 0
+    },
+    "suppression_flag": {
+      "missing": 0,
+      "non_finite": 0
+    },
+    "z_score_peak_lift": {
+      "missing": 15,
+      "non_finite": 0
+    },
+    "zero_fraction": {
+      "missing": 0,
+      "non_finite": 0
+    }
+  },
+  "lineage": {
+    "inputs": {
+      "episode_response_metrics": {
+        "byte_count": 19909,
+        "file_name": "trends_episode_response_metrics.parquet",
+        "path": "C:\\Work\\Data\\GeoDemand\\trends\\1.0A_final_analysis_corrected\\processed\\trends_episode_response_metrics.parquet",
+        "sha256": "a74d643ca090723995a8192e065725beec5bedbcefd66218c8ee13841d8bc044"
+      },
+      "phase_response_metrics": {
+        "byte_count": 26583,
+        "file_name": "trends_phase_response_metrics.parquet",
+        "path": "C:\\Work\\Data\\GeoDemand\\trends\\1.0A_final_analysis_corrected\\processed\\trends_phase_response_metrics.parquet",
+        "sha256": "1656b6ae8ba8ddf685b3fc0dc1aa2e3d3eb5996c0674bf213733eda4bcbfa745"
+      },
+      "repeat_response_metrics": {
+        "byte_count": 18011,
+        "file_name": "trends_episode_response_metrics_by_repeat.parquet",
+        "path": "C:\\Work\\Data\\GeoDemand\\trends\\1.0A_final_analysis_corrected\\processed\\trends_episode_response_metrics_by_repeat.parquet",
+        "sha256": "fbd1918862a87c41d4843fd0d9e90d59dfef384a3d7385efef4a98d081dffc2b"
+      },
+      "request_plan": {
+        "byte_count": 5961,
+        "file_name": "0.9A_batch1_request_plan.csv",
+        "path": "C:\\Work\\Data\\GeoDemand\\trends\\planning\\0.9A_batch1_request_plan.csv",
+        "sha256": "284c68f1044cd2fdf777799a19fdfa35ec994026ed32bb612c4f066e7986ae0b"
+      }
+    },
+    "join_summary": {
+      "all_required_joins_matched": true,
+      "analysis_dataset_version": "1.0A-v1",
+      "analytical_row_grain": [
+        "request_id",
+        "repeat_id",
+        "concept_id"
+      ],
+      "join_cardinalities": {
+        "episode_response_metrics": "many_to_one_by_request_concept",
+        "phase_response_metrics": "base_unique_by_request_repeat_concept",
+        "repeat_response_metrics": "one_to_one_by_request_repeat_concept",
+        "request_plan": "many_to_one_by_request_repeat_or_request"
+      },
+      "orphan_counts": {
+        "episode_response_metrics": 0,
+        "repeat_response_metrics": 0,
+        "request_plan": 0,
+        "request_plan_missing_concepts": 0
+      },
+      "row_counts": {
+        "analysis_dataset_rows": 30,
+        "episode_response_metric_rows": 25,
+        "phase_response_metric_rows": 30,
+        "repeat_response_metric_rows": 30,
+        "request_plan_rows": 6,
+        "unmatched_key_rows": 0
+      },
+      "unmatched_counts": {
+        "episode_metrics_join_status": 0,
+        "plan_join_status": 0,
+        "repeat_metrics_join_status": 0
+      }
+    },
+    "unmatched_by_source_and_direction": [],
+    "unmatched_record_count": 0
+  },
+  "recommendations": {
+    "current_batch_inference_status": "no_go_formal_inference_exploratory_only",
+    "deterministic_seed": 20260721,
+    "eligible_reliability_groups": [
+      {
+        "concept_id": "context_heavy_rain",
+        "request_id": "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351"
+      },
+      {
+        "concept_id": "context_weather",
+        "request_id": "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351"
+      },
+      {
+        "concept_id": "flash_flood",
+        "request_id": "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351"
+      },
+      {
+        "concept_id": "flood",
+        "request_id": "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351"
+      },
+      {
+        "concept_id": "flooding",
+        "request_id": "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351"
+      }
+    ],
+    "eligible_reliability_repeated_request_count": 1,
+    "independent_resampling_unit": "request_id (cluster); episode_id above request when multiple requests per episode exist",
+    "ineligible_metrics": {
+      "absolute_peak_lift": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "anticipatory_maximum": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "anticipatory_mean": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "anticipatory_peak_lift": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "anticipatory_robust_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "anticipatory_standardized_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "anticipatory_valid_day_count": [
+        "constant_or_single_value",
+        "count_like_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "baseline_mad": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "baseline_mean": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "baseline_median": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "baseline_standard_deviation": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "baseline_valid_day_count": [
+        "constant_or_single_value",
+        "count_like_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "dominant_robust_phase_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "dominant_standardized_phase_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "early_recovery_maximum": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "early_recovery_mean": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "early_recovery_peak_lift": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "early_recovery_robust_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "early_recovery_standardized_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "early_recovery_valid_day_count": [
+        "constant_or_single_value",
+        "count_like_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "event_maximum": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "event_valid_day_count": [
+        "count_like_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "extended_recovery_maximum": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "extended_recovery_mean": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "extended_recovery_peak_lift": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "extended_recovery_robust_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "extended_recovery_standardized_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "extended_recovery_valid_day_count": [
+        "constant_or_single_value",
+        "count_like_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "global_peak_value": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "immediate_maximum": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "immediate_mean": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "immediate_peak_lift": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "immediate_robust_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "immediate_standardized_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "immediate_valid_day_count": [
+        "count_like_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "maximum_repeat_phase_lift_stddev": [
+        "constant_or_single_value",
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_1_below_20"
+      ],
+      "peak_lead_lag_days": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "post_maximum": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "post_valid_day_count": [
+        "count_like_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "ratio_peak_lift": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "repeat_count": [
+        "count_like_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "repeat_stability_flag": [
+        "flag_derived_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "robust_peak_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "standardized_peak_lift": [
+        "more_than_50_percent_missing",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "suppression_flag": [
+        "flag_derived_not_primary_response",
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "z_score_peak_lift": [
+        "insufficient_independent_requests_5_below_20"
+      ],
+      "zero_fraction": [
+        "insufficient_independent_requests_5_below_20"
+      ]
+    },
+    "iteration_counts": {
+      "bootstrap": 10000,
+      "permutation": 10000
+    },
+    "minimum_sample_thresholds": {
+      "bootstrap_independent_requests_per_estimand": 20,
+      "icc_independent_request_concept_groups": 20,
+      "permutation_paired_independent_units": 10,
+      "population_inference_independent_requests_per_metric": 20,
+      "repeat_agreement_repeats_per_request_concept": 2,
+      "warn_sparse_independent_units_below": 30
+    },
+    "overall_implementation_recommendation": "conditional_go_descriptive_repeat_only_no_go_formal_inference",
+    "recommended_statistical_tests": [
+      {
+        "general_repeat_reliability": "not_established",
+        "name": "paired_repeat_agreement_descriptive",
+        "statistics": [
+          "absolute_difference",
+          "relative_difference_when_denominator_nonzero",
+          "within_group_standard_deviation",
+          "rank_consistency_across_concepts"
+        ],
+        "status": "available_for_one_repeated_request_exploratory_only"
+      },
+      {
+        "name": "cluster_bootstrap_request_level_estimand",
+        "status": "not_available_current_batch"
+      },
+      {
+        "name": "paired_role_or_control_permutation",
+        "status": "not_available_current_batch"
+      }
+    ],
+    "required_upstream_additions": [
+      "at least 20 independent request clusters per estimand (currently 5)",
+      "explicit matched treated/comparison request pairs",
+      "pre-specified negative-control concepts or event windows"
+    ],
+    "viable_metrics": {
+      "bootstrap_after_independent_expansion": [
+        "absolute_peak_lift",
+        "peak_lead_lag_days",
+        "zero_fraction",
+        "anticipatory_peak_lift",
+        "immediate_peak_lift",
+        "early_recovery_peak_lift",
+        "extended_recovery_peak_lift"
+      ],
+      "bootstrap_current_batch": [],
+      "descriptive": [
+        "repeat_count",
+        "repeat_stability_flag",
+        "maximum_repeat_phase_lift_stddev",
+        "baseline_valid_day_count",
+        "event_valid_day_count",
+        "post_valid_day_count",
+        "baseline_mean",
+        "baseline_median",
+        "baseline_standard_deviation",
+        "baseline_mad",
+        "event_maximum",
+        "post_maximum",
+        "absolute_peak_lift",
+        "ratio_peak_lift",
+        "z_score_peak_lift",
+        "robust_peak_lift",
+        "standardized_peak_lift",
+        "peak_lead_lag_days",
+        "zero_fraction",
+        "suppression_flag",
+        "global_peak_value",
+        "dominant_standardized_phase_lift",
+        "dominant_robust_phase_lift",
+        "anticipatory_mean",
+        "anticipatory_maximum",
+        "anticipatory_peak_lift",
+        "anticipatory_standardized_lift",
+        "anticipatory_robust_lift",
+        "immediate_mean",
+        "immediate_maximum",
+        "immediate_peak_lift",
+        "immediate_standardized_lift",
+        "immediate_robust_lift",
+        "early_recovery_mean",
+        "early_recovery_maximum",
+        "early_recovery_peak_lift",
+        "early_recovery_standardized_lift",
+        "early_recovery_robust_lift",
+        "extended_recovery_mean",
+        "extended_recovery_maximum",
+        "extended_recovery_peak_lift",
+        "extended_recovery_standardized_lift",
+        "extended_recovery_robust_lift",
+        "anticipatory_valid_day_count",
+        "immediate_valid_day_count",
+        "early_recovery_valid_day_count",
+        "extended_recovery_valid_day_count"
+      ],
+      "permutation_after_matched_control_expansion": [
+        "anticipatory_standardized_lift",
+        "immediate_standardized_lift",
+        "early_recovery_standardized_lift",
+        "extended_recovery_standardized_lift"
+      ],
+      "permutation_current_batch": [],
+      "repeat_agreement_exploratory": [
+        "baseline_mean",
+        "baseline_median",
+        "baseline_standard_deviation",
+        "baseline_mad",
+        "event_maximum",
+        "post_maximum",
+        "absolute_peak_lift",
+        "ratio_peak_lift",
+        "z_score_peak_lift",
+        "robust_peak_lift",
+        "standardized_peak_lift",
+        "peak_lead_lag_days",
+        "zero_fraction",
+        "global_peak_value",
+        "dominant_standardized_phase_lift",
+        "dominant_robust_phase_lift",
+        "anticipatory_mean",
+        "anticipatory_maximum",
+        "anticipatory_peak_lift",
+        "anticipatory_standardized_lift",
+        "anticipatory_robust_lift",
+        "immediate_mean",
+        "immediate_maximum",
+        "immediate_peak_lift",
+        "immediate_standardized_lift",
+        "immediate_robust_lift",
+        "early_recovery_mean",
+        "early_recovery_maximum",
+        "early_recovery_peak_lift",
+        "early_recovery_standardized_lift",
+        "early_recovery_robust_lift",
+        "extended_recovery_mean",
+        "extended_recovery_maximum",
+        "extended_recovery_peak_lift",
+        "extended_recovery_standardized_lift",
+        "extended_recovery_robust_lift"
+      ]
+    }
+  },
+  "terminology": {
+    "configured_concept_count": 62,
+    "configured_proxy_type_counts": {
+      "None": 52,
+      "damage_mitigation_product": 3,
+      "preparation_product": 4,
+      "retailer_brand": 3
+    },
+    "configured_semantic_family_counts": {
+      "anchor_control": 2,
+      "assistance_recovery": 8,
+      "behavioral_demand_proxy": 10,
+      "context": 9,
+      "damage_cleanup": 9,
+      "disruption": 13,
+      "flood_awareness": 5,
+      "immediate_response": 6
+    },
+    "dataset_concepts": [
+      {
+        "concept_id": "context_heavy_rain",
+        "proxy_type": null,
+        "query_type": "term",
+        "semantic_family": "context"
+      },
+      {
+        "concept_id": "context_weather",
+        "proxy_type": null,
+        "query_type": "term",
+        "semantic_family": "context"
+      },
+      {
+        "concept_id": "flash_flood",
+        "proxy_type": null,
+        "query_type": "term",
+        "semantic_family": "flood_awareness"
+      },
+      {
+        "concept_id": "flood",
+        "proxy_type": null,
+        "query_type": "term",
+        "semantic_family": "flood_awareness"
+      },
+      {
+        "concept_id": "flooding",
+        "proxy_type": null,
+        "query_type": "term",
+        "semantic_family": "flood_awareness"
+      }
+    ]
+  }
+}
