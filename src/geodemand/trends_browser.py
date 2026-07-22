@@ -31,6 +31,14 @@ DecisionProvider = Callable[[Mapping[str, Any], "PageVerification"], ExportDecis
 BROWSER_AUTOMATION_VERSION = "0.8A-browser-v1"
 DEFAULT_DELAY_SECONDS = 15.0
 MAX_SERVICE_ERRORS = 2
+PAGE_TEXT_PREVIEW_LIMIT = 1000
+MANIFEST_DIAGNOSTIC_FIELDS = {
+    "page_url": None,
+    "page_title": None,
+    "page_text_preview": None,
+    "screenshot_path": None,
+    "html_snapshot_path": None,
+}
 REQUIRED_PLAN_COLUMNS = {
     "request_id",
     "episode_id",
@@ -230,6 +238,23 @@ class PlaywrightBrowserSession:
         download.save_as(str(target))
         return target
 
+    def capture_diagnostics(
+        self, output_dir: Path, stem: str, text_limit: int = PAGE_TEXT_PREVIEW_LIMIT
+    ) -> dict[str, Any]:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        screenshot_path = output_dir / f"{stem}.png"
+        html_path = output_dir / f"{stem}.html"
+        page_text = self._page.locator("body").inner_text(timeout=5_000)
+        self._page.screenshot(path=str(screenshot_path), full_page=True)
+        html_path.write_text(str(self._page.content()), encoding="utf-8")
+        return {
+            "page_url": str(self._page.url),
+            "page_title": str(self._page.title()),
+            "page_text_preview": _preview_text(page_text, text_limit),
+            "screenshot_path": str(screenshot_path),
+            "html_snapshot_path": str(html_path),
+        }
+
     def close(self) -> None:
         try:
             self._context.close()
@@ -391,6 +416,10 @@ def export_browser(  # noqa: PLR0912, PLR0915
                 continue
             attempt["verification_status"] = verification.status
             attempt["manual_review_flag"] = not verification.verified
+            if not verification.verified:
+                attempt.update(
+                    _capture_page_diagnostics(session, trends_root, attempt, verification)
+                )
             supervised_approved = False
             if verification.status in {
                 "captcha_detected",
@@ -833,6 +862,7 @@ def _new_attempt(
         "matched_pair_id": plan.get("matched_pair_id"),
         "selection_version": plan.get("selection_version"),
         "execution_selection_rank": plan.get("execution_selection_rank"),
+        **MANIFEST_DIAGNOSTIC_FIELDS,
     }
 
 
@@ -868,6 +898,58 @@ def _failure_fields(status: str, stage: str, reason: str) -> dict[str, Any]:
         "manual_review_flag": status
         in {"mismatched_page", "manual_review", "consent_required", "login_required"},
     }
+
+
+def _capture_page_diagnostics(
+    session: BrowserSession,
+    trends_root: Path,
+    attempt: Mapping[str, Any],
+    verification: PageVerification,
+) -> dict[str, Any]:
+    capture = getattr(session, "capture_diagnostics", None)
+    if not callable(capture):
+        return {**MANIFEST_DIAGNOSTIC_FIELDS, "page_url": verification.loaded_url}
+    stem = "_".join(
+        _safe_path_part(str(value))
+        for value in (
+            attempt["request_id"],
+            attempt["repeat_id"],
+            attempt["export_attempt_id"],
+        )
+    )
+    try:
+        diagnostics = cast(
+            Mapping[str, Any],
+            capture(trends_root / "diagnostics" / "browser_pages", stem),
+        )
+    except Exception:
+        return {**MANIFEST_DIAGNOSTIC_FIELDS, "page_url": verification.loaded_url}
+    return {
+        "page_url": _optional_text(diagnostics.get("page_url")),
+        "page_title": _optional_text(diagnostics.get("page_title")),
+        "page_text_preview": _preview_text(
+            _optional_text(diagnostics.get("page_text_preview")) or "",
+            PAGE_TEXT_PREVIEW_LIMIT,
+        ),
+        "screenshot_path": _optional_text(diagnostics.get("screenshot_path")),
+        "html_snapshot_path": _optional_text(diagnostics.get("html_snapshot_path")),
+    }
+
+
+def _optional_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value)
+    return text if text else None
+
+
+def _preview_text(value: str, limit: int) -> str:
+    normalized = " ".join(value.split())
+    return normalized[:limit]
+
+
+def _safe_path_part(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", value)[:120] or "unknown"
 
 
 def _export_summary(
@@ -944,7 +1026,7 @@ def _read_manifest(path: Path) -> list[dict[str, Any]]:
 def _write_manifest(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     ordered = sorted(
-        (dict(row) for row in rows),
+        ({**MANIFEST_DIAGNOSTIC_FIELDS, **dict(row)} for row in rows),
         key=lambda row: (
             str(row["request_id"]),
             str(row["repeat_id"]),

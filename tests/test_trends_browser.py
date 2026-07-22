@@ -8,6 +8,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 from typer.testing import CliRunner
@@ -40,6 +41,7 @@ class MockSession:
         self.opened: list[str] = []
         self.closed = False
         self.download_count = 0
+        self.diagnostic_text = "Interest over time was not visible. Try again later. " * 30
 
     def open(self, url: str) -> None:
         self.opened.append(url)
@@ -55,6 +57,22 @@ class MockSession:
         else:
             _write_export(output)
         return output
+
+    def capture_diagnostics(
+        self, output_dir: Path, stem: str, text_limit: int = 1000
+    ) -> dict[str, Any]:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        screenshot = output_dir / f"{stem}.png"
+        html = output_dir / f"{stem}.html"
+        screenshot.write_bytes(b"fake-png")
+        html.write_text("<html><body>diagnostic</body></html>", encoding="utf-8")
+        return {
+            "page_url": self.verification.loaded_url,
+            "page_title": "Google Trends diagnostic page",
+            "page_text_preview": self.diagnostic_text[:text_limit],
+            "screenshot_path": str(screenshot),
+            "html_snapshot_path": str(html),
+        }
 
     def close(self) -> None:
         self.closed = True
@@ -186,6 +204,51 @@ def test_page_failures_never_download(tmp_path: Path, status: str, expected: str
     )
     assert result["statuses"] == {expected: 1}
     assert session.download_count == 0
+    [attempt] = _manifest(tmp_path / "trends")
+    assert attempt["page_url"] == "https://trends.google.com/trends/explore"
+    assert attempt["page_title"] == "Google Trends diagnostic page"
+    assert attempt["page_text_preview"].startswith("Interest over time was not visible.")
+    assert len(attempt["page_text_preview"]) <= 1000
+    assert Path(attempt["screenshot_path"]).exists()
+    assert Path(attempt["html_snapshot_path"]).exists()
+
+
+def test_manifest_diagnostic_fields_are_backward_compatible(tmp_path: Path) -> None:
+    plan = _plan(tmp_path)
+    root = tmp_path / "trends"
+    manifest_path = root / "manifests" / "browser_export_manifest.parquet"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "request_id": "legacy",
+                    "repeat_id": "initial",
+                    "started_at": "2026-01-01T00:00:00+00:00",
+                    "export_attempt_id": "legacy-attempt",
+                    "status": "manual_review",
+                }
+            ]
+        ),
+        manifest_path,
+    )
+
+    export_browser(
+        plan,
+        root,
+        ExportOptions(delay_seconds=0),
+        session_factory=lambda *_: MockSession(
+            PageVerification(
+                status="selector_contract_failure",
+                loaded_url="https://trends.google.com/trends/explore",
+                chart_detected=False,
+                download_control_detected=False,
+            )
+        ),
+    )
+    rows = _manifest(root)
+    assert all("page_url" in row for row in rows)
+    assert all("screenshot_path" in row for row in rows)
 
 
 def test_all_zero_csv_is_valid_but_malformed_csv_is_quarantined_as_failure(
