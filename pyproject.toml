@@ -94,3 +94,6 @@ markers = [
   "trends_browser_integration: opt-in visible-browser Google Trends integration",
   "trends_browser_download_integration: opt-in supervised browser download integration",
 ]
+pythonpath = [
+    "."
+]
