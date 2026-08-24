@@ -1,0 +1,2039 @@
+{
+  "file_count": 203,
+  "files": [
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "02f5e4a10c489d02e3b05938b2fd87219f991ba220223f57d11c0e87bfe808b9",
+      "retrieval_timestamp": "2026-07-23T15:18:28.177892+00:00",
+      "sha256": "5231d5aeeedb19a040ec49b8873ecce954ef18f610c9875cf9661eb023e4f70a",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "02f5e4a10c489d02e3b05938b2fd87219f991ba220223f57d11c0e87bfe808b9.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "05165d7b4bd08df2ce76607c108e68317ef358c9404e8ba4b7abc2248bc19f4e",
+      "retrieval_timestamp": "2026-07-23T15:56:26.058599+00:00",
+      "sha256": "9d48c066986e00dbaadaa317aaadb350d489569b5060266336a9dd117e5c8a4f",
+      "sidecar_file": null,
+      "size_bytes": 1846,
+      "source_file": "05165d7b4bd08df2ce76607c108e68317ef358c9404e8ba4b7abc2248bc19f4e.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "059abd04c87434403f4c71df73d102b48b021a460b9cb7f17902b947763b1100",
+      "retrieval_timestamp": "2026-07-23T15:36:58.134470+00:00",
+      "sha256": "efda1f342c22118d301be7206899414ab53cd122e6b4f05aa641ada174c59a81",
+      "sidecar_file": null,
+      "size_bytes": 1842,
+      "source_file": "059abd04c87434403f4c71df73d102b48b021a460b9cb7f17902b947763b1100.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "05a7cf4d21d4e7d0be70328e36d1dbf210245bd189ca12be16cd95965032f4e1",
+      "retrieval_timestamp": "2026-07-23T16:01:14.489393+00:00",
+      "sha256": "512c8b07ee57f267722ff560a4ef685e5a2e733ba6fe22a7957c252fff73c704",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "05a7cf4d21d4e7d0be70328e36d1dbf210245bd189ca12be16cd95965032f4e1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "09261991312bd5bbf1764a12794dbadfd224542cd2db235d6c144b76fe5f4dd8",
+      "retrieval_timestamp": "2026-07-23T16:05:48.969288+00:00",
+      "sha256": "0a1701bf768ef88d171fd83aa5c704f6211414a14d5e673e8fa769946cf6b8d5",
+      "sidecar_file": null,
+      "size_bytes": 1802,
+      "source_file": "09261991312bd5bbf1764a12794dbadfd224542cd2db235d6c144b76fe5f4dd8.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "0a5b245442c63016f23a8a9c888f5e9bec35524f566e72770558511631d5391e",
+      "retrieval_timestamp": "2026-07-23T15:44:23.525635+00:00",
+      "sha256": "edfd3658fd65e536c21693b093ef059ea6554f41dfd28cef976f9aaee5f89335",
+      "sidecar_file": null,
+      "size_bytes": 1804,
+      "source_file": "0a5b245442c63016f23a8a9c888f5e9bec35524f566e72770558511631d5391e.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "0b381eb24501417f3ea4e8ec7b180b66777876f9510c64b62b6f955e84df5c77",
+      "retrieval_timestamp": "2026-07-23T15:50:06.847276+00:00",
+      "sha256": "e7729a674ed99e333a372a6990ab5976ee341fcc37ccc6da1545390a13820330",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "0b381eb24501417f3ea4e8ec7b180b66777876f9510c64b62b6f955e84df5c77.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "0babc77c891ff8497b8dd9fce96032ade609559eef9aa64d06be4e91c570d18f",
+      "retrieval_timestamp": "2026-07-23T15:08:50.837940+00:00",
+      "sha256": "c8177b9b64fbca485d0ffde1a19f05a32b2528ce9975c8341a9bee98a000a18f",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "0babc77c891ff8497b8dd9fce96032ade609559eef9aa64d06be4e91c570d18f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "0c737e0e24234147962be0405efd335fe726f2d41fbb35a39036fa26fbcff698",
+      "retrieval_timestamp": "2026-07-23T16:02:22.927685+00:00",
+      "sha256": "ba0a2473bc38a2156d133103c39907c166bf9233766a07741183ecccf72628c8",
+      "sidecar_file": null,
+      "size_bytes": 1802,
+      "source_file": "0c737e0e24234147962be0405efd335fe726f2d41fbb35a39036fa26fbcff698.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "0caf1c0892fc4759d9ed8212ea64631c6234b3d62935444405fdcd07ad23bcb5",
+      "retrieval_timestamp": "2026-07-23T15:14:04.200904+00:00",
+      "sha256": "0adce59a9a14a218926a25bc659e24631ab03defe2766c620de06b244084eb66",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "0caf1c0892fc4759d9ed8212ea64631c6234b3d62935444405fdcd07ad23bcb5.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "0f60434ab24ce3db16de8c771cf20b9e5347283c51ea7f276272523b22b81e64",
+      "retrieval_timestamp": "2026-07-23T15:15:04.215548+00:00",
+      "sha256": "f29494f550feec17df1ae577649b2e50cf4d356d930706fd48405f7da2b23c9c",
+      "sidecar_file": null,
+      "size_bytes": 1860,
+      "source_file": "0f60434ab24ce3db16de8c771cf20b9e5347283c51ea7f276272523b22b81e64.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "0f6eaf3ad6adac5d6cd9b6326869d0fe68e2c16fbae85feda13fc72cd6c29ec8",
+      "retrieval_timestamp": "2026-07-23T15:14:15.706331+00:00",
+      "sha256": "69d9b51ae3959f3fa4d35f8569ecf756737603a6405c1ab23fef75503edc47c4",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "0f6eaf3ad6adac5d6cd9b6326869d0fe68e2c16fbae85feda13fc72cd6c29ec8.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "113aaef9ec1705ed267142184396c4d4b8fd6bcd6de573f1045578ccbd734fb0",
+      "retrieval_timestamp": "2026-07-23T15:49:05.308086+00:00",
+      "sha256": "61f1462056e371c4907046570e489c15d335d1ede04ea0abe22e630edb1587d0",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "113aaef9ec1705ed267142184396c4d4b8fd6bcd6de573f1045578ccbd734fb0.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1165ed50bfcdf5d4d57c89ac8f0147a5e6b1c27ea22897cb3cf27ea2c8c06a57",
+      "retrieval_timestamp": "2026-07-23T15:59:07.341990+00:00",
+      "sha256": "a9fa2e0af31d65ce727745e2a61a000c75d67c5de05973b7d23e0569143b3368",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "1165ed50bfcdf5d4d57c89ac8f0147a5e6b1c27ea22897cb3cf27ea2c8c06a57.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1620872e014e7ce7397c3dab06f245fd1ec9cdab43b5ff1c1bcd84a01a0955d4",
+      "retrieval_timestamp": "2026-07-23T15:51:11.462473+00:00",
+      "sha256": "2ed245bcae2417dece0e9a17ff0c9ff93a3dcc0fa0939bf5ec1b6acef26e82c5",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "1620872e014e7ce7397c3dab06f245fd1ec9cdab43b5ff1c1bcd84a01a0955d4.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "19583e2c8287d54e0ab842b47bf3121dd2b22b1e4e9e3c80dcbd68fc713e510a",
+      "retrieval_timestamp": "2026-07-23T16:10:16.004118+00:00",
+      "sha256": "21349d978800825f2f24ecb5677abdc1fa56784368ce887cd8ef74a4a694c977",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "19583e2c8287d54e0ab842b47bf3121dd2b22b1e4e9e3c80dcbd68fc713e510a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "19dc571c317fde503447c00e243abeee4ea77d8003f759d5c2d0fd82f27f4478",
+      "retrieval_timestamp": "2026-07-23T15:36:47.500164+00:00",
+      "sha256": "1331dae098995b57fcda3d48233ab9d30c290e391f2751bd1ab7c4625ed7e4be",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "19dc571c317fde503447c00e243abeee4ea77d8003f759d5c2d0fd82f27f4478.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1b5028de968ac7816a1a01e6a6fed21edc69b3ec1ecc11fd1879d694ae416530",
+      "retrieval_timestamp": "2026-07-23T15:57:07.308155+00:00",
+      "sha256": "4483ff9d7bd818d4e3058425824ad0381701a7066318d00fc91760e03e71b9ce",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "1b5028de968ac7816a1a01e6a6fed21edc69b3ec1ecc11fd1879d694ae416530.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1b9c26546aeb78ad29a31b94dda11f8267ba7c22811a2a4c19e28c8a94aebe58",
+      "retrieval_timestamp": "2026-07-23T16:05:03.348817+00:00",
+      "sha256": "d18224376bf83da7bcd02952c34625bc081cc2dc802c75f1ce1823c8116a7109",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "1b9c26546aeb78ad29a31b94dda11f8267ba7c22811a2a4c19e28c8a94aebe58.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1c80329752287551c5485bb2b3b08ac3e90e76ebda5665717d87daaaab910c06",
+      "retrieval_timestamp": "2026-07-23T15:26:54.513285+00:00",
+      "sha256": "9c69c190dce2d9234d580a8e0daa476b079611944a6fa3dea798ca3bfac1d051",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "1c80329752287551c5485bb2b3b08ac3e90e76ebda5665717d87daaaab910c06.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1d2fa8400268ab86eb2821e76ba5255ee76538d65dae00d249a43d22130ef474",
+      "retrieval_timestamp": "2026-07-23T16:09:37.787805+00:00",
+      "sha256": "b04c974d807b1aec96b9c95cd6beb53ae24ef4a3e7c78b9b8428a6e96f86c408",
+      "sidecar_file": null,
+      "size_bytes": 1809,
+      "source_file": "1d2fa8400268ab86eb2821e76ba5255ee76538d65dae00d249a43d22130ef474.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1d557847061bbf433b9cdba87a652c1afc21a304bcf3624af0398a51675a7292",
+      "retrieval_timestamp": "2026-07-23T15:27:27.741354+00:00",
+      "sha256": "570486307beb4f4850dfb4cb8121fab5595fa5f6e70bf049c413c3b867e84f37",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "1d557847061bbf433b9cdba87a652c1afc21a304bcf3624af0398a51675a7292.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1ec667b078bcbdb1cb17e4e08dd1d3f376af06e8cb4c3639ec4e7364db05189a",
+      "retrieval_timestamp": "2026-07-23T15:08:05.650155+00:00",
+      "sha256": "8d7724e9a516970dee82fcd9c54cfe82991bec2ce82fd5372d7e31a1e1b63f53",
+      "sidecar_file": null,
+      "size_bytes": 1843,
+      "source_file": "1ec667b078bcbdb1cb17e4e08dd1d3f376af06e8cb4c3639ec4e7364db05189a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "1fd2b590aeb7b28f0dd4b1d9d0a678a8ff94ba7e3748736cb4202c344353d6c1",
+      "retrieval_timestamp": "2026-07-23T15:17:37.790274+00:00",
+      "sha256": "92c28cdbc04a59e490cda2ec3d669dca6983e93e9338fc4163f4b91a6b373b7f",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "1fd2b590aeb7b28f0dd4b1d9d0a678a8ff94ba7e3748736cb4202c344353d6c1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "21018cb8c83db1b22630b0f056b85549399748137d481efeed8d9e539187a278",
+      "retrieval_timestamp": "2026-07-23T15:41:40.523657+00:00",
+      "sha256": "b7ae227b0ff0522ec8035f2d5a6226b0556ba9d21e7567ded8b039859471c332",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "21018cb8c83db1b22630b0f056b85549399748137d481efeed8d9e539187a278.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "214ed890a8809e78099a2d2501378fd7a9fb92cb35794f1a40f9dff828a543f2",
+      "retrieval_timestamp": "2026-07-23T15:59:17.138934+00:00",
+      "sha256": "02536a5f9bd6b560be6c3293f20b13c80819af8c686b1e679a1ecab64e49f75c",
+      "sidecar_file": null,
+      "size_bytes": 1800,
+      "source_file": "214ed890a8809e78099a2d2501378fd7a9fb92cb35794f1a40f9dff828a543f2.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "24470d3b4e117332093b07a0f6f404af576cb3f57e3852ce1e0081d69b140f8d",
+      "retrieval_timestamp": "2026-07-23T15:45:17.338167+00:00",
+      "sha256": "01cd3cd415ea95ae72b4b6879370f2a311775227a9fd225c0c76e29cae6b6d5f",
+      "sidecar_file": null,
+      "size_bytes": 1805,
+      "source_file": "24470d3b4e117332093b07a0f6f404af576cb3f57e3852ce1e0081d69b140f8d.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "25cd86846af26649a08d79e4c23e758b5eecbf55f876f1099bd9284a985970ca",
+      "retrieval_timestamp": "2026-07-23T15:54:07.841328+00:00",
+      "sha256": "9f2df60bc19767d190df32f6027e7dea23884d21eb34760b80a7e8513803a4e5",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "25cd86846af26649a08d79e4c23e758b5eecbf55f876f1099bd9284a985970ca.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "27d472fc01aab03bdf84306d55c712dee2f963722dc524fab8164d9cae8bf7cc",
+      "retrieval_timestamp": "2026-07-23T15:20:04.666507+00:00",
+      "sha256": "c480f19e64a03dea6f67941bd1d0ea60a1944ad40328d9bd6b92c2127f52516a",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "27d472fc01aab03bdf84306d55c712dee2f963722dc524fab8164d9cae8bf7cc.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "28577e7c5b00e632dbcba7093bec1fa73f5e7c6dcc033b5c59361ca292474177",
+      "retrieval_timestamp": "2026-07-23T15:44:06.228728+00:00",
+      "sha256": "92f9b2c11833372120a62d1a4ac8e1d6d5ae4b0fce1dec7ce2e026b952ed57a1",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "28577e7c5b00e632dbcba7093bec1fa73f5e7c6dcc033b5c59361ca292474177.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "28c2866c3310afefe4c83073593d605eb2ed9c2f03331d034d9e10292141e171",
+      "retrieval_timestamp": "2026-07-23T15:19:16.098110+00:00",
+      "sha256": "ce32e4888ef1c5c150b14dc570ee7021b087cd7ece5404501c3a01dcaef479bf",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "28c2866c3310afefe4c83073593d605eb2ed9c2f03331d034d9e10292141e171.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "29b43716b6b0ddc26bdf0cba5286262015cc9ba8931405580b93744a2c5fbad5",
+      "retrieval_timestamp": "2026-07-23T15:57:27.827166+00:00",
+      "sha256": "2c533a11615e0716525aea4cc3307853a2080c4e688d11263a0bfb25e98e39f3",
+      "sidecar_file": null,
+      "size_bytes": 1848,
+      "source_file": "29b43716b6b0ddc26bdf0cba5286262015cc9ba8931405580b93744a2c5fbad5.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2a641891dfe0cd7c76238c7fc995a6219ffba79ed9712234101c44061b367174",
+      "retrieval_timestamp": "2026-07-23T15:17:52.514595+00:00",
+      "sha256": "da617ba9112a821e8d2a8f534a204df0fe6448edf07c5f5380996f0bb4dd28cc",
+      "sidecar_file": null,
+      "size_bytes": 1804,
+      "source_file": "2a641891dfe0cd7c76238c7fc995a6219ffba79ed9712234101c44061b367174.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2bb002bc385d9e5c7cbe1f7f6c7087389884d91c57f35ed14990ea5270fd5ef1",
+      "retrieval_timestamp": "2026-07-23T15:22:02.018071+00:00",
+      "sha256": "31585e11bb9f9604ca0af315d741c232ebcbe3584b8d2370af3be3e67dd2561c",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "2bb002bc385d9e5c7cbe1f7f6c7087389884d91c57f35ed14990ea5270fd5ef1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2becee72cdbd2ba3b1992334e11ef7aac24cb551f2a2e03ef8f4145d1ed1fccc",
+      "retrieval_timestamp": "2026-07-23T15:11:09.829006+00:00",
+      "sha256": "997dfdc18d08262d55129f1d0f5b0c9c4ca10ea451068a28acdb8c726ce65799",
+      "sidecar_file": null,
+      "size_bytes": 1808,
+      "source_file": "2becee72cdbd2ba3b1992334e11ef7aac24cb551f2a2e03ef8f4145d1ed1fccc.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2c36a29fce09c93e85bbb69015c47c2d7a2b4a03a7ca5b3e0c7ec58b6fc011fb",
+      "retrieval_timestamp": "2026-07-23T16:02:33.387796+00:00",
+      "sha256": "066c453181f8604e1671fde06fae2f69004ed505bac3fbafe756e20b52c08e12",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "2c36a29fce09c93e85bbb69015c47c2d7a2b4a03a7ca5b3e0c7ec58b6fc011fb.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2d8eeb7e60266ebedd349569c822b5bbab2404677a97adf07c67f48e41da951e",
+      "retrieval_timestamp": "2026-07-23T15:58:17.815660+00:00",
+      "sha256": "18ccd9c129d101c73b04476291f0af0f58304ca0d48e480614f2346a8307a8ac",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "2d8eeb7e60266ebedd349569c822b5bbab2404677a97adf07c67f48e41da951e.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2d95cf8088d4345d1380199096bf0088e3b8f2dc18032904791ace72ab10d17e",
+      "retrieval_timestamp": "2026-07-23T15:25:57.632402+00:00",
+      "sha256": "87e27e7373da2b88cf85710c7e539780a7b684fcc5f692c5c81c592b4fd2f5dd",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "2d95cf8088d4345d1380199096bf0088e3b8f2dc18032904791ace72ab10d17e.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2e5cb5830e641f8b101d1824d93bb8ef91d52f89ac67d5b414ae9577488b2167",
+      "retrieval_timestamp": "2026-07-23T15:10:49.350932+00:00",
+      "sha256": "da59ae8453614c190ae3b5aae6b5e4b4a934fdf2033c418b2d849fda3f4917a6",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "2e5cb5830e641f8b101d1824d93bb8ef91d52f89ac67d5b414ae9577488b2167.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2f325de6a999682fe719a744fb111ca75425453bd7c2ec872982a8fe2311df64",
+      "retrieval_timestamp": "2026-07-23T15:47:29.927696+00:00",
+      "sha256": "a686993441adfd18374c46e392c55e1e33b2acb1d5b0ededb414594e5efaa13a",
+      "sidecar_file": null,
+      "size_bytes": 1826,
+      "source_file": "2f325de6a999682fe719a744fb111ca75425453bd7c2ec872982a8fe2311df64.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2f4610c365265c03833f0c86d46e5428b863c9926707290913f765d1dae27038",
+      "retrieval_timestamp": "2026-07-23T16:07:03.148976+00:00",
+      "sha256": "db2a8164248960b8d8154f854339606d76dd359f313735c03de6dbdda4699376",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "2f4610c365265c03833f0c86d46e5428b863c9926707290913f765d1dae27038.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "2fc0aa913837cb908c0af28f3e1be47ae4024084fc3a4454c889491942084641",
+      "retrieval_timestamp": "2026-07-23T15:12:45.887015+00:00",
+      "sha256": "97491d1bc209eae07c4970467fd937514108eae00b1983cacd6f400044f5e93f",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "2fc0aa913837cb908c0af28f3e1be47ae4024084fc3a4454c889491942084641.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "30691c28cb7b975865f6102b300daebdf95a7c9f120fbd079bde02cbe6df7c1a",
+      "retrieval_timestamp": "2026-07-23T15:47:11.762512+00:00",
+      "sha256": "95abdf6dfce61047c10e0086c52146bf33c4bd432f8a85a42c9c95b77e9d8168",
+      "sidecar_file": null,
+      "size_bytes": 1809,
+      "source_file": "30691c28cb7b975865f6102b300daebdf95a7c9f120fbd079bde02cbe6df7c1a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "3124a7b93627d95b9bea9d020e66484c22842ffe18d350128dff1e818b8e55b4",
+      "retrieval_timestamp": "2026-07-23T15:31:05.827637+00:00",
+      "sha256": "9ed836da59a096d38528cf817e1d9db0852526246a237cb71b95b41997d7a9e2",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "3124a7b93627d95b9bea9d020e66484c22842ffe18d350128dff1e818b8e55b4.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "37c37256cdaefaf61782ddd9cab6d0e388db1ed35f84f37e8ee51aeaf1f98af8",
+      "retrieval_timestamp": "2026-07-23T15:10:29.021181+00:00",
+      "sha256": "46aaee30a1fca2893c9f048aedda473dd0404a691e83ad6ff0807e7267e50bd7",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "37c37256cdaefaf61782ddd9cab6d0e388db1ed35f84f37e8ee51aeaf1f98af8.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "3898fe577950ff16632ac4473ba38f1aef1ced2d37993b7e71f91853fe25888b",
+      "retrieval_timestamp": "2026-07-23T15:49:14.257181+00:00",
+      "sha256": "b96b3c12b1c57535175db0ce221501ee371760819cabf49a88112364a602c2ff",
+      "sidecar_file": null,
+      "size_bytes": 1807,
+      "source_file": "3898fe577950ff16632ac4473ba38f1aef1ced2d37993b7e71f91853fe25888b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "38f76ddbd3a306422ea88f684594558f27e8fc102109d0bfbba3be2c1b5bab5a",
+      "retrieval_timestamp": "2026-07-23T15:43:02.838656+00:00",
+      "sha256": "b1b71b05b53866bbc55e108bdae2aae9d6f3756201271347fc6dbc45b7e72a2e",
+      "sidecar_file": null,
+      "size_bytes": 1829,
+      "source_file": "38f76ddbd3a306422ea88f684594558f27e8fc102109d0bfbba3be2c1b5bab5a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "3904379c4b06d0739c20c6bc0dc4faf8fd56fa73b5e6aed423d61475f4e2edb1",
+      "retrieval_timestamp": "2026-07-23T16:04:03.076242+00:00",
+      "sha256": "aa126d583432bd9d9daa6b9ffffadb0831b5e0687d148b2168a84c04db04acfa",
+      "sidecar_file": null,
+      "size_bytes": 1808,
+      "source_file": "3904379c4b06d0739c20c6bc0dc4faf8fd56fa73b5e6aed423d61475f4e2edb1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "3937f660206364a7c58f722a9a46ff740c6bdff91bc32e7af536211f94cb181a",
+      "retrieval_timestamp": "2026-07-23T15:42:15.067849+00:00",
+      "sha256": "7cd7e264bc82ba400c8c2a8ee8ea1347e5cbafb3d6c8ed69674fb401817a0113",
+      "sidecar_file": null,
+      "size_bytes": 1807,
+      "source_file": "3937f660206364a7c58f722a9a46ff740c6bdff91bc32e7af536211f94cb181a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "3d321408e18e9ab67372b4d0eb2c90ad14a3e89d7c434d2440ae49f60d33375a",
+      "retrieval_timestamp": "2026-07-23T15:37:15.196178+00:00",
+      "sha256": "4f134502b36d564b36b1c6f1ed9b015826ac53ee6a9e032cb2ce48ec12fbd1da",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "3d321408e18e9ab67372b4d0eb2c90ad14a3e89d7c434d2440ae49f60d33375a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "3de922211c94d4bc35584dc487f1a181a1e8cc4fbe1dd4ad320d402f14aef2c9",
+      "retrieval_timestamp": "2026-07-23T15:53:50.591460+00:00",
+      "sha256": "b1fda593e183a0e54f769acfddd4cfac0054b6e110d322f96413da89caa838d3",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "3de922211c94d4bc35584dc487f1a181a1e8cc4fbe1dd4ad320d402f14aef2c9.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "3e7f5a6553129785e8f11ec9fe5e1ae3a291a01de48ea0012a04bcd256c75657",
+      "retrieval_timestamp": "2026-07-23T16:06:28.958163+00:00",
+      "sha256": "977161c21d4e4e057aafd478b06d7d9b7f0cc439b95ac51f7567bdf4e8896fee",
+      "sidecar_file": null,
+      "size_bytes": 1808,
+      "source_file": "3e7f5a6553129785e8f11ec9fe5e1ae3a291a01de48ea0012a04bcd256c75657.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "3f56c0edeefc278665060df9109a1f9205dbbd0b8a3b70a9df2e31781ea6abaa",
+      "retrieval_timestamp": "2026-07-23T15:16:54.259374+00:00",
+      "sha256": "2152d9545e29bae636dee378cbf1d8b87c22bbab4a190d171d1a3396b6eda0da",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "3f56c0edeefc278665060df9109a1f9205dbbd0b8a3b70a9df2e31781ea6abaa.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "425676021e0468b9f4c721c9b73358b32da3e2f90b00f8d6c7caa813a0d87f6f",
+      "retrieval_timestamp": "2026-07-23T15:42:02.660792+00:00",
+      "sha256": "da24e4b89e2576c877da46fdbc3dbc0657c7f9ad538e511b09bd93b95e2ca2e6",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "425676021e0468b9f4c721c9b73358b32da3e2f90b00f8d6c7caa813a0d87f6f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "42ad01fdbaddb3fa733b4559be19cd0fd4bee247332696ff67ca974968127b71",
+      "retrieval_timestamp": "2026-07-23T15:51:51.880738+00:00",
+      "sha256": "41f93712f698275ac30f2a14a15815e89ce4bfa18fac4a8b8effa4a74a983069",
+      "sidecar_file": null,
+      "size_bytes": 1814,
+      "source_file": "42ad01fdbaddb3fa733b4559be19cd0fd4bee247332696ff67ca974968127b71.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "442015f3dc3597d68a8e965f5ca267818bf96c6d828e1f757492abe877b71c83",
+      "retrieval_timestamp": "2026-07-23T15:28:41.527838+00:00",
+      "sha256": "e93dd2fac259fda305e7aed5ea2e2f0244181e8e5d26339ff826528a77221578",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "442015f3dc3597d68a8e965f5ca267818bf96c6d828e1f757492abe877b71c83.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "47029c9e3c4154d5e3fff43138dfe376a74bbea8a3256ded456ddd18a3f9be53",
+      "retrieval_timestamp": "2026-07-23T15:11:28.535048+00:00",
+      "sha256": "c8adb7755b813c7a7db386c0cb07c1f14fce0f0ef42c632df16c4ec4e6fb24c9",
+      "sidecar_file": null,
+      "size_bytes": 1848,
+      "source_file": "47029c9e3c4154d5e3fff43138dfe376a74bbea8a3256ded456ddd18a3f9be53.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "4990b14e4bf8694b3f831ab5411a7742eadd388459400dcae3fd5ee48a1fdd51",
+      "retrieval_timestamp": "2026-07-23T15:48:09.205583+00:00",
+      "sha256": "5207cbf1dec1ccba32c406675526e11feaeb1055b41a5518b2e4e0f808a7cc46",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "4990b14e4bf8694b3f831ab5411a7742eadd388459400dcae3fd5ee48a1fdd51.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "4990d2f59560b73a79e12e9350e4cc80250497f2d1afe6d0572d3f5b004c6632",
+      "retrieval_timestamp": "2026-07-23T15:38:13.307473+00:00",
+      "sha256": "1e245bb50a659c422b05b6d08c6f390aac60aa18ff37c68a144ff04e64f33e11",
+      "sidecar_file": null,
+      "size_bytes": 1830,
+      "source_file": "4990d2f59560b73a79e12e9350e4cc80250497f2d1afe6d0572d3f5b004c6632.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "4ae918f8dff3976812e49cfb2474e7ce596171ae27c1e8fe19c86d511a55756b",
+      "retrieval_timestamp": "2026-07-23T15:22:18.160927+00:00",
+      "sha256": "74f38ca8ab8508a5f11d2989a77951c478ecffa8bf0167081cafd241602586ea",
+      "sidecar_file": null,
+      "size_bytes": 1808,
+      "source_file": "4ae918f8dff3976812e49cfb2474e7ce596171ae27c1e8fe19c86d511a55756b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "4aeb542e241461bce998c572373a465ac27e1d580595333b9dcbd0730841dcb5",
+      "retrieval_timestamp": "2026-07-23T15:37:58.741937+00:00",
+      "sha256": "c476c72295d4a4b2021df3fa612c1e04aa873a28ba9bf6aaf47fa039307666bc",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "4aeb542e241461bce998c572373a465ac27e1d580595333b9dcbd0730841dcb5.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "4b2efa1ffa854b0e6a596e094f0a4acfe2322bf6b0153f4329bbb81e1f847bdc",
+      "retrieval_timestamp": "2026-07-23T15:19:53.577401+00:00",
+      "sha256": "20fb73aba99e000795604b57e1eb84c12c6ff8e31a6c6a89efa1067aac7e534a",
+      "sidecar_file": null,
+      "size_bytes": 1810,
+      "source_file": "4b2efa1ffa854b0e6a596e094f0a4acfe2322bf6b0153f4329bbb81e1f847bdc.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "4c103b29443b196e928aad53ae3e50bfab17f1096c01f7b0e96faac4dd3163f3",
+      "retrieval_timestamp": "2026-07-23T16:11:41.892807+00:00",
+      "sha256": "7e0054cafb48ff76b79def5da2bea20a019fffac5956d55fd72cc3ba488bd9e7",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "4c103b29443b196e928aad53ae3e50bfab17f1096c01f7b0e96faac4dd3163f3.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "4ca3b67fa7113d5d0cbbdf6eda1480fcfc3f15b6dca8737fe6413b762e55766f",
+      "retrieval_timestamp": "2026-07-23T15:22:44.525808+00:00",
+      "sha256": "b88b1dc1317fb01ceedb99cd9410c745e9440ce02aa8792b9ea8bde6a3ae2f51",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "4ca3b67fa7113d5d0cbbdf6eda1480fcfc3f15b6dca8737fe6413b762e55766f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "4fa3e3a43c4e51fcb0aa3fa5df49b66986cfd384077fbfa4604b656bfb01a091",
+      "retrieval_timestamp": "2026-07-23T16:02:13.330961+00:00",
+      "sha256": "a91b1ae8f5d86dcc05f529b69656df395e1129a7105fe76912b7d111503e34ec",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "4fa3e3a43c4e51fcb0aa3fa5df49b66986cfd384077fbfa4604b656bfb01a091.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "501a328e1ae43628c75f818dfe3a38b0cde6941520b90d1907fd38b2a98f0161",
+      "retrieval_timestamp": "2026-07-23T15:18:39.280320+00:00",
+      "sha256": "0a7e25e666d9165e40b82caf66f6c18ec0c636c9acc9a6144a0901a8948c6e3b",
+      "sidecar_file": null,
+      "size_bytes": 1809,
+      "source_file": "501a328e1ae43628c75f818dfe3a38b0cde6941520b90d1907fd38b2a98f0161.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "50d12059ca5a90501ee721ae55afc3fa4210176868003fba337af538b6641eec",
+      "retrieval_timestamp": "2026-07-23T15:28:23.696935+00:00",
+      "sha256": "fa9ae57577fff36e147918383d3cc39c2b1e1eb433e5308a160029d4a6e9310c",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "50d12059ca5a90501ee721ae55afc3fa4210176868003fba337af538b6641eec.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "50f911f9065e4bffc0fb160b9dd45c31834661cc0d5f8044df5137692e85c8df",
+      "retrieval_timestamp": "2026-07-23T15:32:52.401816+00:00",
+      "sha256": "e112c8cac57a88b475c7479817832c90c5d69d63b5dd282f69fff77913305246",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "50f911f9065e4bffc0fb160b9dd45c31834661cc0d5f8044df5137692e85c8df.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "52c0953b14b3319b23fe01e1590e32127b40678ab0304f949003f457f887459b",
+      "retrieval_timestamp": "2026-07-23T15:32:15.218948+00:00",
+      "sha256": "b39656aef20743617bd040708bae273f95be10ca3971eba6e558d633b0f07878",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "52c0953b14b3319b23fe01e1590e32127b40678ab0304f949003f457f887459b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "52d60eb26eabe98d7485f30acf3ae859bf2fe7ed668c770d313057d32d922c0a",
+      "retrieval_timestamp": "2026-07-23T16:08:13.116350+00:00",
+      "sha256": "ed712562be09e7640a6cbcd4880d41461ec006c08a566ac2368c292c7a522d95",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "52d60eb26eabe98d7485f30acf3ae859bf2fe7ed668c770d313057d32d922c0a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "557ed4619543fa6d9677f4180cf587f28d327ebdb5b4f34a09ae3aaf259cf03c",
+      "retrieval_timestamp": "2026-07-23T15:09:23.967840+00:00",
+      "sha256": "8cf1cfb6d31b5dff4d6e4c5f16994875664210a8c0c5c28caa292853d77b5bc1",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "557ed4619543fa6d9677f4180cf587f28d327ebdb5b4f34a09ae3aaf259cf03c.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "5657de29bb33e07e5b99aca109be2cacc4b8cedf73d0cfdb3a93e9402a39ff34",
+      "retrieval_timestamp": "2026-07-23T15:32:32.168893+00:00",
+      "sha256": "a6d8511841b4547196c34838f4978ba82b8fa1b20842bc346b776dce375b9500",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "5657de29bb33e07e5b99aca109be2cacc4b8cedf73d0cfdb3a93e9402a39ff34.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "56b35e6fb2694e45c7bf66fbba6bcc83f1ef7b9834c0bc5c28784e4bf148c9f7",
+      "retrieval_timestamp": "2026-07-23T15:17:16.099927+00:00",
+      "sha256": "df587ae4fdb145aac6c92183f85d2e4d6448a42584aea38f089be43297b32ecd",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "56b35e6fb2694e45c7bf66fbba6bcc83f1ef7b9834c0bc5c28784e4bf148c9f7.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "57bc0a9ac1f7a5e571bb48516c935cbe4d49b37b4b128daae41a783270b0e6f9",
+      "retrieval_timestamp": "2026-07-23T15:12:21.413908+00:00",
+      "sha256": "f5a88f51f5ac06a78a312d2e5a2c85f7a6b9f048ea5c8ee1bd1bd5bb2d5afde7",
+      "sidecar_file": null,
+      "size_bytes": 1807,
+      "source_file": "57bc0a9ac1f7a5e571bb48516c935cbe4d49b37b4b128daae41a783270b0e6f9.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "586a24563415d11eab36eda46ee4d3ba4a1c5edb65d260a9ffe87ab19a50e32c",
+      "retrieval_timestamp": "2026-07-23T15:23:02.261438+00:00",
+      "sha256": "923669db876fc30310b2ea9cae0169d9ebc2676637204412bb3d64dd2231b3fc",
+      "sidecar_file": null,
+      "size_bytes": 1844,
+      "source_file": "586a24563415d11eab36eda46ee4d3ba4a1c5edb65d260a9ffe87ab19a50e32c.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "591731acdb262e5664f7bfeec9ab48373d5703dc4abfd27fa32901b50b6c284c",
+      "retrieval_timestamp": "2026-07-23T15:52:56.351491+00:00",
+      "sha256": "54020de58a7fea6b44616a8e6bd89546943449917c9743bfc2ce4535909f11ff",
+      "sidecar_file": null,
+      "size_bytes": 1854,
+      "source_file": "591731acdb262e5664f7bfeec9ab48373d5703dc4abfd27fa32901b50b6c284c.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "59ba22e768bf1ab6536abef6a5e1c8abff46b84c72d973e7504efab2b31eeedb",
+      "retrieval_timestamp": "2026-07-23T15:29:23.777952+00:00",
+      "sha256": "8299e789e811c790cf2682c463090af3c7573be26e09dd186d69b049a09db843",
+      "sidecar_file": null,
+      "size_bytes": 1814,
+      "source_file": "59ba22e768bf1ab6536abef6a5e1c8abff46b84c72d973e7504efab2b31eeedb.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "5a966d9071c8da094639b7cc4ff4dc4dd109c3aaec1673ec56923e4a2d242cd1",
+      "retrieval_timestamp": "2026-07-23T16:07:39.526707+00:00",
+      "sha256": "d1526779a866fa3d2aa69a5882fb84345dcb8263f680f5ffaaf1290a886ff00f",
+      "sidecar_file": null,
+      "size_bytes": 1800,
+      "source_file": "5a966d9071c8da094639b7cc4ff4dc4dd109c3aaec1673ec56923e4a2d242cd1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "5b25cba44ba90fe8f54d817af4a2b5039e682f42ffae93e92aa9f9b7d4cdd986",
+      "retrieval_timestamp": "2026-07-23T15:42:32.195360+00:00",
+      "sha256": "1b50ed15b638d95e7e9307c505203d376413c0f76779022b430d3edb57159c23",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "5b25cba44ba90fe8f54d817af4a2b5039e682f42ffae93e92aa9f9b7d4cdd986.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "5c2da56e0dab7230a0fe9387c096f021323675c6d34448b7366e86ebeea6bbcc",
+      "retrieval_timestamp": "2026-07-23T15:24:17.994142+00:00",
+      "sha256": "7afc9ff2547b256ab1681ab977b21b244e8b168617bc03c9200496b97b373466",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "5c2da56e0dab7230a0fe9387c096f021323675c6d34448b7366e86ebeea6bbcc.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "5c7327bd17e789a120da7e550d506af482d060b6ab3ade67b879d685a0f370bb",
+      "retrieval_timestamp": "2026-07-23T15:49:41.947678+00:00",
+      "sha256": "50e7b1ecc72dc08a686923153eefe9221921ed41d21eefdc90320aa99d7f8ceb",
+      "sidecar_file": null,
+      "size_bytes": 1804,
+      "source_file": "5c7327bd17e789a120da7e550d506af482d060b6ab3ade67b879d685a0f370bb.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "5cb3bea4e7e4fb2c9bf38cea2530cba502ccd0199d6e8b044289002fc5b604d4",
+      "retrieval_timestamp": "2026-07-23T15:29:43.795414+00:00",
+      "sha256": "52b9aa0b274de68ac00b02bcbd82a14f084d0cacee07e2fb4cda0c7c1de6824a",
+      "sidecar_file": null,
+      "size_bytes": 1846,
+      "source_file": "5cb3bea4e7e4fb2c9bf38cea2530cba502ccd0199d6e8b044289002fc5b604d4.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "5d368ce4075581660d2d3560fd493f976f23428b287d07c7edb01619a504b713",
+      "retrieval_timestamp": "2026-07-23T15:23:31.538129+00:00",
+      "sha256": "402b4c8c695540244aa3afc26a74df918c83fc874b76e96a89f16d06e71237ce",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "5d368ce4075581660d2d3560fd493f976f23428b287d07c7edb01619a504b713.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "5df19c1f5ada3e6b3a9b857e75c9864d53cd49b16258e9b26b0f6f9916169a42",
+      "retrieval_timestamp": "2026-07-23T16:01:00.236777+00:00",
+      "sha256": "4b4074b71cc35de4e7088c4bd310adf22c31c1a050b0aae45eb05deb21dc727d",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "5df19c1f5ada3e6b3a9b857e75c9864d53cd49b16258e9b26b0f6f9916169a42.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "62b1eddbd737f46882561a6dbfeac665138dea0b2fcebc63e8c85c759fcd8d2f",
+      "retrieval_timestamp": "2026-07-23T15:23:41.326899+00:00",
+      "sha256": "3b14236770845bce21e21ac2399fc57dec87af789984d2e583fa85e2283312a1",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "62b1eddbd737f46882561a6dbfeac665138dea0b2fcebc63e8c85c759fcd8d2f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "62b3859ddf05b6b2fde822c797f4ec7d8657852223ed9fb9a14b8c6b989c4e28",
+      "retrieval_timestamp": "2026-07-23T15:50:26.605243+00:00",
+      "sha256": "e72afec384e560bd73f05726a5058979d92fc48c0b657d7712c414200155098f",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "62b3859ddf05b6b2fde822c797f4ec7d8657852223ed9fb9a14b8c6b989c4e28.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "630347619118879afd022a93777d90bf3b5bd69857cd78ca16dd425f41db1d5f",
+      "retrieval_timestamp": "2026-07-23T15:56:08.839647+00:00",
+      "sha256": "96eb3958c88acd5cc8b5bf0212f5cfd7ee45265e433c9804c49d050ec63c89e5",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "630347619118879afd022a93777d90bf3b5bd69857cd78ca16dd425f41db1d5f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "643f08a08e34cc8706afbb3e95e545566d0a26ea35c06fe0755b9af9768d2ef5",
+      "retrieval_timestamp": "2026-07-23T15:41:30.448555+00:00",
+      "sha256": "90e73daf012dbeddd3341b8533d49c00e4c6fe40df0aa6cefe15fe60a2abc365",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "643f08a08e34cc8706afbb3e95e545566d0a26ea35c06fe0755b9af9768d2ef5.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "64f9deb96da759857d9a3167223fc54b4da2ebfc1eb9acbc22b0298279e992e2",
+      "retrieval_timestamp": "2026-07-23T15:21:47.245870+00:00",
+      "sha256": "5746ed74d08826444123167662c7764e6269327629db19e99553d23bec8ac866",
+      "sidecar_file": null,
+      "size_bytes": 1861,
+      "source_file": "64f9deb96da759857d9a3167223fc54b4da2ebfc1eb9acbc22b0298279e992e2.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "655277787138d5af581176b469d0bb121c1f49cb9c45c745d746c73e2c8f8681",
+      "retrieval_timestamp": "2026-07-23T16:06:47.600205+00:00",
+      "sha256": "b775cf42acc04e96a8d4f8c7ec7c2844da91e6ff9d76bf43530e5f119299e7d0",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "655277787138d5af581176b469d0bb121c1f49cb9c45c745d746c73e2c8f8681.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "6a394301f858dda97b8a70d80f9c2d218342ef751f3139146924fec07cc78477",
+      "retrieval_timestamp": "2026-07-23T15:27:46.309982+00:00",
+      "sha256": "c6b0b5e4945cdb1307452d899dab61903ef46af9472598ef006d064ae60d2d79",
+      "sidecar_file": null,
+      "size_bytes": 1805,
+      "source_file": "6a394301f858dda97b8a70d80f9c2d218342ef751f3139146924fec07cc78477.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "6ac13ab7f1fdf12b69d6a813f8b2655e51173bf49ee2896ba0ca7b79c05b1f01",
+      "retrieval_timestamp": "2026-07-23T15:32:02.265332+00:00",
+      "sha256": "fb7b4a1cc3f2e7b808d30e4e60eb4653c686375de95460c802bb4e0199dcf5f8",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "6ac13ab7f1fdf12b69d6a813f8b2655e51173bf49ee2896ba0ca7b79c05b1f01.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "6b537e26de9aa014ade0b9d3c2c40a536f67f8854f3d0240da2336f86584bd2e",
+      "retrieval_timestamp": "2026-07-23T15:55:27.990681+00:00",
+      "sha256": "434ab2a27dbeb3f340f8c01c4d08e6a3a354df665a91ddf41a09f503467b750e",
+      "sidecar_file": null,
+      "size_bytes": 1826,
+      "source_file": "6b537e26de9aa014ade0b9d3c2c40a536f67f8854f3d0240da2336f86584bd2e.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "6beb98a34a3c755a2c100a48182cad9fc548102a9ac6a2dcdf86b02a475a2390",
+      "retrieval_timestamp": "2026-07-23T15:20:38.375674+00:00",
+      "sha256": "3602442168dd98ee4dfd0e4d44a3111f45e594426402c7c2d0c2c09922692620",
+      "sidecar_file": null,
+      "size_bytes": 1813,
+      "source_file": "6beb98a34a3c755a2c100a48182cad9fc548102a9ac6a2dcdf86b02a475a2390.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "6d8b4e100af8bf3968681a42ce9985d07525eadc320522335d8bb218eed71f82",
+      "retrieval_timestamp": "2026-07-23T15:33:21.365288+00:00",
+      "sha256": "ee17ea97112cf41ab637c7320728da76aa696da21c3580375960b3ba6682373a",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "6d8b4e100af8bf3968681a42ce9985d07525eadc320522335d8bb218eed71f82.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "6e1bd5e3df1a9db5cd44b46ee59fd60fdb04f61c47ab4e58c939e5e86e1e328b",
+      "retrieval_timestamp": "2026-07-23T15:13:06.694320+00:00",
+      "sha256": "4c6b4f1b4a4876b9f3330c42fa79073524d790622c49a6558c2e533f1cd3f86b",
+      "sidecar_file": null,
+      "size_bytes": 1861,
+      "source_file": "6e1bd5e3df1a9db5cd44b46ee59fd60fdb04f61c47ab4e58c939e5e86e1e328b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "710763d1621295aeb48ee124a365e9b6f92bef0e5b3de8af73f44f5330f9859f",
+      "retrieval_timestamp": "2026-07-23T16:03:02.682951+00:00",
+      "sha256": "e48c20ee029f20133c34abe5959eca7acf8f92476d5dc0e57d8472d5e7fa069c",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "710763d1621295aeb48ee124a365e9b6f92bef0e5b3de8af73f44f5330f9859f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "7433552f520e7c605704fb57ad34e49edb29b706881125602f5bee006283cf4e",
+      "retrieval_timestamp": "2026-07-23T16:07:21.492617+00:00",
+      "sha256": "0cb3b5cc6649eabf87e5d5ff7f807b6992cc63e751cd25119ffa30f4a527fb78",
+      "sidecar_file": null,
+      "size_bytes": 1852,
+      "source_file": "7433552f520e7c605704fb57ad34e49edb29b706881125602f5bee006283cf4e.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "743cc08ac269623d8bf19b647a49a979951114e6eea957b9acd6ce7e91251dbd",
+      "retrieval_timestamp": "2026-07-23T16:02:47.997382+00:00",
+      "sha256": "9140d58782af80490d32c8e0db13e6326f8fc485e8e0cd51be7588982e74b295",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "743cc08ac269623d8bf19b647a49a979951114e6eea957b9acd6ce7e91251dbd.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "7690276acd0c780dcdcdd6f2c1b56f658864835f6343cc106c46f8fd586e2466",
+      "retrieval_timestamp": "2026-07-23T16:10:36.306164+00:00",
+      "sha256": "d6076b811d62910983c9d720e79e6a84f9dfa9d6c02d4fcc0cf2f171ec4b0bef",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "7690276acd0c780dcdcdd6f2c1b56f658864835f6343cc106c46f8fd586e2466.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "78f82a2c47a60358cbd93e34964ee6eadcd7b05069e550f89500296dbf671c04",
+      "retrieval_timestamp": "2026-07-23T15:59:36.841786+00:00",
+      "sha256": "337c5d6c863c1135d955710ac980fdde021865287fbe95abcfb35bb360b8be6e",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "78f82a2c47a60358cbd93e34964ee6eadcd7b05069e550f89500296dbf671c04.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "7acb8d44a627b08b5a8188ecddb88fecc0866c6a7930d12239e79f65693dc425",
+      "retrieval_timestamp": "2026-07-23T15:58:03.189611+00:00",
+      "sha256": "b1ada43c185ef5ac3df397a934fe41e58d56a533145af14b0e8054b32262504c",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "7acb8d44a627b08b5a8188ecddb88fecc0866c6a7930d12239e79f65693dc425.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "7af483e712fbdcecbbb6b11507948e13daf8767ee57e628cbb764ea909aff88e",
+      "retrieval_timestamp": "2026-07-23T15:49:56.977254+00:00",
+      "sha256": "88445d13f198600721fb462124fc04126b64cd99fc7903ec151d33bf2548b24e",
+      "sidecar_file": null,
+      "size_bytes": 1843,
+      "source_file": "7af483e712fbdcecbbb6b11507948e13daf8767ee57e628cbb764ea909aff88e.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "7c08bda56da52e32be9a361057adcdd20e9c99c1f314190493ffb0f9d5a83a90",
+      "retrieval_timestamp": "2026-07-23T16:00:48.357816+00:00",
+      "sha256": "65809d7dbdc92b10e7dac797aa25fa94459ab83c37d1d08ab470c01441b47108",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "7c08bda56da52e32be9a361057adcdd20e9c99c1f314190493ffb0f9d5a83a90.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "7d091723f2bad8cbb4928e0636129e100567645761fad5ccff4a228446f19f0a",
+      "retrieval_timestamp": "2026-07-23T15:44:32.920585+00:00",
+      "sha256": "b191853b0dd40c4a817fbdfed0ceb39c19400460274092b7f2fb2341033d87e1",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "7d091723f2bad8cbb4928e0636129e100567645761fad5ccff4a228446f19f0a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "7f3222c7d0346159edbbddd4e46f40a35861a32b7617db15a61531248127ac51",
+      "retrieval_timestamp": "2026-07-23T16:12:11.898364+00:00",
+      "sha256": "e688a9017f5c9969cd4972008529757c625ca2d117352de712cb0aa7766381a3",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "7f3222c7d0346159edbbddd4e46f40a35861a32b7617db15a61531248127ac51.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "7f55100735402ca9006abd149065a7be2f25a6811cc2a834831dfab9ba1873ac",
+      "retrieval_timestamp": "2026-07-23T15:44:45.619618+00:00",
+      "sha256": "1af34d8158f197801814e80e74829e8c60e35f0f931e1bf16a1478e4327216f8",
+      "sidecar_file": null,
+      "size_bytes": 1809,
+      "source_file": "7f55100735402ca9006abd149065a7be2f25a6811cc2a834831dfab9ba1873ac.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "83e30dbb77a08f52baa11e1ad6fca4d0460a243757bbf394cca06f3f18a028d6",
+      "retrieval_timestamp": "2026-07-23T15:26:44.122073+00:00",
+      "sha256": "e651d8536b87d3147deda09e52c01c1a28b6f847562c1c846dc7cc21199aedb8",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "83e30dbb77a08f52baa11e1ad6fca4d0460a243757bbf394cca06f3f18a028d6.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "83f8639b6a324f65732ae6ada214bdf2524bc62250084194ca307f564a8dfeed",
+      "retrieval_timestamp": "2026-07-23T16:12:22.246965+00:00",
+      "sha256": "5d8ed90f263c0050ac677506be0331d0a2f69a824dceeb1eea69b71d45d6a9e6",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "83f8639b6a324f65732ae6ada214bdf2524bc62250084194ca307f564a8dfeed.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "84463cb8c1c7bd509d03be8b8e0aa6a4627f59f3a880220f5cf8ee7a992f0c46",
+      "retrieval_timestamp": "2026-07-23T15:24:42.302628+00:00",
+      "sha256": "abad6f9a70aee125a1cb2989faed57924934fe562006f785386abf3d9822d137",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "84463cb8c1c7bd509d03be8b8e0aa6a4627f59f3a880220f5cf8ee7a992f0c46.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "84c45a133edbc4737b5a13b0729321e4fd7470af00f5cc86a0ff075883792561",
+      "retrieval_timestamp": "2026-07-23T15:47:53.692176+00:00",
+      "sha256": "a64606ed5fc562bc2d44ba85b90e636146820f58eef2b452a23e2388a2815448",
+      "sidecar_file": null,
+      "size_bytes": 1835,
+      "source_file": "84c45a133edbc4737b5a13b0729321e4fd7470af00f5cc86a0ff075883792561.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "84f7c193c1ceec71a425eea0f36f107801487ac674d455f648e5ba36c5bef678",
+      "retrieval_timestamp": "2026-07-23T15:13:16.320553+00:00",
+      "sha256": "25a4a1f7582dfbfc5ecb35caff2d3228f21d768ec336026bc5bf68250f97c9ab",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "84f7c193c1ceec71a425eea0f36f107801487ac674d455f648e5ba36c5bef678.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "853df1bbc4efa92419d2c1ae0669d39409266c281fb63d6ca2ccc80f6c46e04c",
+      "retrieval_timestamp": "2026-07-23T15:57:18.137450+00:00",
+      "sha256": "1c4e22bd4f7720938bdcd46e7e4814d0d74d8ce787d83664cc236c84d677a5ba",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "853df1bbc4efa92419d2c1ae0669d39409266c281fb63d6ca2ccc80f6c46e04c.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "88ae9a9ee22efd05c8b812278bad1ebe1f38d7de94a3adda3523abf7121361d1",
+      "retrieval_timestamp": "2026-07-23T15:23:13.353868+00:00",
+      "sha256": "b98e67ae46111a3556b723aca4b38966f22314f8797edee4c96a19a3724211d8",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "88ae9a9ee22efd05c8b812278bad1ebe1f38d7de94a3adda3523abf7121361d1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "8b8d29fbd7577465b00a459397fa08ed7b9941be37c474435308883ccbe3d85b",
+      "retrieval_timestamp": "2026-07-23T15:33:08.124307+00:00",
+      "sha256": "1a007fa8400275eb1d73b5de30ad9bef170576427ed187f0b2d756df1aaf5a6a",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "8b8d29fbd7577465b00a459397fa08ed7b9941be37c474435308883ccbe3d85b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "8d34bf43634d9b5c31311ca30f86469f7297de66994e004782e148e8526ccd5f",
+      "retrieval_timestamp": "2026-07-23T16:03:37.844566+00:00",
+      "sha256": "957cf983c12d05891edbd249ce2219d8118927b95c22d0f05179a654d763a56d",
+      "sidecar_file": null,
+      "size_bytes": 1860,
+      "source_file": "8d34bf43634d9b5c31311ca30f86469f7297de66994e004782e148e8526ccd5f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "8f038b1d6c87a534aefa1504692420a678bfc50fbd02ec47e9f216562e2043d0",
+      "retrieval_timestamp": "2026-07-23T15:11:43.414647+00:00",
+      "sha256": "053706bb3a09ccf17d0cb96d720da9cd8af9f067cdaffe975cc24fa6a99c6642",
+      "sidecar_file": null,
+      "size_bytes": 1800,
+      "source_file": "8f038b1d6c87a534aefa1504692420a678bfc50fbd02ec47e9f216562e2043d0.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "93d0edadd67ded4c741ef66ce0c82ca3ff39028aa06e3a8a98793c7e3f1e0c9f",
+      "retrieval_timestamp": "2026-07-23T16:11:21.593231+00:00",
+      "sha256": "9c29d22478be5060bf0e29b89f7c823a466e632e202de6c1b702a2d3a305cff9",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "93d0edadd67ded4c741ef66ce0c82ca3ff39028aa06e3a8a98793c7e3f1e0c9f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "93d8b1ec8c2ef6fdad06d43912835345521d708185786d1eee02cb83e6206ff9",
+      "retrieval_timestamp": "2026-07-23T15:22:32.617179+00:00",
+      "sha256": "37e5d74c81b3948b3de5a3dc80752cd9ccd6ffa257e55e2abeaf563f2614fac9",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "93d8b1ec8c2ef6fdad06d43912835345521d708185786d1eee02cb83e6206ff9.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "94f2ae7239a94f9bdce86c31f81378289bc6a70c300cf43d5300d4f20b0d5026",
+      "retrieval_timestamp": "2026-07-23T15:09:08.643093+00:00",
+      "sha256": "c36cd9fe27234717bee793754893c15f45e91228b9206ce6a621440f0010397e",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "94f2ae7239a94f9bdce86c31f81378289bc6a70c300cf43d5300d4f20b0d5026.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "96912a286ca2881074d365df75a0a161493c141e228fe984d0844cd955ce67a1",
+      "retrieval_timestamp": "2026-07-23T15:37:33.455319+00:00",
+      "sha256": "9b2a0a1e72cb5ed6ed22cce000a6cafe6fa31d5b012164d4bcce6f092859671b",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "96912a286ca2881074d365df75a0a161493c141e228fe984d0844cd955ce67a1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "96a5f63627cbedf2cb478c6436bdbdb4fc6c892242d1e4aabcf6a87bc35146a2",
+      "retrieval_timestamp": "2026-07-23T15:16:10.745161+00:00",
+      "sha256": "f209c248a938fef66dd1da83bc0ee95e49d663f64f080e8dd8d4e51db27ed8f8",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "96a5f63627cbedf2cb478c6436bdbdb4fc6c892242d1e4aabcf6a87bc35146a2.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "97dbbe2b2ce1b42c9b1222c558a05879f59ba42f78d200f2bb90e9e5f45f2d39",
+      "retrieval_timestamp": "2026-07-23T15:40:26.213008+00:00",
+      "sha256": "748cac2951b150bc6feef0e87899b12fb8ca8931ac77a605a375cc0c13f8bcdb",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "97dbbe2b2ce1b42c9b1222c558a05879f59ba42f78d200f2bb90e9e5f45f2d39.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "9864b8bd85356fe3fa13730fcde3f8acabcad78dec208e705dacc224493ed553",
+      "retrieval_timestamp": "2026-07-23T16:09:57.854664+00:00",
+      "sha256": "f27b6afa73670b4eb700392fbfa0a8b33179fdac0b948e9edad2d8fefe0058ce",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "9864b8bd85356fe3fa13730fcde3f8acabcad78dec208e705dacc224493ed553.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "997b193b73e77094fc05ad3e9ca02e2312779a0230fecd8f7baf8921007958ae",
+      "retrieval_timestamp": "2026-07-23T15:59:53.712626+00:00",
+      "sha256": "4e595cb0b01739c2237e647b1a665761e6b4cae5add9de03b0a5aaee1f2a7d30",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "997b193b73e77094fc05ad3e9ca02e2312779a0230fecd8f7baf8921007958ae.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "99a92e15ebb4ecaf842379a33b337f463cae625ea47a23b1fc9fe748007b27db",
+      "retrieval_timestamp": "2026-07-23T15:17:07.101618+00:00",
+      "sha256": "bf3b1f1a9e43f50f362d57adae3c537f8b300ab435136b8d38a6d345c498e79a",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "99a92e15ebb4ecaf842379a33b337f463cae625ea47a23b1fc9fe748007b27db.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "9aeb6c19b4a980bfca081183cf5e787ab3ab7f3b622d1b073c7c129b17ab4666",
+      "retrieval_timestamp": "2026-07-23T15:30:40.472885+00:00",
+      "sha256": "f553df1c26c7026c98c128cea68d33c6f040a0d333e11c00a9c99e70e161d337",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "9aeb6c19b4a980bfca081183cf5e787ab3ab7f3b622d1b073c7c129b17ab4666.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "9cf492df767605546614e902bb612ffacac3523f4ecc039165230162185b0c26",
+      "retrieval_timestamp": "2026-07-23T16:08:26.921610+00:00",
+      "sha256": "75b37c69087c44c9fd0c6bc584662aa4de410c04b9193b24341ba9ac69af5031",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "9cf492df767605546614e902bb612ffacac3523f4ecc039165230162185b0c26.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "9fd55a0d5017a3187f3a7c0a08d6a0d13157227bfaa888f575e56a2856c546bf",
+      "retrieval_timestamp": "2026-07-23T15:30:56.382850+00:00",
+      "sha256": "7f83d32038572c61f6f508b7d85300c029e2a6bab2dcfbb47248b86ed5b0ee71",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "9fd55a0d5017a3187f3a7c0a08d6a0d13157227bfaa888f575e56a2856c546bf.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "a084be913a4cc06841cc12f1d806f6809ab574fb358f8ea9e84a575a75f4e237",
+      "retrieval_timestamp": "2026-07-23T15:26:33.303370+00:00",
+      "sha256": "fd2bf1a4c1cfeadbee3d0f8cde4278a8b31b5ae23ccd448aa6f5ee190547bc7d",
+      "sidecar_file": null,
+      "size_bytes": 1860,
+      "source_file": "a084be913a4cc06841cc12f1d806f6809ab574fb358f8ea9e84a575a75f4e237.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "a2f3fef3d49c8e6730f0a7534a7d1f53399153befed30417ff7ee8828451c5fc",
+      "retrieval_timestamp": "2026-07-23T15:46:25.637331+00:00",
+      "sha256": "d57ab36c8bad1a2528039b67ceaa73ccdd129f12b98cd3ea3e53bf0dc0a36720",
+      "sidecar_file": null,
+      "size_bytes": 1800,
+      "source_file": "a2f3fef3d49c8e6730f0a7534a7d1f53399153befed30417ff7ee8828451c5fc.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "a49d6f58f235a099613c1d50137d1ca508c8cc571cb045832d76179d093f2d07",
+      "retrieval_timestamp": "2026-07-23T15:25:39.130282+00:00",
+      "sha256": "39c6f89af5022215b9762ab03b7e007059a21f3539ed0330e90874eccd98ab6e",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "a49d6f58f235a099613c1d50137d1ca508c8cc571cb045832d76179d093f2d07.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "a53a6243e31a883f0b1b2e499a317c7b7fd5964d0b4b82a52f37dcb6756b5d38",
+      "retrieval_timestamp": "2026-07-23T15:57:44.435755+00:00",
+      "sha256": "7f160bff7a2ed53ebde4d304a423e13df5444e02fcc8b3a957732ab3445eea4b",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "a53a6243e31a883f0b1b2e499a317c7b7fd5964d0b4b82a52f37dcb6756b5d38.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "a7800b7913705d000b6d7f8af84a39537da167819fb462afa6b2f47567da1ea5",
+      "retrieval_timestamp": "2026-07-23T15:09:52.472649+00:00",
+      "sha256": "706f793df4e10ba4b320ac940ea22624dffebe11b5fd79931f1740bb2bc6f35b",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "a7800b7913705d000b6d7f8af84a39537da167819fb462afa6b2f47567da1ea5.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "a7ecead0e789840871eb68255c4e597ac48937e9bd83910c80030d105577e161",
+      "retrieval_timestamp": "2026-07-23T15:49:27.538763+00:00",
+      "sha256": "fc92a876a4937362b669fa0a528f25a674cd625861673c482bb20280891374a8",
+      "sidecar_file": null,
+      "size_bytes": 1826,
+      "source_file": "a7ecead0e789840871eb68255c4e597ac48937e9bd83910c80030d105577e161.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "a8021e72c49f2c9d8c379d47ae526f943baeff40d790d13331c53d735fdfe018",
+      "retrieval_timestamp": "2026-07-23T15:51:31.447021+00:00",
+      "sha256": "cbb7154d276aabafd4de55d819a7db78475c53e1a0053d983041f2810091ae5e",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "a8021e72c49f2c9d8c379d47ae526f943baeff40d790d13331c53d735fdfe018.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "a90e02397c30bbbe02e08a0c7bce86455547aff4e83333e3eaacb0b6e7b20aa1",
+      "retrieval_timestamp": "2026-07-23T16:00:05.992695+00:00",
+      "sha256": "29e8b24e213875aad97a2a5e902c102f9c9fd3c0012bab5eb7394361558186ba",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "a90e02397c30bbbe02e08a0c7bce86455547aff4e83333e3eaacb0b6e7b20aa1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "aa92e53335af02781a1b5c2e449118cc4b5909df47779a45e55fa8801b619219",
+      "retrieval_timestamp": "2026-07-23T15:21:32.242018+00:00",
+      "sha256": "bc800662091ea94ba5e39628a19e7d68f7b381026f9777a6d78281afe7a8d3b0",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "aa92e53335af02781a1b5c2e449118cc4b5909df47779a45e55fa8801b619219.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "aafad9fa5769a4de4e340a032309667f22d4beb953c1c38c204d1a1ca6e21730",
+      "retrieval_timestamp": "2026-07-23T15:36:15.585331+00:00",
+      "sha256": "5937438c8bea2e9bda722d330934e55af440b64e6c2b707ccb4efb884328cb99",
+      "sidecar_file": null,
+      "size_bytes": 1809,
+      "source_file": "aafad9fa5769a4de4e340a032309667f22d4beb953c1c38c204d1a1ca6e21730.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "add748db72638952d1cbf5a6b44229d38fe3c161855deb6b820893afec35bcc1",
+      "retrieval_timestamp": "2026-07-23T15:41:49.335313+00:00",
+      "sha256": "bddc6bb95f457ebd610d3389434cf20307527fb2df92b8cfccff0317f2b96f0f",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "add748db72638952d1cbf5a6b44229d38fe3c161855deb6b820893afec35bcc1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "afa6280a569c4c476cf806229edd821c463f5b4f5010411fde2fd830e100dd8c",
+      "retrieval_timestamp": "2026-07-23T16:11:59.001388+00:00",
+      "sha256": "fb8d185f396b837470f7c42af267e829ed94e34d0dd503e57a73e75d27d4bbd4",
+      "sidecar_file": null,
+      "size_bytes": 1843,
+      "source_file": "afa6280a569c4c476cf806229edd821c463f5b4f5010411fde2fd830e100dd8c.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "b2828ab3e7bf5fff115bca6fd1b212151ed0fad3c978eb3f22f76c038bca71f1",
+      "retrieval_timestamp": "2026-07-23T15:40:41.280277+00:00",
+      "sha256": "6ce761ad6fad19146389ad36ff3287e88f5ea553ffef4f590a054c4d38ead0e2",
+      "sidecar_file": null,
+      "size_bytes": 1828,
+      "source_file": "b2828ab3e7bf5fff115bca6fd1b212151ed0fad3c978eb3f22f76c038bca71f1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "b2ca01ad777ad4e1f0ff113b8a0d9a1ff629179b39118180d714386bb89ce0f1",
+      "retrieval_timestamp": "2026-07-23T15:48:19.521352+00:00",
+      "sha256": "f484a33ea9fe1d7e772e8c80e22f4220c7006a7346b4549da120f8c8e4bed461",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "b2ca01ad777ad4e1f0ff113b8a0d9a1ff629179b39118180d714386bb89ce0f1.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "b2fdd35567bb4f13e6c5aa4e10b9be7b260c60ce0a66e68a7de73d4d55fdaa66",
+      "retrieval_timestamp": "2026-07-23T15:38:32.536771+00:00",
+      "sha256": "d4fb7963f7b22fc3c960d3978254a72e31b7c8315c2538922422183bad0b5c9a",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "b2fdd35567bb4f13e6c5aa4e10b9be7b260c60ce0a66e68a7de73d4d55fdaa66.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "b3dad286b89f0adb9a9608b0206727e282fe7835098d69eadaf5ffd61ea931de",
+      "retrieval_timestamp": "2026-07-23T15:56:35.980659+00:00",
+      "sha256": "5e0c265c333f6e13d042cd9a6c1eea6f5591bc60d9b467aec55846335a88af9d",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "b3dad286b89f0adb9a9608b0206727e282fe7835098d69eadaf5ffd61ea931de.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "b42c68ce7e6e5db973f51ae20743e68017abc4aa72ae0595dc18a3af39f8b265",
+      "retrieval_timestamp": "2026-07-23T16:04:19.211772+00:00",
+      "sha256": "b35054b351fb011d10befaa524037553260c3bf078e79ff9ff0f44e20fbca136",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "b42c68ce7e6e5db973f51ae20743e68017abc4aa72ae0595dc18a3af39f8b265.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "b543b856f0356c32ec3d31ed48a9acfbab557d23e72343fc0d74cef5ac9fdbf0",
+      "retrieval_timestamp": "2026-07-23T15:20:18.659251+00:00",
+      "sha256": "229066603c09b1b7f18e93312fb9a9cc153153d68e6528d8f0c660f2f865c2fc",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "b543b856f0356c32ec3d31ed48a9acfbab557d23e72343fc0d74cef5ac9fdbf0.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "bbf33af9e3310313759c8ccbb7a5b6c7d41bec4a5e8d1e7d98bbef1f02049931",
+      "retrieval_timestamp": "2026-07-23T15:42:42.882272+00:00",
+      "sha256": "f41ca8999a890b259a1c0679ff1ca872fa89d465cd749f689f266c6db95f9075",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "bbf33af9e3310313759c8ccbb7a5b6c7d41bec4a5e8d1e7d98bbef1f02049931.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "bc9497a1abfa25d52c788357c381875e734362fe9c00aa643965298f2227422d",
+      "retrieval_timestamp": "2026-07-23T15:17:25.694743+00:00",
+      "sha256": "1502be4c9df80d5cb8db137c52fe24d66f4bb5376e6a0f70aaf0ddbf0cb61c70",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "bc9497a1abfa25d52c788357c381875e734362fe9c00aa643965298f2227422d.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "bceb677dfd66e94b9020fd0b35ee7f90b2e58a77b43ab2ce4f125544a2150e42",
+      "retrieval_timestamp": "2026-07-23T15:46:04.923467+00:00",
+      "sha256": "ffba9b12f05e914b6887a219cd4a2c8fc96abc8a5ee6bd1b339849bc7f5a0418",
+      "sidecar_file": null,
+      "size_bytes": 1840,
+      "source_file": "bceb677dfd66e94b9020fd0b35ee7f90b2e58a77b43ab2ce4f125544a2150e42.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "bdba995762028fa0c7355302b8409fa5dc83e26a5923c65ec4edd0b7176a04a3",
+      "retrieval_timestamp": "2026-07-23T15:41:12.192398+00:00",
+      "sha256": "92d13dd1154eddadece9456fddfaed74a41d678f2970c6fcb5d092713e25d69f",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "bdba995762028fa0c7355302b8409fa5dc83e26a5923c65ec4edd0b7176a04a3.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "be00c732dd44e1ba744c96308b8618b0be4bc334ac9135321f6028bc5a888e93",
+      "retrieval_timestamp": "2026-07-23T15:50:57.832004+00:00",
+      "sha256": "c9cee4b999e855580fbfd13695db2155d0f99254e2ddaba42b7c09cb4e36d532",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "be00c732dd44e1ba744c96308b8618b0be4bc334ac9135321f6028bc5a888e93.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c01a42b24e829200ac31d97e1a6a64ad52c4223db7c77ce64a7c47331a2f725d",
+      "retrieval_timestamp": "2026-07-23T15:54:53.233136+00:00",
+      "sha256": "ae1c9a81d117fa80b42e4be8e2c55f3c73c257957d8972a1e183955b0615010f",
+      "sidecar_file": null,
+      "size_bytes": 1800,
+      "source_file": "c01a42b24e829200ac31d97e1a6a64ad52c4223db7c77ce64a7c47331a2f725d.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c13cce5a514fe7fcc7d71a3e165ab5106e425e111541743f4ce9dd22cc132666",
+      "retrieval_timestamp": "2026-07-23T15:24:55.481479+00:00",
+      "sha256": "ed8108a726321d659bd6406c3e9f2337b558184ec421617bdbdcae89aaa0b662",
+      "sidecar_file": null,
+      "size_bytes": 1807,
+      "source_file": "c13cce5a514fe7fcc7d71a3e165ab5106e425e111541743f4ce9dd22cc132666.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c18235df3ca1a5ac050eab659ab8b9455650c2ee8ac504bd740a3079218abe0d",
+      "retrieval_timestamp": "2026-07-23T16:03:48.088684+00:00",
+      "sha256": "6ca0a7fd6da9f0fbbccf3d7be6e356fe0d778bf6260430225b78bd385430d839",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "c18235df3ca1a5ac050eab659ab8b9455650c2ee8ac504bd740a3079218abe0d.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c3a4fee94e3afaaa6ea335a161dc044924a71386b1930fab72254a68261c76f4",
+      "retrieval_timestamp": "2026-07-23T15:43:29.358076+00:00",
+      "sha256": "5b50c6b2cfe4775c76e27fc248740f71cc2148baa469e5781d5f76a6b3ec3f6b",
+      "sidecar_file": null,
+      "size_bytes": 1813,
+      "source_file": "c3a4fee94e3afaaa6ea335a161dc044924a71386b1930fab72254a68261c76f4.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c3e6f4c0922eb31e1e4728fac32d120d8e37fa87e7d673e22d957cd547bbd8a8",
+      "retrieval_timestamp": "2026-07-23T15:24:30.962695+00:00",
+      "sha256": "721d641cc64096caaab83f048d7f48f1ab2ce5ee93bdc13ce1fbbe0c76c0821b",
+      "sidecar_file": null,
+      "size_bytes": 1801,
+      "source_file": "c3e6f4c0922eb31e1e4728fac32d120d8e37fa87e7d673e22d957cd547bbd8a8.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c42f491ec9ca94411d0661d0be1863cfd75b668da9ac02842d860ba8dc6286fd",
+      "retrieval_timestamp": "2026-07-23T16:01:34.063479+00:00",
+      "sha256": "287bdde8c50b1d93ecac51f4de1a4604dcce8fed72f9f3b061dc645e66fa9393",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "c42f491ec9ca94411d0661d0be1863cfd75b668da9ac02842d860ba8dc6286fd.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c4359d4b0716019482914d54ffea98b8d54cea3acf382eca652af6c59b030653",
+      "retrieval_timestamp": "2026-07-23T15:37:46.835033+00:00",
+      "sha256": "a7462fb0e1defef7a93a527b7e89e91f5700db9c871aa72ab4eb5d6c6b7b29c7",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "c4359d4b0716019482914d54ffea98b8d54cea3acf382eca652af6c59b030653.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c4dba90e2e13094cdc0adf53d3112b9257eae4187ce675a21c1a9624f07e3600",
+      "retrieval_timestamp": "2026-07-23T15:50:45.776088+00:00",
+      "sha256": "6c760a746ee4d4fd83ebf9310681bf018b78acd6472cf41ee59beff438d31ead",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "c4dba90e2e13094cdc0adf53d3112b9257eae4187ce675a21c1a9624f07e3600.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c86fe38dce3227a0bd3c14149b789ed529beb02b03a1958855d97c6a9bd1fd66",
+      "retrieval_timestamp": "2026-07-23T16:10:46.601838+00:00",
+      "sha256": "ae9f808f460a602d275f4cf135fb3d2a3b8661b07e9008aa8d2b4607c5684c9c",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "c86fe38dce3227a0bd3c14149b789ed529beb02b03a1958855d97c6a9bd1fd66.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c904e47878d14c6962eb57d4ed98f1e4039b3645b9b3ac0b60e0eaee405b67a9",
+      "retrieval_timestamp": "2026-07-23T15:38:59.332840+00:00",
+      "sha256": "1969592977942d5da96da7b1e11e60d53cac63be263dd6c225a69bd99074e013",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "c904e47878d14c6962eb57d4ed98f1e4039b3645b9b3ac0b60e0eaee405b67a9.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c908b2c8791d205335da712c4013db2fb1582544f6dff84afee735aff3921efa",
+      "retrieval_timestamp": "2026-07-23T15:47:40.434691+00:00",
+      "sha256": "5e9151ee48ac96a5af6c44ba630a9684e9194eac5bce70563fc1590844ccd88e",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "c908b2c8791d205335da712c4013db2fb1582544f6dff84afee735aff3921efa.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "c9fbf8ca5847bfb4f49d4db1082340bdc17b95393c357b7f5deefaf38cf2bdb7",
+      "retrieval_timestamp": "2026-07-23T15:48:55.983975+00:00",
+      "sha256": "1d233d510e5a65c8a86a2d74d2b462f4253bbc766b340447d944b2a4eb089f3c",
+      "sidecar_file": null,
+      "size_bytes": 1851,
+      "source_file": "c9fbf8ca5847bfb4f49d4db1082340bdc17b95393c357b7f5deefaf38cf2bdb7.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "cb1a4edf9a9203e453db7f19b81d434f24e1a5bc301238a658c65c8c8381f496",
+      "retrieval_timestamp": "2026-07-23T15:36:26.843519+00:00",
+      "sha256": "82c87bc059ea95a2bde8f81a1167942c20942d00467b7fd2a12cf53bacaa45d2",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "cb1a4edf9a9203e453db7f19b81d434f24e1a5bc301238a658c65c8c8381f496.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "cb7d14063fe2b56ec4cdc9fc6705bad7343dfa4c496cd62118e06aaad9919b9a",
+      "retrieval_timestamp": "2026-07-23T15:18:11.569209+00:00",
+      "sha256": "5989c7777b22b41d9b9c468ba0356c0a9fc34e5a0aea0265a48be58a524d4ff7",
+      "sidecar_file": null,
+      "size_bytes": 1835,
+      "source_file": "cb7d14063fe2b56ec4cdc9fc6705bad7343dfa4c496cd62118e06aaad9919b9a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "cc79529efdb685336b161be9c4043308c358f96d54bbde6b8c9d372ce0256da5",
+      "retrieval_timestamp": "2026-07-23T15:13:27.219132+00:00",
+      "sha256": "901d14e799af18a382e4a10f30f615f222c28fbe3da672df23936721442ecbef",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "cc79529efdb685336b161be9c4043308c358f96d54bbde6b8c9d372ce0256da5.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "ceaa2ee0519c612047ae99de95df00ec78255fb3a437ccd958df2af1e261dfd9",
+      "retrieval_timestamp": "2026-07-23T15:52:43.858822+00:00",
+      "sha256": "cae9ed3e4261e58e630a43bf5ecb2620a281eb5646e22c3060d1311a5bc80611",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "ceaa2ee0519c612047ae99de95df00ec78255fb3a437ccd958df2af1e261dfd9.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "ceea7bbf95be49869b2c8c9e796fc43d56f090ef4d4796fba891fcaf98623b51",
+      "retrieval_timestamp": "2026-07-23T15:38:45.791730+00:00",
+      "sha256": "83dde1172accd1af2bc04d7686c513404ac38269768e17b46093e85beab6ebcb",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "ceea7bbf95be49869b2c8c9e796fc43d56f090ef4d4796fba891fcaf98623b51.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "d5c201a2b6c41d92f0c0fc0145cec52cb18581f86d199a4c564b8b20f4f9e6fc",
+      "retrieval_timestamp": "2026-07-23T15:15:23.069901+00:00",
+      "sha256": "0c33064fcc035488e6194d19a73e4871d6f9fdfc129f19922202d070868eb098",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "d5c201a2b6c41d92f0c0fc0145cec52cb18581f86d199a4c564b8b20f4f9e6fc.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351",
+      "retrieval_timestamp": "2026-07-23T15:48:44.753164+00:00",
+      "sha256": "9fa16d0342b1097039dc77db60d0ace1c343909e919f47947c298e350ad73d22",
+      "sidecar_file": null,
+      "size_bytes": 1805,
+      "source_file": "d7825d9b97515a3207c965a659da8883e2f3663ea0dbd5402565a7b9febf5351.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "d7f883f87df17bf711df06b2fa59638178650a6caeb61ca6d0ca38a8663df251",
+      "retrieval_timestamp": "2026-07-23T16:09:03.497986+00:00",
+      "sha256": "60e2a8d8abd1615ce138d7b6dd48b163767c405479857bb8b3be74572f913f69",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "d7f883f87df17bf711df06b2fa59638178650a6caeb61ca6d0ca38a8663df251.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "dcb56c6f5a5cc832f667cef456ee0fac637d52c56859a29718a4ed8645fde905",
+      "retrieval_timestamp": "2026-07-23T16:08:44.580810+00:00",
+      "sha256": "1230567f0f1bda01ea07189063826f3c21a2cfe0d24a7cff2d88e6a1d262bb94",
+      "sidecar_file": null,
+      "size_bytes": 1861,
+      "source_file": "dcb56c6f5a5cc832f667cef456ee0fac637d52c56859a29718a4ed8645fde905.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "df311b690110862b1896cda3080c6111cc51abc76b65734befa7d0b74a4df7d2",
+      "retrieval_timestamp": "2026-07-23T15:10:11.617106+00:00",
+      "sha256": "37f129b83b713ff49381290d1d567cc5b14d3ac2cb058363c2adb465aa2a2b82",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "df311b690110862b1896cda3080c6111cc51abc76b65734befa7d0b74a4df7d2.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "df66ab902652c9cb88889a2887cdfa36f9923602a7e7a7003f221bc64966b44b",
+      "retrieval_timestamp": "2026-07-23T15:29:01.470275+00:00",
+      "sha256": "5ef4cc386c476c3fc80dc8b7ae258920ecdf72af63257d48cf0f20898513dfe8",
+      "sidecar_file": null,
+      "size_bytes": 1810,
+      "source_file": "df66ab902652c9cb88889a2887cdfa36f9923602a7e7a7003f221bc64966b44b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "e292030d44886d52a6cf589ea94d858d9a87ef494ba322e09c5b17e0aeff4aa6",
+      "retrieval_timestamp": "2026-07-23T15:58:30.597882+00:00",
+      "sha256": "e25d997932b8bf805d7bbc18fac0fbb3d83f2660bc63aaf09f048ebd93a9153d",
+      "sidecar_file": null,
+      "size_bytes": 1818,
+      "source_file": "e292030d44886d52a6cf589ea94d858d9a87ef494ba322e09c5b17e0aeff4aa6.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "e2cc50507fe37ba5889f77cd3692447f890a3dccd0789a42d1d4e56be66391a9",
+      "retrieval_timestamp": "2026-07-23T15:21:20.110189+00:00",
+      "sha256": "9c711c582abe0155c5eae1ab7b65d85248c8697550ee9c728ef432533a3454d2",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "e2cc50507fe37ba5889f77cd3692447f890a3dccd0789a42d1d4e56be66391a9.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "e5b5dff233432367a9e149e5bbf353f65e31925cd1a0971a3269515306204067",
+      "retrieval_timestamp": "2026-07-23T15:53:10.818049+00:00",
+      "sha256": "70d4f26947cd0da43b8448ca1f393f7bfe62740f877b67dc0fbd2fff2bf45b6a",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "e5b5dff233432367a9e149e5bbf353f65e31925cd1a0971a3269515306204067.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "e703f2b0c699c3493ec4823a64c4bebbd7d885dd7a60c69c86b8d29ae765154c",
+      "retrieval_timestamp": "2026-07-23T15:52:31.466918+00:00",
+      "sha256": "57d466872a84434a83b619a66d01c9d41cec711670425c4ff1e44ac9a64b098e",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "e703f2b0c699c3493ec4823a64c4bebbd7d885dd7a60c69c86b8d29ae765154c.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "e81ef256c30bd9f140ab4f13605ff515609926ae590caf04fd909bc1038e995a",
+      "retrieval_timestamp": "2026-07-23T15:31:19.073098+00:00",
+      "sha256": "9f488b5b09372223a0f442cedc1d4a30e421a64d33e829e168337e01075b04f0",
+      "sidecar_file": null,
+      "size_bytes": 1817,
+      "source_file": "e81ef256c30bd9f140ab4f13605ff515609926ae590caf04fd909bc1038e995a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "e8a0c15b06e6b671a5b222d53dd53dd38af218b2533b0770dc4fe63d05c760ad",
+      "retrieval_timestamp": "2026-07-23T15:29:10.236186+00:00",
+      "sha256": "5067f2d3765d7c57eee72305d5882dd8a3860bce43879142615c73612567891b",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "e8a0c15b06e6b671a5b222d53dd53dd38af218b2533b0770dc4fe63d05c760ad.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "e8a1d1fc2711e4801e401ba64458e560e3ede05dddb724b75c2236bafa531535",
+      "retrieval_timestamp": "2026-07-23T15:54:16.960299+00:00",
+      "sha256": "56b53bd497ac836fd2fe21d278ab3f7ab87ff4531bc1f5c089c1a13c0823fa3d",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "e8a1d1fc2711e4801e401ba64458e560e3ede05dddb724b75c2236bafa531535.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "e9dffa898ee05c9cb406b9d962acdbe6cd2bdc28bdaa2b2d7a1a20f71c50d64f",
+      "retrieval_timestamp": "2026-07-23T15:48:32.755976+00:00",
+      "sha256": "4244e56528b0ebb9d97029b594dcaddeab15b1502584d3b67fe0f6f57818a684",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "e9dffa898ee05c9cb406b9d962acdbe6cd2bdc28bdaa2b2d7a1a20f71c50d64f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "ea369499b97c7cfa1e11a905d8e7f2096a18f58dc1defc815210e6f43456c113",
+      "retrieval_timestamp": "2026-07-23T16:11:03.320317+00:00",
+      "sha256": "5acebeca3f1744bf28a86bd52e6d35209afd514f1f80620af94dc508450027e7",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "ea369499b97c7cfa1e11a905d8e7f2096a18f58dc1defc815210e6f43456c113.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "eb2ae07d8ad42148ca47aaa3691b760c77dc89530ec3d5748f61b4623ee4c57b",
+      "retrieval_timestamp": "2026-07-23T15:56:47.813415+00:00",
+      "sha256": "23667cdb14a1338faeeb810a2c4097129b03d711473943617f35e0de8714a024",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "eb2ae07d8ad42148ca47aaa3691b760c77dc89530ec3d5748f61b4623ee4c57b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "eb8b03c2410ec754150f711ce7312d4e1a22f9f79324435fb1350677bec79242",
+      "retrieval_timestamp": "2026-07-23T15:12:33.465435+00:00",
+      "sha256": "fd3acf69e69dddca76d50777539ebb6a2087651a7064e61d533215dddbf29468",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "eb8b03c2410ec754150f711ce7312d4e1a22f9f79324435fb1350677bec79242.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "ec5af522ef6c862d0bf49ee87ac2bf1be34cf92ddd00ab4b44c60165b30c6e2b",
+      "retrieval_timestamp": "2026-07-23T16:07:58.819288+00:00",
+      "sha256": "95f694535832d29872c4dc3b142978a6175cbeb56794d7a2fda7789bcf1cee6d",
+      "sidecar_file": null,
+      "size_bytes": 1806,
+      "source_file": "ec5af522ef6c862d0bf49ee87ac2bf1be34cf92ddd00ab4b44c60165b30c6e2b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "ed39340b5bc68a350448ad8644e645a6530b456abb8e7f8f1a80c2156ccebe5e",
+      "retrieval_timestamp": "2026-07-23T15:40:55.976757+00:00",
+      "sha256": "3c0bdb69fc42427e18dcd3fdd2e8cee1e9d1b3ef304fe4d27bfac3f0e71be81c",
+      "sidecar_file": null,
+      "size_bytes": 1800,
+      "source_file": "ed39340b5bc68a350448ad8644e645a6530b456abb8e7f8f1a80c2156ccebe5e.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "ed83b0f1152a343a59c99b1250e16a466b489b2e9af29fa5cd99fb1a8f19d0be",
+      "retrieval_timestamp": "2026-07-23T15:43:47.003247+00:00",
+      "sha256": "ec87c29815c4dc74b8eff34cde131ceb2617b9cb912308060ddfc829b4bef9cd",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "ed83b0f1152a343a59c99b1250e16a466b489b2e9af29fa5cd99fb1a8f19d0be.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "ee9267704017df65d654aedb966834ac88fc2900bd768043105ba7e579e0eed8",
+      "retrieval_timestamp": "2026-07-23T15:16:01.938198+00:00",
+      "sha256": "53a00a4bb8cfadf2c731cd2de02721153da8e0b326024df1c8257884c017d166",
+      "sidecar_file": null,
+      "size_bytes": 1813,
+      "source_file": "ee9267704017df65d654aedb966834ac88fc2900bd768043105ba7e579e0eed8.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "f16ed04d87f5df83fb43650823a60b12745d44f6d67c5f6d49a932e605ff8d39",
+      "retrieval_timestamp": "2026-07-23T16:03:20.558960+00:00",
+      "sha256": "93b8fc9d0241bd47f74ab358f20ee95f6db4fe3162d98776983192fc114948f0",
+      "sidecar_file": null,
+      "size_bytes": 1804,
+      "source_file": "f16ed04d87f5df83fb43650823a60b12745d44f6d67c5f6d49a932e605ff8d39.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "f307d7ee2d3532c86013053ac9f9f9b165ce142a9e37b3ebce83bdc526366f4b",
+      "retrieval_timestamp": "2026-07-23T15:54:34.732770+00:00",
+      "sha256": "ac22938b85f062a258dfdc9e23b75ce1394733e55e7c5cf2ad5ee35ae711fdcb",
+      "sidecar_file": null,
+      "size_bytes": 1862,
+      "source_file": "f307d7ee2d3532c86013053ac9f9f9b165ce142a9e37b3ebce83bdc526366f4b.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "f7c963c3c49be38bb418152bfdc20b3181df92e7bd3be9f3f79f8ab7c3579fb9",
+      "retrieval_timestamp": "2026-07-23T15:43:12.049869+00:00",
+      "sha256": "87fa7d486f399bbc06889547bc813bf130761cf55f06f699f91cb3df8d36e03f",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "f7c963c3c49be38bb418152bfdc20b3181df92e7bd3be9f3f79f8ab7c3579fb9.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "f86f59b2ad807d5b469c7bdef40757aec959ab8c5df033062cec2c6fcb84008f",
+      "retrieval_timestamp": "2026-07-23T16:06:08.532181+00:00",
+      "sha256": "1da38aa64477dc308399ceef4c3778a7368fa1b28ffbf26515b63492fa9948d8",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "f86f59b2ad807d5b469c7bdef40757aec959ab8c5df033062cec2c6fcb84008f.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "f96cb2fca0b5f5f59121ea48e59efc7d25db37dd5d67316d786a8c9d2583eecc",
+      "retrieval_timestamp": "2026-07-23T15:07:45.355424+00:00",
+      "sha256": "e418f965a22205e47b63e678aa32e579750637372cfab821009b3c9569c9fdd4",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "f96cb2fca0b5f5f59121ea48e59efc7d25db37dd5d67316d786a8c9d2583eecc.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "fad0e8b386998c6f5be48502bc45587b38d831fcd6f38756c604141676288e9a",
+      "retrieval_timestamp": "2026-07-23T15:29:57.960231+00:00",
+      "sha256": "a621e8a2afd37dd0f2debfd2dd61883c78e6590be76c2f0d8d89f7ba7f51e465",
+      "sidecar_file": null,
+      "size_bytes": 1799,
+      "source_file": "fad0e8b386998c6f5be48502bc45587b38d831fcd6f38756c604141676288e9a.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "fbda4516752afe14b288639f33225087d56d624d9a9679c3853e7ef4af2bdae2",
+      "retrieval_timestamp": "2026-07-23T16:12:40.275466+00:00",
+      "sha256": "7d1deb4abcb6083a1d09fb0aefa387ce22d0262357f90aedd58665be57358921",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "fbda4516752afe14b288639f33225087d56d624d9a9679c3853e7ef4af2bdae2.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "fde1f841de16138c95390a4e0d242236dd49ef7add0ec14385baa6711e8225fe",
+      "retrieval_timestamp": "2026-07-23T15:44:57.548286+00:00",
+      "sha256": "496d8a9b8d375b75f0bb204125ce244f0515d8fc3facb014fe39c85a9ee7fa99",
+      "sidecar_file": null,
+      "size_bytes": 1825,
+      "source_file": "fde1f841de16138c95390a4e0d242236dd49ef7add0ec14385baa6711e8225fe.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "fedf5804cd04c1da28f08effb4a58d7d9a284fb16f652911c0e2e791da82a423",
+      "retrieval_timestamp": "2026-07-23T15:55:09.744531+00:00",
+      "sha256": "9561f17d88322b7be00e794871cd4762bed10335b6469ea933735eb2d9f56b18",
+      "sidecar_file": null,
+      "size_bytes": 1808,
+      "source_file": "fedf5804cd04c1da28f08effb4a58d7d9a284fb16f652911c0e2e791da82a423.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "fffc5f20b56686dd0faad630546ae5dbfde703d2fc0c44b86922da9555e6f5c6",
+      "retrieval_timestamp": "2026-07-23T15:09:34.602855+00:00",
+      "sha256": "fe8fa191e5b1d219f1a24d6fc89351485104aae164272e7594ad2faae3be7717",
+      "sidecar_file": null,
+      "size_bytes": 1803,
+      "source_file": "fffc5f20b56686dd0faad630546ae5dbfde703d2fc0c44b86922da9555e6f5c6.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "trends_request_plan",
+      "retrieval_timestamp": "2026-07-24T16:35:10.346517+00:00",
+      "sha256": "349e197368d758d27af1f7717ee7f90e906471b1410e202c8b75e712b8231aa6",
+      "sidecar_file": null,
+      "size_bytes": 42100,
+      "source_file": "trends_request_plan.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "trends_request_plan_updated",
+      "retrieval_timestamp": "2026-07-23T16:12:40.307032+00:00",
+      "sha256": "8edb07524f029bb14105bff279a9fb863652cd6bf13a4dd5976e2ba9e0475b16",
+      "sidecar_file": null,
+      "size_bytes": 157738,
+      "source_file": "trends_request_plan_updated.csv"
+    },
+    {
+      "acquisition_backend": "pytrends",
+      "repeat_id": "",
+      "request_id": "trends_run_log",
+      "retrieval_timestamp": "2026-07-23T16:12:40.281100+00:00",
+      "sha256": "eac5ee01858b06c58048c3b9c91d6c10f278b02cf9fff35b263695afdb3c26f9",
+      "sidecar_file": null,
+      "size_bytes": 60108,
+      "source_file": "trends_run_log.csv"
+    }
+  ],
+  "inventory_sha256": "c875b7490d46b6354cb8aef391c4bb0be1c0dd723e330e23ab6edf2ed392ca9b",
+  "package_version": "0.1.0",
+  "request_count": 203,
+  "root": "C:\\Work\\Data\\GeoDemand\\trends\\raws"
+}
