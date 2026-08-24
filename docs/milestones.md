@@ -10,6 +10,7 @@
 | 1.0A | Schema- and lineage-validated integration of request, episode, repeat, and phase metrics |
 | 1.0B | Deterministic descriptive signal summaries and paired-repeat diagnostics |
 | 1.0C-2 | Nested execution selection, matched-pair lineage, and planning-only dry runs |
+| 1.0C-3 | Dual-backend acquisition provenance, PyTrends export, and acquisition reproducibility audit |
 
 Milestone 1.0C-2 produces nested 10/20 episode selections, uses one rank-1 control per
 episode, supports exact panel filtering and two planned repeats, and scopes export status to

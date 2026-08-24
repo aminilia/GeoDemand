@@ -61,6 +61,11 @@ from geodemand.trends import (
 from geodemand.trends import (
     write_quicklooks as write_trends_quicklooks,
 )
+from geodemand.trends_acquisition import (
+    compare_acquisition_reproducibility,
+    export_pytrends,
+    inventory_acquisition_stores,
+)
 from geodemand.trends_browser import (
     BrowserName,
     ExportOptions,
@@ -605,6 +610,37 @@ def trends_export_browser_command(  # noqa: PLR0913
         mini_pilot=mini_pilot,
     )
     _run_trends(lambda: export_browser(plan_path, output_root, options))
+
+
+@trends_app.command("export-pytrends")
+def trends_export_pytrends_command(  # noqa: PLR0913
+    plan_path: Annotated[Path, typer.Option("--plan", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+    request_ids: Annotated[list[str] | None, typer.Option("--request-id")] = None,
+) -> None:
+    """Export Google Trends data through the PyTrends backend into the raw acquisition store."""
+    _run_trends(lambda: export_pytrends(plan_path, output_root, request_ids=set(request_ids or [])))
+
+
+@trends_app.command("acquisition-inventory")
+def trends_acquisition_inventory_command(
+    data_root: Annotated[Path, typer.Option("--data-root", exists=True, file_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Inventory the frozen manual and PyTrends acquisition stores without modifying them."""
+    _run_trends(lambda: inventory_acquisition_stores(data_root, output_root))
+
+
+@trends_app.command("acquisition-reproducibility")
+def trends_acquisition_reproducibility_command(
+    manual_root: Annotated[Path, typer.Option("--manual-root", exists=True, file_okay=False)],
+    pytrends_root: Annotated[Path, typer.Option("--pytrends-root", exists=True, file_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Compare paired manual and PyTrends exports with deterministic reproducibility summaries."""
+    _run_trends(
+        lambda: compare_acquisition_reproducibility(manual_root, pytrends_root, output_root)
+    )
 
 
 @trends_app.command("export-status")

@@ -23,6 +23,7 @@ from geodemand import __version__
 Backend = Literal[
     "official_api",
     "manual_csv",
+    "pytrends",
     "classic_web_experimental",
     "playwright_export_assistant",
 ]
@@ -237,8 +238,8 @@ class TrendsSidecar(BaseModel):
         }
         if len(lengths) != 1:
             raise ValueError("Concept, label, query-type, and family lists must align.")
-        if self.backend not in {"manual_csv", "playwright_export_assistant"}:
-            raise ValueError("CSV imports require a manual or browser-export backend.")
+        if self.backend not in {"manual_csv", "pytrends", "playwright_export_assistant"}:
+            raise ValueError("CSV imports require a manual, pytrends, or browser-export backend.")
         if self.end_date < self.start_date:
             raise ValueError("Sidecar end_date precedes start_date.")
         return self

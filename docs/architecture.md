@@ -69,6 +69,12 @@ request lineage, export attempt metadata, terminology versions, and repeat IDs. 
 metrics are calculated within a request series; the workflow does not subtract raw
 0-to-100 values across geographies.
 
+GeoDemand now distinguishes two acquisition backends at the storage boundary:
+manual Explore CSVs in `raw/`, with sidecars that capture explicit request lineage,
+and PyTrends-derived exports in `raws/`, which carry their own acquisition manifests
+and reproducibility diagnostics. The backends are intentionally separate so the raw
+archives can be inventoried and compared without merging their provenance.
+
 Repeat-aware concurrence aggregation is deterministic and separates scientific result
 metrics from volatile execution metadata. National and matched-control comparisons are
 used as observational diagnostics, not causal labels.

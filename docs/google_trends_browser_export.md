@@ -1,9 +1,10 @@
 # Controlled Google Trends Browser Export
 
 The `playwright_export_assistant` backend is an experimental operator aid for
-official Google Trends Explore CSV exports. It is not an official API, does not
-use `pytrends`, and does not replace the canonical manual CSV importer. The
-official limited-access API remains preferred when access is available.
+official Google Trends Explore CSV exports. GeoDemand now also exposes a
+separate `pytrends` acquisition backend for deterministic reproduction and
+inventory work. Neither backend replaces the canonical manual CSV importer.
+The official limited-access API remains preferred when access is available.
 
 ## Safety boundary
 

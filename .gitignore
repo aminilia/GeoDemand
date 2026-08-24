@@ -17,6 +17,9 @@ Thumbs.db
 *.log
 *.zip
 
+# Browser automation profiles
+.profiles/
+
 # Research data and derived local outputs
 data/raw/
 data/interim/
@@ -35,6 +38,16 @@ trends/
 *.h5
 *.hdf5
 browser-profile*/
+*.zip
+
+
+.env
+.env.*
+*.log
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # Local environment
 .env

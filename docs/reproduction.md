@@ -54,6 +54,9 @@ geodemand trends pilot-sample --catalog-dir PATH --output-root PATH --rules conf
 geodemand trends map-geographies --pilot PATH --output-root PATH
 geodemand trends plan --pilot PATH --geography PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH --include-national
 geodemand trends import-csv --csv PATH --sidecar PATH --output-root PATH
+geodemand trends export-pytrends --plan PATH --output-root PATH
+geodemand trends acquisition-inventory --data-root PATH --output-root PATH
+geodemand trends acquisition-reproducibility --manual-root PATH --pytrends-root PATH --output-root PATH
 geodemand trends validate-imports --observations PATH --plan PATH
 geodemand trends metrics --observations PATH --plan PATH --rules config/trends_rules.yaml --output-root PATH
 geodemand trends phase-metrics --observations PATH --plan PATH --terms config/trends_terms.yaml --rules config/trends_rules.yaml --output-root PATH
