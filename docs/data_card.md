@@ -29,8 +29,9 @@ event labels.
 
 ## Google Trends
 
-Google Trends data enter only through immutable official CSV exports plus sidecar
-metadata. Values are request-relative indices. The event study uses within-request
+The primary 1.1 analysis admits only immutable official/manual or browser-assisted
+Explore CSV exports with verified sidecars. Historical PyTrends artifacts are excluded;
+the unsafe exporter is disabled. Values are request-relative indices. The event study uses within-request
 phase metrics, repeat-aware concurrence, national diagnostics, and matched controls.
 
 ## Redistribution

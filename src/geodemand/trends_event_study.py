@@ -680,6 +680,8 @@ def _phase_metric_row(  # noqa: PLR0915
     plan: Mapping[str, Any],
     term: Mapping[str, Any],
     rules: Mapping[str, Any],
+    *,
+    baseline_end_override: date | None = None,
 ) -> dict[str, Any]:
     normalization = cast(Mapping[str, Any], rules["normalization"])
     event_start = _as_date(plan["event_start_date"])
@@ -688,6 +690,8 @@ def _phase_metric_row(  # noqa: PLR0915
     baseline_end = min(
         _as_date(plan["baseline_end_date"]), windows["anticipatory"][0] - timedelta(days=1)
     )
+    if baseline_end_override is not None:
+        baseline_end = baseline_end_override
     baseline_values = _period_values(series, _as_date(plan["baseline_start_date"]), baseline_end)
     baseline_mean = statistics.fmean(baseline_values) if baseline_values else None
     baseline_sd = statistics.pstdev(baseline_values) if len(baseline_values) > 1 else None

@@ -4,9 +4,11 @@ import json
 from pathlib import Path
 
 import pyarrow.parquet as pq
+import pytest
 from typer.testing import CliRunner
 
 from geodemand.cli import app
+from geodemand.trends import TrendsError
 from geodemand.trends_acquisition import (
     compare_acquisition_reproducibility,
     export_pytrends,
@@ -14,7 +16,6 @@ from geodemand.trends_acquisition import (
 )
 
 ROOT = Path(__file__).parents[1]
-DATA_ROOT = Path("C:/Work/Data/GeoDemand/trends")
 
 
 class _FakeFrame:
@@ -44,7 +45,17 @@ class _FakeClient:
 
 
 def test_inventory_acquisition_stores_reports_both_backends(tmp_path: Path) -> None:
-    outputs = inventory_acquisition_stores(DATA_ROOT, tmp_path)
+    data_root = tmp_path / "inputs"
+    for backend in ("raw", "raws"):
+        (data_root / backend).mkdir(parents=True)
+        (data_root / backend / "request.csv").write_text(
+            "date,weather,isPartial\n2024-01-01,5,False\n", encoding="utf-8"
+        )
+    (data_root / "raw" / "request.json").write_text(
+        json.dumps({"backend": "manual_csv", "request_id": "request", "repeat_id": "repeat_1"}),
+        encoding="utf-8",
+    )
+    outputs = inventory_acquisition_stores(data_root, tmp_path / "out")
     manual = json.loads(outputs["manual_store"].read_text(encoding="utf-8"))
     pytrends = json.loads(outputs["pytrends_store"].read_text(encoding="utf-8"))
     assert manual["file_count"] > 0
@@ -55,19 +66,16 @@ def test_inventory_acquisition_stores_reports_both_backends(tmp_path: Path) -> N
     assert all("size_bytes" in row for row in pytrends["files"])
 
 
-def test_export_pytrends_writes_manifest_with_deterministic_filenames(tmp_path: Path) -> None:
+def test_export_pytrends_fails_closed_without_writing(tmp_path: Path) -> None:
     plan = tmp_path / "plan.csv"
     plan.write_text(
         "request_id,concept_ids,request_start_date,request_end_date,geography\n"
         "request-1,weather;flood,2024-01-01,2024-02-01,US-CA\n",
         encoding="utf-8",
     )
-    result = export_pytrends(plan, tmp_path / "out", pytrends_client=_FakeClient())
-    manifest = json.loads(result["manifest"].read_text(encoding="utf-8"))
-    assert manifest["backend"] == "pytrends"
-    assert manifest["request_count"] == 1
-    assert manifest["requests"][0]["source_file"] == "request-1.csv"
-    assert manifest["requests"][0]["acquisition_backend"] == "pytrends"
+    with pytest.raises(TrendsError, match="disabled"):
+        export_pytrends(plan, tmp_path / "out", pytrends_client=_FakeClient())
+    assert not (tmp_path / "out").exists()
 
 
 def test_acquisition_reproducibility_compares_shared_request_ids(tmp_path: Path) -> None:

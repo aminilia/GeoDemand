@@ -1,3 +1,40 @@
+Metadata-Version: 2.5
+Name: geodemand-ff
+Version: 0.1.0
+Summary: Reproducible geospatial event-study pipeline for candidate U.S. flood episodes and search-interest responses.
+Author: Amin Ilia
+License-Expression: LicenseRef-GeoDemand-Read-Only
+License-File: LICENSE
+Keywords: event-study,flood-events,geoai,research,search-interest
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: GIS
+Requires-Python: >=3.11
+Requires-Dist: matplotlib<3.11,>=3.9
+Requires-Dist: numpy<2.3,>=2.0
+Requires-Dist: polars>=1.43.0
+Requires-Dist: pyarrow>=15.0
+Requires-Dist: pydantic>=2.7
+Requires-Dist: pyogrio>=0.9
+Requires-Dist: pyproj>=3.6
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: shapely>=2.0
+Requires-Dist: typer>=0.12
+Provides-Extra: dev
+Requires-Dist: build>=1.2; extra == 'dev'
+Requires-Dist: click<9,>=8.1; extra == 'dev'
+Requires-Dist: mypy>=1.10; extra == 'dev'
+Requires-Dist: pre-commit>=3.7; extra == 'dev'
+Requires-Dist: pytest>=8.2; extra == 'dev'
+Requires-Dist: ruff>=0.5; extra == 'dev'
+Provides-Extra: trends-browser
+Requires-Dist: playwright<2,>=1.52; extra == 'trends-browser'
+Description-Content-Type: text/markdown
+
 # GeoDemand-FF
 
 GeoDemand-FF is a reproducible geospatial event-study pipeline for constructing

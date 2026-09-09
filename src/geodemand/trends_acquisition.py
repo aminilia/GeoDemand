@@ -7,8 +7,7 @@ import math
 import statistics
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime
-from importlib import import_module
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +15,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from geodemand import __version__
-from geodemand.trends import TrendsError, read_request_plan_rows
+from geodemand.trends import TrendsError
 
 ACQUISITION_BACKENDS = ("manual_csv", "pytrends")
 MANUAL_STORE = "raw"
@@ -124,6 +123,7 @@ def compare_acquisition_reproducibility(
         "metric_row_count": len(metrics_rows),
         "diagnostic_row_count": len(diagnostics_rows),
         "plan_path": str(plan_path) if plan_path else None,
+        "validation_status": "unvalidated_legacy_comparison_not_for_1_1",
     }
     _write_json(output_root / "acquisition_reproducibility_summary.json", summary)
     return {
@@ -141,42 +141,10 @@ def export_pytrends(
     pytrends_client: Any | None = None,
     request_ids: set[str] | None = None,
 ) -> dict[str, Path]:
-    plans = read_request_plan_rows(plan_path, required_fields={"request_id", "concept_ids"})
-    selected = [row for row in plans if not request_ids or str(row["request_id"]) in request_ids]
-    if not selected:
-        raise TrendsError("No request plans selected for pytrends export.")
-    output_root.mkdir(parents=True, exist_ok=True)
-    raw_dir = output_root / PYTRENDS_STORE
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    if pytrends_client is None:
-        pytrends_client = _load_pytrends_client()
-    records: list[dict[str, Any]] = []
-    for plan in selected:
-        rows = _download_pytrends_series(pytrends_client, plan)
-        csv_path = raw_dir / f"{plan['request_id']}.csv"
-        _write_pytrends_csv(csv_path, rows)
-        records.append(
-            {
-                "acquisition_backend": "pytrends",
-                "acquisition_run_id": _run_id(plan),
-                "request_id": str(plan["request_id"]),
-                "repeat_id": str(plan.get("planned_repeat_id") or plan.get("repeat_id") or ""),
-                "source_file": csv_path.name,
-                "sha256": _sha256(csv_path),
-                "retrieval_timestamp": datetime.now(UTC).isoformat(),
-            }
-        )
-    _write_json(
-        output_root / "pytrends_manifest.json",
-        {
-            "package_version": __version__,
-            "backend": "pytrends",
-            "plan_path": str(plan_path),
-            "request_count": len(records),
-            "requests": records,
-        },
+    raise TrendsError(
+        "PyTrends export is disabled for 1.1: query mapping and immutable repeat provenance "
+        "are not validated. Use official/manual exports for the primary analysis."
     )
-    return {"manifest": output_root / "pytrends_manifest.json"}
 
 
 def _inventory_manual_store(raw_store: Path) -> dict[str, Any]:
@@ -206,6 +174,8 @@ def _inventory_manual_store(raw_store: Path) -> dict[str, Any]:
 def _inventory_pytrends_store(pytrends_store: Path) -> dict[str, Any]:
     files = []
     for csv_path in sorted(pytrends_store.glob("*.csv")):
+        if csv_path.stem.startswith(("trends_request_plan", "trends_run_log")):
+            continue
         files.append(
             {
                 "acquisition_backend": "pytrends",
@@ -215,9 +185,8 @@ def _inventory_pytrends_store(pytrends_store: Path) -> dict[str, Any]:
                 "sidecar_file": None,
                 "sha256": _sha256(csv_path),
                 "size_bytes": csv_path.stat().st_size,
-                "retrieval_timestamp": datetime.fromtimestamp(
-                    csv_path.stat().st_mtime, tz=UTC
-                ).isoformat(),
+                "retrieval_timestamp": None,
+                "retrieval_timestamp_status": "unknown_no_acquisition_metadata",
             }
         )
     return _inventory_payload(pytrends_store, files)
@@ -271,47 +240,6 @@ def _group_series(rows: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, floa
     for row in rows:
         grouped[str(row["concept_id"])][str(row["date"])] = float(row["value"])
     return grouped
-
-
-def _download_pytrends_series(
-    pytrends_client: Any, plan: Mapping[str, Any]
-) -> list[dict[str, Any]]:
-    concepts = [item for item in str(plan["concept_ids"]).split(";") if item]
-    timeframe = f"{plan['request_start_date']} {plan['request_end_date']}"
-    pytrends_client.build_payload(concepts, timeframe=timeframe, geo=str(plan["geography"]))
-    frame = pytrends_client.interest_over_time()
-    if frame is None or frame.empty:
-        return []
-    return list(frame.reset_index().to_dict(orient="records"))
-
-
-def _write_pytrends_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
-    if not rows:
-        path.write_text("date,isPartial\n", encoding="utf-8")
-        return
-    fieldnames = ["date", *[key for key in rows[0] if key != "date"]]
-    _write_csv(path, rows, fieldnames)
-
-
-def _load_pytrends_client() -> Any:
-    try:
-        trend_module = import_module("pytrends.request")
-    except ImportError as exc:  # pragma: no cover - environment dependent
-        raise TrendsError("pytrends dependency is required for export-pytrends.") from exc
-    return trend_module.TrendReq(hl="en-US", tz=360)
-
-
-def _run_id(plan: Mapping[str, Any]) -> str:
-    payload = {
-        "request_id": plan["request_id"],
-        "concept_ids": plan["concept_ids"],
-        "backend": "pytrends",
-        "request_start_date": plan["request_start_date"],
-        "request_end_date": plan["request_end_date"],
-    }
-    return hashlib.sha256(
-        json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
-    ).hexdigest()
 
 
 def _pearson(left: Sequence[float], right: Sequence[float]) -> float | None:

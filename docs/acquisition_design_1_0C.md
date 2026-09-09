@@ -1,6 +1,13 @@
 # Milestone 1.0C acquisition design
 
-## Status and scope
+## Historical status and scope
+
+This document records the 1.0C planning contract. GeoDemand 1.1 now performs strict
+plan-based analytical admission through `analysis finalize`; batch acquisition remains
+outside the final task. The later PyTrends exporter is disabled and its historical
+comparisons are explicitly unvalidated. See analysis_1_1.md.
+
+## Original planning stages
 
 Milestone 1.0C is split into three stages:
 

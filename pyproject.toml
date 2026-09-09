@@ -31,6 +31,8 @@ dependencies = [
   "shapely>=2.0",
   "typer>=0.12",
   "polars>=1.43.0",
+  "numpy>=2.0,<2.3",
+  "matplotlib>=3.9,<3.11",
 ]
 
 [project.optional-dependencies]
@@ -51,6 +53,9 @@ geodemand = "geodemand.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/geodemand"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/.pytest_tmp", "/.test-runtime", "/.cache", "/.venv", "/dist", "/build"]
 
 [tool.ruff]
 line-length = 100
@@ -81,6 +86,8 @@ module = [
   "shapely",
   "shapely.*",
   "yaml",
+  "matplotlib",
+  "matplotlib.*",
 ]
 ignore_missing_imports = true
 

@@ -2005,5 +2005,6 @@
   "inventory_sha256": "50fc5be1b9fe3033c0f15e9350c8212af2eb5d6d0b26394d758702cbc6fee34a",
   "package_version": "0.1.0",
   "request_count": 200,
-  "root": "C:\\Work\\Data\\GeoDemand\\trends\\raw"
+  "root": "C:\\Work\\Data\\GeoDemand\\trends\\raw",
+  "validation_status": "historical_unvalidated_not_for_1_1"
 }

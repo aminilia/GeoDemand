@@ -11,6 +11,7 @@ import typer
 
 from geodemand.analysis import AnalysisError, build_analysis_dataset
 from geodemand.analysis_descriptive import DescriptiveAnalysisError, describe_signal
+from geodemand.analysis_finalize import FinalizeError, finalize
 from geodemand.boundaries import BoundaryError, inspect_boundaries, prepare_boundaries
 from geodemand.catalog import (
     CatalogError,
@@ -987,6 +988,31 @@ def analysis_describe_signal_command(
     except DescriptiveAnalysisError as exc:
         raise typer.BadParameter(str(exc)) from exc
     _echo_json({name: str(path) for name, path in artifacts.items()})
+
+
+@analysis_app.command("finalize")
+def analysis_finalize_command(
+    catalog_path: Annotated[Path, typer.Option("--catalog", exists=True, dir_okay=False)],
+    request_plan_path: Annotated[Path, typer.Option("--request-plan", exists=True, dir_okay=False)],
+    observations_path: Annotated[Path, typer.Option("--observations", exists=True, dir_okay=False)],
+    raw_root: Annotated[Path, typer.Option("--raw-root", exists=True, file_okay=False)],
+    config_path: Annotated[Path, typer.Option("--config", exists=True, dir_okay=False)],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Freeze verified existing observations into the final response report."""
+    try:
+        result = finalize(
+            catalog_path=catalog_path,
+            request_plan_path=request_plan_path,
+            observations_path=observations_path,
+            raw_root=raw_root,
+            config_path=config_path,
+            output_root=output_root,
+        )
+    except (FinalizeError, TrendsError) as exc:
+        _echo_json({"status": "error", "error": str(exc)})
+        raise typer.Exit(2) from exc
+    _echo_json(result)
 
 
 def _run_trends(operation: Callable[[], Any]) -> None:

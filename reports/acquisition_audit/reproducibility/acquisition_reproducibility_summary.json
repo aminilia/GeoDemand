@@ -3,5 +3,6 @@
   "metric_row_count": 1000,
   "package_version": "0.1.0",
   "paired_request_count": 200,
-  "plan_path": null
+  "plan_path": null,
+  "validation_status": "historical_unvalidated_not_for_1_1"
 }

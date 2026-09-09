@@ -1,0 +1,24 @@
+version: 1.1-v1
+data_origin: observed
+terms: trends_terms.yaml
+rules: trends_rules.yaml
+lockfile: ../uv.lock
+maximum_episodes: 20
+panels: [batch_1_flood_awareness, batch_5_specific_recovery]
+repeats: [repeat_1, repeat_2]
+# Both labels identify official Explore CSV acquisition; acquisition identity is retained.
+primary_backends: [manual_csv, playwright_export_assistant]
+baseline_start: -28
+baseline_end: -8
+minimum_baseline_days: 14
+minimum_phase_coverage: 0.8
+maximum_zero_fraction: 0.5
+minimum_baseline_sd: 0.001
+minimum_prediction_episodes: 20
+folds: 5
+minimum_training_episodes: 12
+ridge_alpha: 1.0
+seed: 20260721
+context_panel: batch_1_flood_awareness
+primary_outcome: standardized_peak_lift
+sensitivities: [baseline_end_minus_1, complete_two_repeats]

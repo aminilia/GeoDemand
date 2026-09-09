@@ -862,7 +862,7 @@ def plan_requests(  # noqa: PLR0912, PLR0915
     return result
 
 
-def import_csv_export(
+def import_csv_export(  # noqa: PLR0912
     csv_path: Path,
     sidecar_path: Path,
     output_root: Path,
@@ -878,9 +878,8 @@ def import_csv_export(
         raise TrendsError(f"Invalid Trends sidecar {sidecar_path}: {exc}") from exc
     if sidecar.source_filename != csv_path.name:
         raise TrendsError("Sidecar source_filename does not match the supplied CSV file.")
-    raw_dir = output_root / "raw"
-    _preserve_raw(csv_path, raw_dir / csv_path.name)
-    _preserve_raw(sidecar_path, raw_dir / sidecar_path.name)
+    if sidecar.csv_sha256 and sidecar.csv_sha256 != _sha256_file(csv_path):
+        raise TrendsError("CSV hash does not match sidecar csv_sha256.")
     header, raw_rows = _parse_export(csv_path)
     if len(header) - 1 != len(sidecar.requested_concepts):
         raise TrendsError("CSV series count does not match sidecar requested concepts.")
@@ -940,6 +939,32 @@ def import_csv_export(
         (row["request_id"], row["repeat_id"], row["concept_id"], str(row["date"]))
         for row in existing
     }
+    existing_by_key = {
+        (row["request_id"], row["repeat_id"], row["concept_id"], str(row["date"])): row
+        for row in existing
+    }
+    comparison_fields = (
+        "interest",
+        "is_partial",
+        "episode_id",
+        "geography",
+        "backend",
+        "batch_id",
+        "query_text",
+        "query_type",
+        "terminology_version",
+        "request_role",
+        "category",
+        "search_property",
+    )
+    for row in observations:
+        observation_key = (row["request_id"], row["repeat_id"], row["concept_id"], str(row["date"]))
+        prior = existing_by_key.get(observation_key)
+        if prior and any(prior.get(field) != row.get(field) for field in comparison_fields):
+            raise TrendsError(f"Conflicting imported observation identity: {observation_key}")
+    raw_dir = output_root / "raw"
+    _preserve_raw(csv_path, raw_dir / csv_path.name)
+    _preserve_raw(sidecar_path, raw_dir / sidecar_path.name)
     additions = [
         row
         for row in observations
@@ -2651,7 +2676,7 @@ def _validate_plan_fields(
         (index, field)
         for index, row in enumerate(rows, start=1)
         for field in sorted(required_fields)
-        if not str(row.get(field) or "").strip()
+        if row.get(field) is None or not str(row[field]).strip()
     ]
     if empty_required:
         raise TrendsError(

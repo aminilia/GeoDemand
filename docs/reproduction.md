@@ -20,12 +20,12 @@ statistical validation.
 ## Environment
 
 ```bash
-uv sync
-python -m ruff check .
-python -m ruff format --check .
-python -m mypy
-python scripts/run_tests.py
-python scripts/validate_documented_cli.py
+uv sync --locked --extra dev
+uv run python -m ruff check .
+uv run python -m ruff format --check .
+uv run python -m mypy
+uv run python scripts/run_tests.py
+uv run python scripts/validate_documented_cli.py
 ```
 
 Browser-assisted Google Trends export requires the optional browser extra:
@@ -92,7 +92,7 @@ bootstrap, permutation, ICC, p-value, confidence-interval, or model output is pr
 ## Synthetic Demonstration
 
 ```bash
-python scripts/synthetic_demo.py --output-dir demo-output
+uv run python scripts/synthetic_demo.py --output-dir demo-output
 ```
 
 Repeated runs in the same locked execution environment produce identical scientific
@@ -103,3 +103,9 @@ content hashes are used for portable comparisons.
 
 Do not commit raw Groundsource data, raw Google Trends exports, full generated audit
 artifacts, canonical Parquet outputs, quarantine outputs, or rejected-record outputs.
+
+## Final analysis
+
+Use the exact `analysis finalize` contract in [analysis_1_1.md](analysis_1_1.md).
+PyTrends export now fails closed; prior command examples are historical, not part of 1.1.
+On deep Windows paths pass a short disposable `--basetemp` to scripts/run_tests.py.

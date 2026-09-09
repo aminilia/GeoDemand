@@ -58,3 +58,4 @@ venv/
 env/
 
 .tmp_pytest/
+.pytest_tmp/

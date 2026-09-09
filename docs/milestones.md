@@ -10,7 +10,8 @@
 | 1.0A | Schema- and lineage-validated integration of request, episode, repeat, and phase metrics |
 | 1.0B | Deterministic descriptive signal summaries and paired-repeat diagnostics |
 | 1.0C-2 | Nested execution selection, matched-pair lineage, and planning-only dry runs |
-| 1.0C-3 | Dual-backend acquisition provenance, PyTrends export, and acquisition reproducibility audit |
+| 1.0C-3 | Historical dual-backend experiment; PyTrends export disabled and comparisons unvalidated for 1.1 |
+| 1.1 | Strict raw admission, final response report, conditional grouped ridge baseline and two sensitivities |
 
 Milestone 1.0C-2 produces nested 10/20 episode selections, uses one rank-1 control per
 episode, supports exact panel filtering and two planned repeats, and scopes export status to
@@ -25,7 +26,7 @@ and non-inferential concept-rank agreement. Pairwise procedures require exactly 
 exports; larger repeat sets require a separate multi-repeat design. Batch 1 has
 five independent requests and only one repeated Florida request; it does not support formal
 population inference or general repeat reliability. Bootstrap, permutation tests, ICC,
-p-values, predictive models, and `analysis validate-signal` are not implemented.
+p-values and `analysis validate-signal` are not implemented. The separate 1.1 finalizer adds a conditional predictive baseline; it does not change the 1.0B descriptive contract.
 
 The active project is a Groundsource-to-Google-Trends event-study pipeline. Candidate
 episodes remain reported-event research units and require manual interpretation.
