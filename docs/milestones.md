@@ -12,6 +12,7 @@
 | 1.0C-2 | Nested execution selection, matched-pair lineage, and planning-only dry runs |
 | 1.0C-3 | Historical dual-backend experiment; PyTrends export disabled and comparisons unvalidated for 1.1 |
 | 1.1 | Strict raw admission, final response report, conditional grouped ridge baseline and two sensitivities |
+| 1.2 | Final integrated descriptive report, separate exploratory archive supplement, compatibility validation and local release candidate |
 
 Milestone 1.0C-2 produces nested 10/20 episode selections, uses one rank-1 control per
 episode, supports exact panel filtering and two planned repeats, and scopes export status to

@@ -109,3 +109,31 @@ artifacts, canonical Parquet outputs, quarantine outputs, or rejected-record out
 Use the exact `analysis finalize` contract in [analysis_1_1.md](analysis_1_1.md).
 PyTrends export now fails closed; prior command examples are historical, not part of 1.1.
 On deep Windows paths pass a short disposable `--basetemp` to scripts/run_tests.py.
+
+## Milestone 1.2 integrated report and exploratory supplement
+
+The integrated report is docs/final_results.md. The local release package adds figures
+and keeps the official and exploratory output directories separate. Preserve the source
+snapshot and lockfile; use `uv sync --locked --extra dev` in a supported Python environment.
+
+Reproduce official-only outputs with the existing `analysis finalize` command and the
+exact catalog, request-plan, observations, raw-root and config paths recorded in its
+provenance/report. Use a new empty output directory. No acquisition is performed.
+
+The local package includes build_exploratory_supplement.py and archive-audit/. Run:
+
+```text
+python build_exploratory_supplement.py --repo PATH_TO_SOURCE --audit archive-audit --output NEW_EMPTY_OUTPUT
+```
+
+Run that script using the source checkout's locked Python environment. The audit manifest
+contains original local research paths; those inputs must be available. Current hashes
+are verified before/after use. The builder reuses source response metrics with the same
+thresholds, reproduces all 80 episode/version records, and compares only the 19 shared
+eligible episodes. Unknown archive retrieval dates and missing alternative partial flags
+remain explicit. Never relabel these records as verified official data.
+
+Two runs in the same rendering environment should be byte-identical. The official and
+exploratory runs have separate provenance; do not combine their eligibility populations.
+Keep raw CSVs and data-bearing outputs local under DATA_LICENSES.md. Consult the local
+validation record for actual runtime versions and checks performed on the release candidate.

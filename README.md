@@ -8,6 +8,15 @@ The project is intentionally scoped to reported flood footprints and Google Tren
 event-study analysis. It does not claim confirmed events, causal attribution, or
 predictive demand forecasting.
 
+## Final descriptive release candidate — milestone 1.2
+
+The [final results](docs/final_results.md) distinguish five eligible official-subset
+weather-context units from 22 exploratory flood units and a 19-episode archive-version
+comparison. These samples are not pooled. The exploratory median peak lag is three days;
+acquisition uncertainty and absent controls limit interpretation. No predictive result is
+claimed. See [release preparation](docs/release_1_2.md) and
+[reproduction](docs/reproduction.md). Raw research inputs remain local.
+
 ## GeoDemand 1.1 final analysis
 
 `analysis finalize` produces a provenance-checked descriptive report and conditional
