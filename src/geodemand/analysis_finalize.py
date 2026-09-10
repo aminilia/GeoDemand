@@ -577,6 +577,37 @@ def aggregate(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def eligible_treated_control_pairs(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[tuple[Mapping[str, Any], Mapping[str, Any]]]:
+    """Return contrasts satisfying the same admission contract as pairs."""
+    grouped: dict[tuple[str, str, str], dict[str, list[Mapping[str, Any]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for row in rows:
+        if not row.get("eligible") or not row.get("primary_unit"):
+            continue
+        role = str(row.get("request_role", ""))
+        if role in {"treated_state", "control_state"}:
+            key = (str(row["matched_pair_id"]), str(row["batch_id"]), str(row["concept_id"]))
+            grouped[key][role].append(row)
+    output: list[tuple[Mapping[str, Any], Mapping[str, Any]]] = []
+    for key in sorted(grouped):
+        treated = grouped[key].get("treated_state", [])
+        control = grouped[key].get("control_state", [])
+        if len(treated) != 1 or len(control) != 1:
+            continue
+        left, right = treated[0], control[0]
+        if not left.get("complete_pair") or not right.get("complete_pair"):
+            continue
+        if str(left.get("request_id")) == str(right.get("request_id")):
+            continue
+        if str(left.get("geography")) == str(right.get("geography")):
+            continue
+        output.append((left, right))
+    return output
+
+
 def _summary_sensitivity(
     name: str, primary: list[dict[str, Any]], other: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -820,6 +851,7 @@ def _finalize(  # noqa: PLR0912, PLR0915
         for r in event_rows
         if r["eligible"] and r["primary_unit"] and r["request_role"] == "treated_state"
     ]
+    contrasts = eligible_treated_control_pairs(event_rows)
     verified = [r for r in repeat_rows if r["verified"]]
     readiness = {
         "analysis_version": VERSION,
@@ -838,6 +870,10 @@ def _finalize(  # noqa: PLR0912, PLR0915
         "eligible_independent_event_groups": len({r["event_group"] for r in primary}),
         "planned_request_repeat_concept_count": len(repeat_rows),
         "eligible_primary_unit_count": len(primary),
+        "eligible_treated_control_contrast_count": len(contrasts),
+        "eligible_treated_control_contrast_episode_count": len(
+            {str(t["episode_id"]) for t, _ in contrasts}
+        ),
         "missing_count": sum(not r["acquired"] for r in repeat_rows),
         "excluded_count": sum(not r["eligible"] for r in repeat_rows),
         "complete_plan": all(r["verified"] for r in repeat_rows),

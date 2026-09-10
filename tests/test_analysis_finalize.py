@@ -18,6 +18,7 @@ from geodemand.analysis_finalize import (
     FinalizeError,
     _config,
     aggregate,
+    eligible_treated_control_pairs,
     finalize,
     response_metrics,
 )
@@ -211,6 +212,85 @@ def test_missing_repeat_concept_pair_and_no_data(tmp_path: Path) -> None:
     result = finalize(**inputs, output_root=tmp_path / "empty")
     assert result["verified_episode_count"] == 0
     assert result["eligible_episode_count"] == 0
+
+
+def _contrast_row(
+    *,
+    role: str,
+    geography: str,
+    request_id: str,
+    batch_id: str = "batch_1_flood_awareness",
+    concept_id: str = "flood",
+    complete_pair: bool = True,
+) -> dict[str, Any]:
+    return {
+        "matched_pair_id": "pair-1",
+        "batch_id": batch_id,
+        "concept_id": concept_id,
+        "request_role": role,
+        "geography": geography,
+        "request_id": request_id,
+        "episode_id": "episode-1",
+        "eligible": True,
+        "primary_unit": True,
+        "complete_pair": complete_pair,
+    }
+
+
+def test_contrast_pairing_requires_distinct_geographies_and_complete_support() -> None:
+    rows = [
+        _contrast_row(role="treated_state", geography="US-FL", request_id="treated"),
+        _contrast_row(role="control_state", geography="US-FL", request_id="control"),
+    ]
+    assert eligible_treated_control_pairs(rows) == []
+    rows[1]["geography"] = "US-GA"
+    rows[0]["complete_pair"] = False
+    assert eligible_treated_control_pairs(rows) == []
+    rows[0]["complete_pair"] = True
+    assert len(eligible_treated_control_pairs(rows)) == 1
+
+
+def test_contrast_pairing_does_not_cross_panels_or_count_nested_concepts_as_requests() -> None:
+    rows: list[dict[str, Any]] = []
+    for concept in ("flood", "flood_recovery", "context_weather", "sump_pump", "wet_vacuum"):
+        rows.extend(
+            [
+                _contrast_row(
+                    role="treated_state",
+                    geography="US-FL",
+                    request_id="treated",
+                    concept_id=concept,
+                ),
+                _contrast_row(
+                    role="control_state",
+                    geography="US-GA",
+                    request_id="control",
+                    concept_id=concept,
+                ),
+            ]
+        )
+    rows.extend(
+        [
+            _contrast_row(
+                role="treated_state",
+                geography="US-FL",
+                request_id="treated",
+                batch_id="batch_5_specific_recovery",
+            ),
+            _contrast_row(
+                role="control_state",
+                geography="US-GA",
+                request_id="control",
+                batch_id="batch_5_specific_recovery",
+            ),
+        ]
+    )
+    pairs = eligible_treated_control_pairs(rows)
+    assert len(pairs) == 6
+    assert {(left["batch_id"], left["concept_id"]) for left, _ in pairs} == {
+        ("batch_1_flood_awareness", concept)
+        for concept in ("flood", "flood_recovery", "context_weather", "sump_pump", "wet_vacuum")
+    } | {("batch_5_specific_recovery", "flood")}
 
 
 @pytest.mark.parametrize(

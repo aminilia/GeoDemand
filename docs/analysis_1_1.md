@@ -35,7 +35,9 @@ duplicate primary episode/concept units. Raw files are never modified.
 
 Version `1.1-v1` freezes baseline onset −28 through −8, lead −7 through −1, immediate
 onset through event end +2, early recovery end +3 through +7 and extended recovery end +8
-through +28. All endpoints are inclusive. Baseline requires 14 valid days; each response
+through +28. All endpoints are inclusive. Response-window length therefore varies with
+event duration because the immediate phase ends at each event's end date; phase coverage is
+evaluated against each event-specific window. Baseline requires 14 valid days; each response
 phase requires 80% of its expected daily observations. Missing/partial values are excluded.
 Zero fraction at least 0.5 is low volume; all-zero series remain an explicit exclusion.
 Baseline population SD must exceed 0.001. Undefined outcomes remain null.

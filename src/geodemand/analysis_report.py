@@ -90,7 +90,10 @@ def build_report(  # noqa: PLR0912, PLR0915
     sensitivities: list[dict[str, Any]],
     command: str,
 ) -> None:
-    from geodemand.analysis_finalize import write_csv  # noqa: PLC0415
+    from geodemand.analysis_finalize import (  # noqa: PLC0415
+        eligible_treated_control_pairs,
+        write_csv,
+    )
 
     tables, figures = output / "tables", output / "figures"
     tables.mkdir()
@@ -131,16 +134,19 @@ def build_report(  # noqa: PLR0912, PLR0915
             raise ValueError(
                 "Multiple primary acquisition backends for one episode/concept; select one before finalization."
             )
-        controls = {
-            (r["matched_pair_id"], r["concept_id"], r["batch_id"]): r
-            for r in events
-            if r["eligible"] and r["request_role"] == "control_state"
+        contrasts = {
+            (treated["matched_pair_id"], treated["concept_id"], treated["batch_id"]): (
+                treated,
+                control,
+            )
+            for treated, control in eligible_treated_control_pairs(events)
         }
         differences = [
-            r["standardized_peak_lift"]
-            - controls[(r["matched_pair_id"], concept, panel)]["standardized_peak_lift"]
-            for r in rows
-            if role == "treated_state" and (r["matched_pair_id"], concept, panel) in controls
+            treated["standardized_peak_lift"] - control["standardized_peak_lift"]
+            for treated, control in contrasts.values()
+            if role == "treated_state"
+            and str(treated["concept_id"]) == concept
+            and str(treated["batch_id"]) == panel
         ]
         response.append(
             {
