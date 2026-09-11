@@ -9,6 +9,7 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from rich.text import Text
 from typer.testing import CliRunner
 
 import geodemand.analysis_descriptive as descriptive_module
@@ -33,14 +34,16 @@ def test_describe_signal_cli_help_and_registration() -> None:
     result = runner.invoke(app, ["analysis", "describe-signal", "--help"])
     group = runner.invoke(app, ["analysis", "--help"])
 
+    output = " ".join(Text.from_ansi(result.output).plain.split())
+    group_output = Text.from_ansi(group.output).plain
+
     assert result.exit_code == 0
-    assert (
-        "Generate deterministic descriptive and paired-repeat signal diagnostics." in result.output
-    )
-    assert "--dataset" in result.output
-    assert "--output-root" in result.output
-    assert "describe-signal" in group.output
-    assert "validate-signal" not in group.output
+    assert group.exit_code == 0
+    assert "Generate deterministic descriptive and paired-repeat signal diagnostics." in output
+    assert "--dataset" in output
+    assert "--output-root" in output
+    assert "describe-signal" in group_output
+    assert "validate-signal" not in group_output
 
 
 def test_describe_signal_summaries_pairs_ranks_and_determinism(tmp_path: Path) -> None:

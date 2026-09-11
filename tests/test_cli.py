@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from rich.text import Text
 from typer.testing import CliRunner
 
 from geodemand.cli import app
@@ -46,10 +47,14 @@ def test_cli_filter_groundsource_requires_boundaries(
             "--country",
             "US",
         ],
+        # Keep the error phrase on one line inside Rich's bordered panel.
+        env={"COLUMNS": "120"},
+        terminal_width=120,
     )
+    output = " ".join(Text.from_ansi(result.output).plain.split())
 
     assert result.exit_code != 0
-    assert "provide --country-boundaries" in result.output
+    assert "provide --country-boundaries" in output
 
 
 def test_cli_audit_groundsource(groundsource_path: Path, tmp_path: Path) -> None:
